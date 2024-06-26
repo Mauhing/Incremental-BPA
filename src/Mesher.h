@@ -309,6 +309,9 @@ class Mesher
          */
         void merge(Mesher &mesher);
 
+        /** @brief find all boundary edges and mark it as front edges
+         */
+        void allBoundaryEdgesToFrontEdges();
 
         /** @brief change the radius and set the border edges as the edge front
          * @param radius new radius to be tested

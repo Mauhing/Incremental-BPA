@@ -155,9 +155,8 @@ void Mesher::reconstruct(std::list< double >& radii)
 }
 
 
-void Mesher::changeRadius(double radius)
+void Mesher::allBoundaryEdgesToFrontEdges()
 {
-    setBallRadius(radius);
     Edge_star_list::iterator ei = m_border_edges.begin();
     while(ei != m_border_edges.end())
     {
@@ -175,6 +174,13 @@ void Mesher::changeRadius(double radius)
         }
         ++ei;
     }
+}
+
+
+void Mesher::changeRadius(double radius)
+{
+    setBallRadius(radius);
+    allBoundaryEdgesToFrontEdges();
 }
 
 
