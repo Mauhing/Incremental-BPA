@@ -44,7 +44,8 @@ int main(int argc, char **argv)
     //handling command line options
     int c;
     stringstream f;
-    string infile, outfile, input_radii;
+    string input_infiles, outfile, input_radii;
+    std::list<string> infile_list;
     unsigned int depth = 7;
     double radius = -1;
     int radius_flag = -1;
@@ -59,11 +60,21 @@ int main(int argc, char **argv)
         {
             case 'i':
             {
-                f.clear();
-                f<<optarg;
-                f>>infile;
+                string infile;
+                input_infiles=optarg;
+                istringstream iss(input_infiles, istringstream::in);
+                while (iss>>infile)
+                {
+                    infile_list.push_back(infile);
+                }
                 infile_flag = 1;
                 break;
+
+                //f.clear();
+                //f<<optarg;
+                //f>>infile;
+                //infile_flag = 1;
+                //break;
             }
             case 'o':
             {
@@ -120,65 +131,73 @@ int main(int argc, char **argv)
     time_t start,end;
 
     Octree octree;
+    Mesher mesher;
 
-
-    std::time(&start);
-    bool ok;
-    if(radius >0)
+    for(std::list<string>::iterator it = infile_list.begin(); it != infile_list.end(); ++it)
     {
-        ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
+        std::cout<<"****** Processing file "<<*it<<" ******"<<std::endl;
+        //std::cout<<"Reading and sorting points from "<<*it<<"... "<<std::flush;
+
+        std::time(&start);
+        bool ok;
+        //std::string infile = it;
+        if(radius >0)
+        {
+            ok = FileIO::readAndSortPoints(it->c_str(),octree,radius); 
+        }
+        else
+        {
+            octree.setDepth(depth);
+            ok = FileIO::readAndSortPoints(it->c_str(),octree);  
+        }
+        if( !ok )
+        {
+            std::cerr<<"Pb opening the file; exiting."<<std::endl;
+            return EXIT_FAILURE;
+        }
+        std::time(&end);
+
+        std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
+        std::cout<<"Octree contains "<<octree.getNpoints()
+                <<" points. The bounding box size is "
+                <<octree.getSize()<<std::endl;
+        std::cout<<"Reading and sorting points in this octree took "
+                <<difftime(end,start)<<" s."<<std::endl;
+        std::cout<<"Octree statistics"<<std::endl;
+        octree.printOctreeStat();
+
+        std::cout<<"****** Reconstructing with radii "<<std::flush;
+
+        std::list<double>::const_iterator ri = radii.begin();
+        while(ri != radii.end())
+        {
+            std::cout<< *ri <<"; ";
+            ++ri;
+        }
+        std::cout<<"******"<<std::endl;
+
+        OctreeIterator iterator(&octree);
+
+        if(radius>0)
+            iterator.setR(radius);
+
+        std::time(&start);
+
+        //Mesher mesher(&octree, &iterator);
+        mesher.resetOctree(&octree, &iterator);
+        if(parallel_flag == 1)
+            mesher.parallelReconstruct(radii);
+        else
+            mesher.reconstruct(radii);
+        std::time(&end);
+
+        std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
+                <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
+        std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
+        std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
+                <<"s."<<std::endl;
+        
     }
-    else
-    {
-        octree.setDepth(depth);
-        ok = FileIO::readAndSortPoints(infile.c_str(),octree);  
-    }
-    if( !ok )
-    {
-        std::cerr<<"Pb opening the file; exiting."<<std::endl;
-        return EXIT_FAILURE;
-    }
-    std::time(&end);
-
-    std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
-    std::cout<<"Octree contains "<<octree.getNpoints()
-             <<" points. The bounding box size is "
-             <<octree.getSize()<<std::endl;
-    std::cout<<"Reading and sorting points in this octree took "
-             <<difftime(end,start)<<" s."<<std::endl;
-    std::cout<<"Octree statistics"<<std::endl;
-    octree.printOctreeStat();
-
-
-    std::cout<<"****** Reconstructing with radii "<<std::flush;
-
-    std::list<double>::const_iterator ri = radii.begin();
-    while(ri != radii.end())
-    {
-        std::cout<< *ri <<"; ";
-        ++ri;
-    }
-    std::cout<<"******"<<std::endl;
-
-    OctreeIterator iterator(&octree);
-
-    if(radius>0)
-        iterator.setR(radius);
-
-    std::time(&start);
-
-    Mesher mesher(&octree, &iterator);
-    if(parallel_flag == 1)
-        mesher.parallelReconstruct(radii);
-    else
-        mesher.reconstruct(radii);
-    std::time(&end);
-
-    std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
-             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
-    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
-    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
-             <<"s."<<std::endl;
 
     std::cout<<"Filling the holes... "<<std::flush;
 

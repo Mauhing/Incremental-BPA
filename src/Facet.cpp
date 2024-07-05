@@ -66,6 +66,10 @@ Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
     m_vertex[2] = v2;
     m_ball_center = ball_center;
 
+    // Pirnt: does m_ball_center have the same address as ball_center?
+    std::cout << "m_ball_center address: " << &m_ball_center << std::endl;
+    std::cout << "ball_center address: " << &ball_center << std::endl;
+
     Edge *e0 = v0->getLinkingEdge(v1);
     if(e0 == NULL)
     {

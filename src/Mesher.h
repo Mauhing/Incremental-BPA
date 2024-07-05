@@ -116,7 +116,7 @@ class Mesher
         /** @brief do the triangulation
          * @param radii a vector of radius
          */
-        void reconstruct(std::list<double> &radii);
+        void reconstruct(const std::list<double> &radii);
 
         /** @brief parallel triangulation
          * @param radii a vector of radius
@@ -186,6 +186,19 @@ class Mesher
          * @return end iterator of the facets
          */
         Facet_star_list::const_iterator facets_end() const;
+
+    public: // reset octree and octree iterator
+            
+        /** @brief reset the octree and the octree iterator
+        * @param octree octree containing the points to mesh
+        * @param iterator iterator over the octree
+        */
+        void resetOctree(Octree *octree, OctreeIterator *iterator);
+
+        /** @brief find all boundary edges and mark it as front edges
+         */
+        //void allBoundaryEdgesToFrontEdges();
+
 
     protected :
 
@@ -308,10 +321,6 @@ class Mesher
          * @param mesher another mesher
          */
         void merge(Mesher &mesher);
-
-        /** @brief find all boundary edges and mark it as front edges
-         */
-        void allBoundaryEdgesToFrontEdges();
 
         /** @brief change the radius and set the border edges as the edge front
          * @param radius new radius to be tested
