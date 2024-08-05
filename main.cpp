@@ -148,26 +148,9 @@ int main(int argc, char **argv)
     }
     if( !ok )
     {
-        std::cout<<"****** Processing file "<<*it<<" ******"<<std::endl;
-        //std::cout<<"Reading and sorting points from "<<*it<<"... "<<std::flush;
-
-        std::time(&start);
-        bool ok;
-        //std::string infile = it;
-        if(radius >0)
-        {
-            ok = FileIO::readAndSortPoints(it->c_str(),octree,radius); 
-        }
-        else
-        {
-            octree.setDepth(depth);
-            ok = FileIO::readAndSortPoints(it->c_str(),octree);  
-        }
-        if( !ok )
-        {
-            std::cerr<<"Pb opening the file; exiting."<<std::endl;
-            return EXIT_FAILURE;
-        }
+        std::cerr<<"Pb opening the file; exiting."<<std::endl;
+        return EXIT_FAILURE;
+    }
         std::time(&end);
 
         std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
@@ -210,7 +193,6 @@ int main(int argc, char **argv)
         std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
                 <<"s."<<std::endl;
         
-    }
 
 
     std::cout << "== Add more vertice ==" << std::endl;
