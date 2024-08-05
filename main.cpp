@@ -44,7 +44,8 @@ int main(int argc, char **argv)
     //handling command line options
     int c;
     stringstream f;
-    string infile, outfile, input_radii;
+    string input_infiles, outfile, input_radii;
+    std::list<string> infile_list;
     unsigned int depth = 7;
     double radius = -1;
     int radius_flag = -1;
@@ -59,11 +60,21 @@ int main(int argc, char **argv)
         {
             case 'i':
             {
-                f.clear();
-                f<<optarg;
-                f>>infile;
+                string infile;
+                input_infiles=optarg;
+                istringstream iss(input_infiles, istringstream::in);
+                while (iss>>infile)
+                {
+                    infile_list.push_back(infile);
+                }
                 infile_flag = 1;
                 break;
+
+                //f.clear();
+                //f<<optarg;
+                //f>>infile;
+                //infile_flag = 1;
+                //break;
             }
             case 'o':
             {
@@ -124,6 +135,7 @@ int main(int argc, char **argv)
 
     std::time(&start);
     bool ok;
+    std::string infile = infile_list.front();
     if(radius >0)
     {
         ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
@@ -180,22 +192,47 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
 
-    std::cout<<"Filling the holes... "<<std::flush;
 
-    std::time(&start);
-    mesher.fillHoles();
-    std::time(&end);
+    std::cout << "== Add more vertice ==" << std::endl;
+    Octree octree2;
+    infile = infile_list.back();
+    for (std::list<string>::iterator it = infile_list.begin(); it != infile_list.end(); ++it)
+    {
+        std::cout << "Reading file: " << *it << std::endl;
+        //FileIO::readAndSortPoints(it->c_str(),octree2,radius); 
+    }
+    radius = radii.front();
+    FileIO::readAndSortPoints(infile.c_str(),octree2,radius); 
 
-    std::cout<<difftime(end,start)<<" s."<<std::endl;
-    std::cout<<"Final mesh: "<<mesher.nVertices()
+    OctreeIterator iterator2(&octree2);
+    if(radius>0)
+        iterator2.setR(radius);
+    mesher.resetOctree(&octree2, &iterator2);
+    mesher.reconstruct(radii);
+
+    std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
              <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
     std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
+    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
+             <<"s."<<std::endl;
+
+
+    //std::cout<<"Filling the holes... "<<std::flush;
+
+    //std::time(&start);
+    //mesher.fillHoles();
+    //std::time(&end);
+
+    //std::cout<<difftime(end,start)<<" s."<<std::endl;
+    //std::cout<<"Final mesh: "<<mesher.nVertices()
+    //         <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
+    //std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
 
     if(! FileIO::saveMesh(outfile.c_str(), mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
     }
-
-    return EXIT_SUCCESS;
+    std::cout<<"Mesh saved in "<<outfile<<std::endl;
+    //return EXIT_SUCCESS;
 }

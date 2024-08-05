@@ -129,6 +129,8 @@ void Mesher::reconstruct()
 
     if(m_edge_front.empty())
     {
+        std::cout<<"No front edge found, looking for seed triangle."
+                 <<std::endl;
         bool ok = findSeedTriangle();
         if(!ok)
             std::cout<<"No seed triangle found, no triangulation done!"
@@ -141,22 +143,20 @@ void Mesher::reconstruct()
 }
 
 
-void Mesher::reconstruct(std::list< double >& radii)
+void Mesher::reconstruct(const std::list<double>& radii)
 {
-    std::cout<<"single threaded reconstruction"<<std::endl;
-    while(! radii.empty())
+    std::cout << "single threaded reconstruction" << std::endl;
+    for (double radius : radii)
     {
-        double radius = radii.front();
-
         changeRadius(radius);
         reconstruct();
-        radii.pop_front();
     }
 }
 
 
-void Mesher::allBoundaryEdgesToFrontEdges()
+void Mesher::changeRadius(double radius)
 {
+    setBallRadius(radius);
     Edge_star_list::iterator ei = m_border_edges.begin();
     while(ei != m_border_edges.end())
     {
@@ -174,13 +174,60 @@ void Mesher::allBoundaryEdgesToFrontEdges()
         }
         ++ei;
     }
+    std::cout<<"After changing radius, "<<m_edge_front.size()
+             <<" front edges and "<<m_border_edges.size()
+             <<" border edges."<<std::endl;
+}
+
+/** 
+void Mesher::cont_reconstruct()
+{
+    std::cout<<"***********Ball radius "<<m_ball_radius
+             <<" ***********"<<std::endl;
+
+    if(m_edge_front.empty())
+    {
+        std::cerr << "Edge front is empty. Aborting program." << std::endl;
+        std::abort(); // Aborts the program 
+    }
+    else
+    {
+        expandTriangulation();
+    }
+}
+
+void Mesher::cont_reconstruct(const std::list<double>& radii)
+{
+    std::cout << "single threaded reconstruction" << std::endl;
+    allBoundaryEdgesToFrontEdges();
+    for (double radius : radii)
+    {
+        setBallRadius(radius);
+        //changeRadius(radius);
+        cont_reconstruct();
+    }
 }
 
 
-void Mesher::changeRadius(double radius)
+void Mesher::allBoundaryEdgesToFrontEdges()
 {
-    setBallRadius(radius);
-    allBoundaryEdgesToFrontEdges();
+    Edge_star_list::iterator ei = m_border_edges.begin();
+    while(ei != m_border_edges.end())
+    {
+        Edge *e = *ei;
+        Facet *f = e->getFacet1();
+
+        e->setType(1);
+        m_edge_front.push_back(e);
+        ei = m_border_edges.erase(ei);
+        ++ei;
+    }
+}*/
+
+void Mesher::resetOctree(Octree *octree, OctreeIterator *iterator)
+{
+    m_octree = octree;
+    m_iterator = iterator;
 }
 
 
@@ -486,10 +533,10 @@ void Mesher::expandTriangulation()
         if(e2->getType() == 1)
             m_edge_front.push_front(e2);
 
-        if(m_nfacets % 10000 == 0)
-            std::cout<<m_nvertices<<" vertices. "<<m_nfacets<<" facets. "
-            <<m_edge_front.size()<<" front edges. "
-            <<m_border_edges.size()<<" border edges."<<std::endl;
+        //if(m_nfacets % 10000 == 0)
+        //    std::cout<<m_nvertices<<" vertices. "<<m_nfacets<<" facets. "
+        //    <<m_edge_front.size()<<" front edges. "
+        //    <<m_border_edges.size()<<" border edges."<<std::endl;
     }
 }
 
