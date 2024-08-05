@@ -21,6 +21,8 @@
 
 #include "Vertex.h"
 
+enum EdgeType {BORDER, FRONT, INNER};
+
 class Facet;
 
 /**
@@ -48,8 +50,8 @@ class Edge
 
 
     /** @brief edge type (0: border, 1: front edge, 2: inner edge)*/
+    //EdgeType m_type;
     int m_type;
-
 
     public :
     //constructor+destructor
@@ -133,6 +135,8 @@ class Edge
      * @param type (0,1,2)
      */
     void setType(int type);
+    
+    void setType(EdgeType type);
 };
 
 #endif

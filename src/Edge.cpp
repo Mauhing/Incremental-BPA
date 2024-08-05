@@ -43,7 +43,7 @@ Edge::Edge(Vertex* src, Vertex* tgt)
     tgt->addAdjacentEdge(this);
     m_facet1 = NULL;
     m_facet2 = NULL;
-    setType(1);
+    setType(EdgeType::FRONT);
 }
 
 Edge::~Edge()
@@ -84,14 +84,14 @@ bool Edge::addAdjacentFacet(Facet* facet)
     {
         m_facet1 = facet;
         updateOrientation();
-        setType(1);
+        setType(EdgeType::FRONT);
         return true;
     }
 
     if(m_facet2 == NULL)
     {
         m_facet2 = facet;
-        setType(2);
+        setType(EdgeType::INNER);
         return true;
     }
 
@@ -107,14 +107,14 @@ bool Edge::removeAdjacentFacet(Facet* facet)
     if(m_facet1 == facet)
     {
         m_facet1 = NULL;
-        setType(1);
+        setType(EdgeType::FRONT);
         return true;
     }
 
     if(m_facet2 == facet)
     {
         m_facet2 = NULL;
-        setType(1);
+        setType(EdgeType::FRONT);
         return true;
     }
 
@@ -173,6 +173,10 @@ void Edge::setType(int type)
     m_type = type;
 }
 
+void Edge::setType(EdgeType type)
+{
+    m_type = type;
+}
 
 Vertex* Edge::getOppositeVertex() const
 {

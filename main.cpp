@@ -131,6 +131,7 @@ int main(int argc, char **argv)
     time_t start,end;
 
     Octree octree;
+    Mesher mesher;
 
 
     std::time(&start);
@@ -147,50 +148,69 @@ int main(int argc, char **argv)
     }
     if( !ok )
     {
-        std::cerr<<"Pb opening the file; exiting."<<std::endl;
-        return EXIT_FAILURE;
+        std::cout<<"****** Processing file "<<*it<<" ******"<<std::endl;
+        //std::cout<<"Reading and sorting points from "<<*it<<"... "<<std::flush;
+
+        std::time(&start);
+        bool ok;
+        //std::string infile = it;
+        if(radius >0)
+        {
+            ok = FileIO::readAndSortPoints(it->c_str(),octree,radius); 
+        }
+        else
+        {
+            octree.setDepth(depth);
+            ok = FileIO::readAndSortPoints(it->c_str(),octree);  
+        }
+        if( !ok )
+        {
+            std::cerr<<"Pb opening the file; exiting."<<std::endl;
+            return EXIT_FAILURE;
+        }
+        std::time(&end);
+
+        std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
+        std::cout<<"Octree contains "<<octree.getNpoints()
+                <<" points. The bounding box size is "
+                <<octree.getSize()<<std::endl;
+        std::cout<<"Reading and sorting points in this octree took "
+                <<difftime(end,start)<<" s."<<std::endl;
+        std::cout<<"Octree statistics"<<std::endl;
+        octree.printOctreeStat();
+
+        std::cout<<"****** Reconstructing with radii "<<std::flush;
+
+        std::list<double>::const_iterator ri = radii.begin();
+        while(ri != radii.end())
+        {
+            std::cout<< *ri <<"; ";
+            ++ri;
+        }
+        std::cout<<"******"<<std::endl;
+
+        OctreeIterator iterator(&octree);
+
+        if(radius>0)
+            iterator.setR(radius);
+
+        std::time(&start);
+
+        //Mesher mesher(&octree, &iterator);
+        mesher.resetOctree(&octree, &iterator);
+        if(parallel_flag == 1)
+            mesher.parallelReconstruct(radii);
+        else
+            mesher.reconstruct(radii);
+        std::time(&end);
+
+        std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
+                <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
+        std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
+        std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
+                <<"s."<<std::endl;
+        
     }
-    std::time(&end);
-
-    std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
-    std::cout<<"Octree contains "<<octree.getNpoints()
-             <<" points. The bounding box size is "
-             <<octree.getSize()<<std::endl;
-    std::cout<<"Reading and sorting points in this octree took "
-             <<difftime(end,start)<<" s."<<std::endl;
-    std::cout<<"Octree statistics"<<std::endl;
-    octree.printOctreeStat();
-
-
-    std::cout<<"****** Reconstructing with radii "<<std::flush;
-
-    std::list<double>::const_iterator ri = radii.begin();
-    while(ri != radii.end())
-    {
-        std::cout<< *ri <<"; ";
-        ++ri;
-    }
-    std::cout<<"******"<<std::endl;
-
-    OctreeIterator iterator(&octree);
-
-    if(radius>0)
-        iterator.setR(radius);
-
-    std::time(&start);
-
-    Mesher mesher(&octree, &iterator);
-    if(parallel_flag == 1)
-        mesher.parallelReconstruct(radii);
-    else
-        mesher.reconstruct(radii);
-    std::time(&end);
-
-    std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
-             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
-    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
-    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
-             <<"s."<<std::endl;
 
 
     std::cout << "== Add more vertice ==" << std::endl;

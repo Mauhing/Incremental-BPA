@@ -167,7 +167,7 @@ void Mesher::changeRadius(double radius)
         if(emptyBallConfiguration(f->vertex(0), f->vertex(1),
             f->vertex(2),center))
         {
-            e->setType(1);
+            e->setType(EdgeType::FRONT);
             m_edge_front.push_back(e);
             ei = m_border_edges.erase(ei);
             continue;
@@ -406,7 +406,13 @@ bool Mesher::checkEmptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
        if((v == v1)||(v == v2)||(v == v3))
            continue;
        if(dist2(*v,center)<m_sq_ball_radius - 1e-16)
+       {
+        //if(v->getType() == 2)
+        // print v type
+        //std::cout << "v type: " << v->getType() << std::endl;
+            //std::cout << "v is inner" << std::endl;
            return false;
+       }
    }
     return true;
 }
@@ -505,7 +511,9 @@ void Mesher::expandTriangulation()
         if((candidate == NULL) || (candidate->getType()==2)
             ||(! candidate->isCompatibleWith(*edge)))
         {
-            edge->setType(0);
+            // If the candidate is type 2, which means it is an inner vertex.
+            // In this case, we set the type in the edge.
+            edge->setType(EdgeType::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -516,7 +524,7 @@ void Mesher::expandTriangulation()
         if( ((e1!=NULL) && (e1->getType()!=1))
             || ((e2!=NULL) && (e2->getType()!=1)))
         {
-            edge->setType(0);
+            edge->setType(EdgeType::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -527,10 +535,10 @@ void Mesher::expandTriangulation()
         e1 = candidate->getLinkingEdge(edge->getSource());
         e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if(e1->getType() == 1)
+        if(e1->getType() == EdgeType::FRONT)
             m_edge_front.push_front(e1);
 
-        if(e2->getType() == 1)
+        if(e2->getType() == EdgeType::FRONT)
             m_edge_front.push_front(e2);
 
         //if(m_nfacets % 10000 == 0)
@@ -579,6 +587,13 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
         vi != neighbors.end(); ++vi)
     {
         Vertex *v = *vi;
+
+        //if(v->getType() == 2)
+        //    continue;
+        // Type 2 is an inner vertex. In this function, we do not consider it
+        // but it does matter since "findCandidateVertex" will check if the
+        // candidate is type 2. If it is, it will set the edge type to 0, which is a border edge.
+
         if(( v == src)||(v == tgt)||(v == opp))
           continue;
 
@@ -604,7 +619,7 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
         cross_product(ax, ay, az, bx, by, bz, cpx, cpy, cpz);
 
         if( cpx * vx + cpy * vy + cpz * vz < 0)
-          angle = 2.0 * PI - angle;
+          angle = 2.0 * PI - angle; //This is the angle correction since acos is only in [0,PI]
 
         if(angle > min_angle)
           continue;
@@ -616,6 +631,9 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
         candidate = v;
         candidate_ball_center = new_center;
     }
+    //print candidate type
+    //if(candidate != NULL && candidate->getType() == 2)
+    //    std::cout << "!!!!!!!!   candidate type: " << candidate->getType() << std::endl;
     return candidate;
 }
 
@@ -916,7 +934,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         if((candidate == NULL) || (candidate->getType()==2)
             ||  (! candidate->isCompatibleWith(*edge)))
         {
-            edge->setType(0);
+            edge->setType(EdgeType::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -927,7 +945,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         if( ((e1!=NULL) && (e1->getType()!=1))
             || ((e2!=NULL) && (e2->getType()!=1)))
         {
-            edge->setType(0);
+            edge->setType(EdgeType::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -935,7 +953,8 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         // band around it
         if(! containment_node->isInside(*candidate, d))
         {
-            edge->setType(1);
+            //edge->setType(1);
+            edge->setType(EdgeType::FRONT);
             m_node_border_edges.push_back(edge);
             continue;
         }
