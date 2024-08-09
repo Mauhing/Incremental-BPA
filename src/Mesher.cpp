@@ -806,9 +806,11 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
                 Edge_set &edges = pi->adjacentEdges();
                 Edge_set::iterator ei;
                 for( ei = edges.begin(); ei != edges.end(); ++ei)
+                { // added the parantheses for compiler warning
                     if((*ei)->getType() == 1)
                         m_edge_front.push_front(*ei);
                     expandTriangulationAroundNode(containment_node, d);
+                } // added the parantheses for compiler warning
             }
             else if(pi->getType() ==0)
             {
