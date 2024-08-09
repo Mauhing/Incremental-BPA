@@ -25,6 +25,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <cmath> // Use for log2
+
+#include <bitset> // Use for debugging
 
 
 /**
@@ -165,6 +168,23 @@ class TOctree
         void getNodes(unsigned int depth, TOctreeNode<T>* starting_node,
                 std::vector< std::vector<TOctreeNode<T>* > > &node_collection);
 
+        void checkSizeAndaddPoint(T& pt);
+
+        void debugPrint()
+        {
+            //for (typename std::set<TOctreeNode<T>*>::iterator it = m_non_empty_nodes.begin(); it != m_non_empty_nodes.end(); ++it)
+            for (auto* node: m_non_empty_nodes)
+            {
+                std::cout << " <<<< " << std::endl;
+                std::cout << "Node: depth " << node->getDepth() << " size " << node->getSize() << std::endl;
+                std::cout << "X start " << node->getOrigin().x() << std::endl;
+                std::cout << "X end " << node->getOrigin().x() + node->getSize() << std::endl;
+                std::cout << "Number of pts contained: " << node->getNpts() << std::endl;
+                std::cout << "Depth in binary " << std::bitset<32>(node->getDepth()) << std::endl;
+                std::cout << "XLoc in binary: " << std::bitset<32>(node->getXLoc()) << std::endl;
+            }
+        }
+
     protected :
         /**
          *@brief Maximum depth of the octree
@@ -191,7 +211,7 @@ class TOctree
          * the bin size is an octree parameter that determines*
          * the locational code of each node
          */
-        unsigned int m_binsize;
+        unsigned int m_binsize; //Total number of bins; binsize = pow2(depth)
         
         /**
          *@brief root of the octree
@@ -202,6 +222,12 @@ class TOctree
          *@brief number of non-empty cells per level
          */
         std::vector<unsigned int> m_nb_non_empty_cells;
+
+        /**
+         *@brief pointer to all the nodes of the octree
+         * Add by Yip
+         */
+        std::set<TOctreeNode<T>*> m_non_empty_nodes;
 };
 
 template<class T>
@@ -267,11 +293,16 @@ void TOctree<T>::initialize(Point& origin, double size)
     
     m_root = new TOctreeNode<T>(m_origin, m_size, m_depth);
     
+    // Setting the locational code for root is actually not necessary
+    // However, it is done here for consistency
     m_root->setXLoc(0);
     m_root->setYLoc(0);
     m_root->setZLoc(0);
     
     m_root->setParent(NULL);
+
+    // Insert root node
+    m_non_empty_nodes.insert(m_root);
 }
 
 
@@ -344,24 +375,144 @@ unsigned int TOctree<T>::addPoints(Iterator begin, Iterator end)
     return m_npoints;
 }
 
+enum PointInBox {RIGHT=0, LEFT=1, INSIDE=2};
+
+template<class T>
+void TOctree<T>::checkSizeAndaddPoint(T& pt)
+{
+    // 0 means the x coordinate is larger than the right border of the octree
+    // 1 means the x coordinate is smaller than the left border of the octree
+    // 2 means the x coordinate is within the octree
+    PointInBox x_in_box = PointInBox::INSIDE;
+    PointInBox y_in_box = PointInBox::INSIDE;
+    PointInBox z_in_box = PointInBox::INSIDE;
+    unsigned int n_x = 0;
+    unsigned int n_y = 0;
+    unsigned int n_z = 0;
+
+    if (pt.x() > m_origin.x() + m_size)
+    {
+        n_x = ceil(log2((pt.x() - m_origin.x())/m_size)); 
+        x_in_box = PointInBox::RIGHT;
+    }
+    if (pt.x() < m_origin.x())
+    {
+        n_x = ceil(log2((m_origin.x() + m_size - pt.x())/m_size)); 
+        x_in_box = PointInBox::LEFT;
+    }
+
+    if (pt.y() > m_origin.y() + m_size)
+    {
+        n_y = ceil(log2((pt.y() - m_origin.y())/m_size)); 
+        y_in_box = PointInBox::RIGHT;
+    }
+    if (pt.y() < m_origin.y())
+    {
+        n_y = ceil(log2((m_origin.y() + m_size - pt.y())/m_size)); 
+        x_in_box = PointInBox::LEFT;
+    }
+
+    if (pt.z() > m_origin.z() + m_size)
+    {
+        n_z = ceil(log2((pt.z() - m_origin.z())/m_size)); 
+        z_in_box = PointInBox::RIGHT;
+    }
+    if (pt.z() < m_origin.z())
+    {
+        n_z = ceil(log2((m_origin.z() + m_size - pt.z())/m_size)); 
+        z_in_box = PointInBox::LEFT;
+    }
+
+    if (x_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE)
+    {
+        unsigned int n_max = (n_x > n_y) ? ((n_x > n_z) ? n_x : n_z) : ((n_y > n_z) ? n_y : n_z);
+        unsigned int x_insert_index = (x_in_box == PointInBox::LEFT) ? 1 : 0;
+        unsigned int y_insert_index = (y_in_box == PointInBox::LEFT) ? 1 : 0;
+        unsigned int z_insert_index = (z_in_box == PointInBox::LEFT) ? 1 : 0;
+    
+        // at this stage n_max will be at least 1
+        // expand size uniformly
+        //std::cerr<<"Point out of the octree bounding box"<<std::endl;
+        //std::cout << "n_max: " << n_max << std::endl;
+
+        #ifndef NDEBUG
+        std::cout << "Debug: n_max: " << n_max << std::endl; 
+        if (n_max < 1) {
+            std::cerr << "Error: n_max must be at least 1." << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        #endif
+
+        // this for loop can not be parallelized
+        for (unsigned int i =0; i < n_max; ++i)
+        {
+            // First update the locational code for all nodes
+            unsigned int top_level = m_root->getDepth();
+            unsigned int insert_level;
+            // this for loop can be parallelized
+            for (auto* node : m_non_empty_nodes)
+            {
+                //TOctreeNode<T> *node = *it;
+                insert_level = top_level - node->getDepth();
+                node->setXLoc( node->getXLoc() + ( x_insert_index<<(insert_level) ) );
+                node->setYLoc( node->getYLoc() + ( y_insert_index<<(insert_level) ) );
+                node->setZLoc( node->getZLoc() + ( z_insert_index<<(insert_level) ) );
+            }
+
+            // Then add parent
+            double x = (x_insert_index == 0) ? m_origin.x() : m_origin.x() - m_size;
+            double y = (y_insert_index == 0) ? m_origin.y() : m_origin.y() - m_size;
+            double z = (z_insert_index == 0) ? m_origin.z() : m_origin.z() - m_size;
+            
+            // Create new root node
+            Point new_origin(x, y, z);
+            TOctreeNode<T> *new_root_node = new TOctreeNode<T>(new_origin, double(2*m_size), (unsigned int)(m_depth +1));
+
+            unsigned int childIndex = (x_insert_index<<2) + (y_insert_index<<1) + z_insert_index; 
+            m_root->setNchild(childIndex);
+            m_root->setParent(new_root_node);
+
+            // add the old root node as a child of the new root node
+            new_root_node->setChild(childIndex, m_root);
+
+            // re-asign new root node
+            m_root = new_root_node;
+
+            // Update the Octree
+            m_depth++;
+            m_size *= 2;
+            m_binsize *= 2;
+            m_origin = new_origin;
+            
+            // Insert the new root node
+            m_non_empty_nodes.insert(new_root_node);
+        }
+    }     
+    addPoint(pt);
+    return;
+}
 
 template<class T>
 void TOctree<T>::addPoint(T& pt)
 {
+    // unsigned int is important here, as we will use bitwise operations. The size of unsigned int is 4 bytes.
+    // This means the depth of the octree should be less than 32.
     unsigned int codx=(unsigned int)((pt.x() - m_origin.x())
                                               / m_size * m_binsize);
     unsigned int cody=(unsigned int)((pt.y() - m_origin.y())
                                               / m_size * m_binsize);
     unsigned int codz=(unsigned int)((pt.z() - m_origin.z())
                                               / m_size * m_binsize);
+
+    // At this stage, there are no nodes in the octree. We need to create a root node.
     TOctreeNode<T> *node=getRoot();
     unsigned int l=node->getDepth()-1;
     
     //traverse the octree until we reach a leaf
-    while(node->getDepth() != 0)
+    while(node->getDepth() != 0) // The node here will get redefined at each iteration
     {
-        unsigned int childBranchBit=1<<l;
-        unsigned int x = ( ( codx & childBranchBit) >> l );
+        unsigned int childBranchBit=1<<l;  // For example, if l=2, childBranchBit=100
+        unsigned int x = ( ( codx & childBranchBit) >> l ); // return 1 if codx has a 1 at the l-th position, 0 otherwise.
         unsigned int y = ( ( cody & childBranchBit) >> l );
         unsigned int z = ( ( codz & childBranchBit) >> l );
         unsigned int childIndex = (x<<2) + (y<<1) + z;
@@ -383,6 +534,7 @@ void TOctree<T>::addPoint(T& pt)
             child->setYLoc( node->getYLoc() + ( y<<(childDepth) ) );
             child->setZLoc( node->getZLoc() + ( z<<(childDepth) ) );
             m_nb_non_empty_cells[childDepth] += 1;
+            m_non_empty_nodes.insert(child);
         }
         node = node->getChild(childIndex);
         l--;
@@ -437,7 +589,7 @@ void TOctree<T>::printOctreeStat()
     double size = m_size;
     for(int i = m_depth-1; i >= 0; i--)
     {
-        std::cout<<"level "<<i<<" : "<<size
+        std::cout<<"level "<<i<<" ; The size length "<<size
         <<" ; mean number of points: "
         <<(double)m_npoints / ((double)m_nb_non_empty_cells[i])
         <<std::endl;

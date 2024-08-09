@@ -1,37 +1,47 @@
 #cmake_minimum_required(VERSION 2.8)
-cmake_minimum_required(VERSION 3.0)
-
-# Set C++11 standard
-set(CMAKE_CXX_STANDARD 11)
-
+cmake_minimum_required(VERSION 3.10)
 project(ballpivoting)
 
+# Set C++11 standard
+#set(CMAKE_CXX_STANDARD 11)
 
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+# Option to choose between Debug and Release
+option(BUILD_DEBUG "Build in Debug mode" ON)
 
+if(BUILD_DEBUG)
+    set(CMAKE_BUILD_TYPE Debug)
+    # Add debug symbols
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+    # Disable optimizations in Debug mode
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    message(STATUS "Building in Debug mode")
+else()
+    set(CMAKE_BUILD_TYPE Release)
+    # Enable optimizations in Release mode
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
+    message(STATUS "Building in Release mode")
+endif()
 
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Debug CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+# Enable all warnings
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
-option(USE_CLANG "build application with clang" OFF) # OFF is the default
-
+# Option to use Clang
+option(USE_CLANG "build application with clang" OFF)
 
 if(USE_CLANG)
-    SET (CMAKE_CXX_COMPILER "/usr/bin/clang++")
+    set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
     add_definitions(-DUSE_CLANG)
-else(USE_CLANG)
-    SET (CMAKE_CXX_COMPILER "/usr/bin/g++")
-    SET(CMAKE_CXX_FLAGS "-ansi -fopenmp")
-endif(USE_CLANG)
+else()
+    set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ansi -fopenmp")
+endif()
 
-MESSAGE(${CMAKE_CXX_COMPILER})
-MESSAGE(${CMAKE_CXX_FLAGS})
-
+message(STATUS "Using compiler: ${CMAKE_CXX_COMPILER}")
+message(STATUS "Compiler flags: ${CMAKE_CXX_FLAGS}")
 
 add_executable(ballpivoting main.cpp
 			src/Facet.cpp

@@ -18,7 +18,7 @@ echo "Build complete."
 
 # Step 3: Run the ballpivoting executable with parameters
 echo "Running ballpivoting..."
-./ballpivoting -i ../points.txt -o ../mesh.ply -r "2"
+./ballpivoting -i "../points_01.txt ../points_02.txt" -o ../mesh.ply -r "3"
 echo "ballpivoting execution complete."
 
 # Step 4: Run visualization Python script

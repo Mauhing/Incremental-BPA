@@ -82,11 +82,14 @@ bool FileIO::readAndSortPoints(const char* filename, Octree& octree,
     list<Vertex> input_vertices;
     input_vertices.push_back(Vertex(x,y,z,nx,ny,nz));
 
+    // >>> initialize bounding box
     double xmin, ymin, zmin, xmax, ymax, zmax;
     xmin = xmax = x;
     ymin = ymax = y;
     zmin = zmax = z;
+    // <<<
 
+    // >>> read the rest of the file and find the bounding box
     while( in >> x >> y >> z >> nx >> ny >> nz)
     {
         input_vertices.push_back(Vertex(x,y,z,nx,ny,nz));
@@ -99,6 +102,7 @@ bool FileIO::readAndSortPoints(const char* filename, Octree& octree,
         zmax = z > zmax ? z : zmax;
     }
     in.close();
+    // <<<
 
     std::cout<<input_vertices.size()<<" points read"<<std::endl;
 
@@ -106,9 +110,9 @@ bool FileIO::readAndSortPoints(const char* filename, Octree& octree,
     double ly = ymax - ymin;
     double lz = zmax - zmin;
 
+    // Get size of one of the largest dimension
     double size = lx > ly ? lx : ly;
     size = size > lz ? size : lz;
-
 
     size = 1.1 * size;
     double margin;
@@ -127,11 +131,13 @@ bool FileIO::readAndSortPoints(const char* filename, Octree& octree,
         margin = 0.05 * size;
     }
 
+    // The orgin of the octree is the lower left corner (2D) of the bounding box
     double ox = xmin - margin;
     double oy = ymin - margin;
     double oz = zmin - margin;
     Point origin(ox,oy,oz);
 
+    // a root node is created in the function initialize.
     octree.initialize(origin, size);
 
     octree.addPoints(input_vertices.begin(), input_vertices.end());

@@ -21,7 +21,7 @@
 
 #include "Vertex.h"
 
-enum EdgeType {BORDER, FRONT, INNER};
+enum EdgeType {BORDER=0, FRONT=1, INNER=2};
 
 class Facet;
 

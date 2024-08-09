@@ -74,7 +74,7 @@ class TOctreeNode
         /** @brief number of points included in the node or in
          * the node's children 
          */
-        unsigned int m_npts;
+        unsigned int m_npts;  //Base on my observation. Only leaf has non zero m_npts. Rest of the node are zero.
         
         /** @brief origin of the node*/
         Point m_origin;
@@ -187,6 +187,12 @@ class TOctreeNode
          * @return child node
          */
         TOctreeNode<T>* getChild(unsigned int index);
+
+        /** @brief set child of a node
+         * @param index of the child
+         * added by yip
+         */
+        void setChild(unsigned int index, TOctreeNode<T>* node);
         
         /**
          * @brief set level of a node
@@ -532,6 +538,12 @@ origin)
     return m_child[index];
 }
 
+
+template<class T>
+void TOctreeNode<T>::setChild(unsigned int index, TOctreeNode<T>* node)
+{
+    m_child[index] = node;
+}
 
 
 #endif
