@@ -312,9 +312,9 @@ bool Mesher::trySeed(Vertex& v)
             Edge *e2 = vtest.getLinkingEdge(candidate);
             Edge *e3 = v.getLinkingEdge(&vtest);
 
-            if( ((e1!=NULL)&&(e1->getType()!=1))
-                ||((e2!=NULL)&&(e2->getType()!=1))
-                ||((e3!=NULL)&&(e3->getType()!=1)) )
+            if( ((e1!=NULL)&&(e1->getType()!=Edge::FRONT))
+                ||((e2!=NULL)&&(e2->getType()!=Edge::FRONT))
+                ||((e3!=NULL)&&(e3->getType()!=Edge::FRONT)) )
             {
                 ++ni;
                 continue;
@@ -333,11 +333,11 @@ bool Mesher::trySeed(Vertex& v)
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
 
-            if(e1->getType() == 1)
+            if(e1->getType() == Edge::FRONT)
                 m_edge_front.push_front(e1);
-            if(e2->getType() == 1)
+            if(e2->getType() == Edge::FRONT)
                 m_edge_front.push_front(e2);
-            if(e3->getType() == 1)
+            if(e3->getType() == Edge::FRONT)
                 m_edge_front.push_front(e3);
 
             if(m_edge_front.size() > 0)
@@ -358,8 +358,8 @@ bool Mesher::tryTriangleSeed(Vertex* v1, Vertex* v2, Vertex *v3,
 
     Edge *e1 = v1->getLinkingEdge(v3);
     Edge *e2 = v2->getLinkingEdge(v3);
-    if(  ((e1!=NULL)&&(e1->getType()==2))
-        || ((e2!=NULL)&&(e2->getType()==2)))
+    if(  ((e1!=NULL)&&(e1->getType()==Edge::INNER))
+        || ((e2!=NULL)&&(e2->getType()==Edge::INNER)))
         return false;
 
     m_iterator->setR(m_ball_radius);
@@ -542,8 +542,6 @@ void Mesher::expandTriangulation()
             {
                 std::cout << "e2 type: " << e2->getType() << std::endl;
             }
-            //std::cout << "e1 type: " << e1->getType() << std::endl;
-            //std::cout << "e2 type: " << e2->getType() << std::endl;
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
@@ -706,7 +704,7 @@ void Mesher::fillHoles()
     {
         //during the filling process border edges become inner edges
         //hence the following check
-        if((*ei)->getType() != 0)
+        if((*ei)->getType() != Edge::BORDER)
         {
 	        ei = m_border_edges.erase(ei);
 	        continue;
@@ -827,7 +825,7 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
                 Edge_set::iterator ei;
                 for( ei = edges.begin(); ei != edges.end(); ++ei)
                 { // added the parantheses for compiler warning
-                    if((*ei)->getType() == 1)
+                    if((*ei)->getType() == Edge::FRONT) // 1
                         m_edge_front.push_front(*ei);
                     expandTriangulationAroundNode(containment_node, d);
                 } // added the parantheses for compiler warning
@@ -887,7 +885,7 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
         if(candidate == NULL)
         {
             Edge *e = v.getLinkingEdge(&vtest);
-            if((e!=NULL)&&(e->getType()==1))
+            if((e!=NULL)&&(e->getType()==Edge::FRONT)) //1
                 m_edge_front.push_front(e);
         }
         else if(containment_node->isInside(*candidate, d))
@@ -896,9 +894,9 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
             Edge *e2 = vtest.getLinkingEdge(candidate);
             Edge *e3 = v.getLinkingEdge(&vtest);
 
-            if( ((e1!=NULL)&&(e1->getType()!=1))
-                ||((e2!=NULL)&&(e2->getType()!=1))
-                ||((e3!=NULL)&&(e3->getType()!=1)) )
+            if( ((e1!=NULL)&&(e1->getType()!=Edge::FRONT)) //1
+                ||((e2!=NULL)&&(e2->getType()!=Edge::FRONT)) //1
+                ||((e3!=NULL)&&(e3->getType()!=Edge::FRONT))) //1
             {
                 ++ni;
                 continue;
@@ -911,11 +909,11 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
 
-            if(e1->getType() == 1)
+            if(e1->getType() == Edge::FRONT) //1
                 m_edge_front.push_front(e1);
-            if(e2->getType() == 1)
+            if(e2->getType() == Edge::FRONT)
                 m_edge_front.push_front(e2);
-            if(e3->getType() == 1)
+            if(e3->getType() == Edge::FRONT)
                 m_edge_front.push_front(e3);
 
             if(m_edge_front.size() > 0)
@@ -947,7 +945,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         Edge *edge = m_edge_front.front();
         m_edge_front.pop_front();
 
-        if(edge->getType() != 1)
+        if(edge->getType() != Edge::FRONT)
             continue;
 
         Point center;
@@ -964,8 +962,8 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         Edge *e1 = candidate->getLinkingEdge(edge->getSource());
         Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if( ((e1!=NULL) && (e1->getType()!=1))
-            || ((e2!=NULL) && (e2->getType()!=1)))
+        if( ((e1!=NULL) && (e1->getType()!=Edge::FRONT))
+            || ((e2!=NULL) && (e2->getType()!=Edge::FRONT)))
         {
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
@@ -987,10 +985,10 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         e1 = candidate->getLinkingEdge(edge->getSource());
         e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if(e1->getType() == 1)
+        if(e1->getType() == Edge::FRONT)
             m_edge_front.push_front(e1);
 
-        if(e2->getType() == 1)
+        if(e2->getType() == Edge::FRONT)
             m_edge_front.push_front(e2);
     }
 }
@@ -1021,7 +1019,7 @@ void Mesher::collectActiveEdges(OctreeNode* containment_node,
                 for(ei = edges.begin(); ei != edges.end(); ++ei)
                 {
                     Edge *e= *ei;
-                    if(e->getType() == 1)
+                    if(e->getType() == Edge::FRONT)
                         active_edges.insert(*ei);
                 }
             }
@@ -1062,7 +1060,7 @@ void Mesher::collectBorderEdges(OctreeNode* containment_node,
                 for(ei = edges.begin(); ei != edges.end(); ++ei)
                 {
                     Edge *e= *ei;
-                    if(e->getType() == 0)
+                    if(e->getType() == Edge::BORDER)
                         border_edges.insert(*ei);
                 }
             }
@@ -1081,18 +1079,18 @@ void Mesher::merge(Mesher& mesher)
     //merging the edge fronts
     while( ei != m_edge_front.end())
     {
-        if((*ei)->getType() == 2)
+        if((*ei)->getType() == Edge::INNER)
         {
             ei = m_edge_front.erase(ei);
             continue;
         }
 
-        else if((*ei)->getType() == 1)
+        else if((*ei)->getType() == Edge::FRONT)
         {
             ++ei;
         }
 
-        else if((*ei)->getType() == 0)
+        else if((*ei)->getType() == Edge::BORDER)
         {
             ei = m_edge_front.erase(ei);
             continue;
