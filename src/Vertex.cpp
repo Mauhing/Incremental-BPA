@@ -26,7 +26,8 @@ Vertex::Vertex() : Point()
 {
     m_nx=m_ny=m_nz=0.0;
     m_index = -1;
-    m_type = 0;
+    //m_type = 0;
+    m_type = Vertex::ORPHAN; //0
 }
 
 Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
@@ -36,7 +37,8 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
     m_ny = ny;
     m_nz = nz;
     m_index = -1;
-    m_type = 0;
+    //m_type = 0;
+    m_type = Vertex::ORPHAN; //0
 }
 
 Vertex::~Vertex()
@@ -45,7 +47,8 @@ Vertex::~Vertex()
     m_index = -1;
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
-    m_type =0;
+    //m_type = 0;
+    m_type = Vertex::ORPHAN; //0
 }
 
 bool Vertex::addAdjacentEdge(Edge* edge)
@@ -160,12 +163,12 @@ bool Vertex::isAdjacent(Facet* facet)
     return false;
 }
 
-int Vertex::getType() const
+Vertex::VertexType Vertex::getType() const
 {
     return m_type;
 }
 
-void Vertex::setType(int type)
+void Vertex::setType(Vertex::VertexType type)
 {
     m_type = type;
 }
@@ -176,20 +179,23 @@ void Vertex::updateType()
 {
     if(m_adjacentEdges.empty())
     {
-        m_type = 0;
+        //m_type = 0;
+        m_type = Vertex::ORPHAN; //0
         return;
     }
     Edge_set::const_iterator ei;
     for(ei = m_adjacentEdges.begin(); ei != m_adjacentEdges.end(); ++ei)
     {
         const Edge *e = *ei;
-        if(e->getType() != 2)
+        if(e->getType() != Edge::INNER) //2
         {
-            m_type = 1;
+            //m_type = 1;
+            m_type = Vertex::FRONT; //1
             return;
         }
     }
-    m_type = 2;
+    //m_type = 2;
+    m_type = Vertex::INNER; //2
 }
 
 ostream& operator << (ostream& out, const Vertex& v)
@@ -210,7 +216,8 @@ Vertex* Vertex::findBorder(Vertex* test)
     Vertex *candidate = NULL;
     while( ei != m_adjacentEdges.end())
     {
-        if((*ei)->getType() != 0)
+        //if((*ei)->getType() != 0)
+        if((*ei)->getType() != Edge::BORDER)
         {
             ++ei;
             continue;
@@ -236,7 +243,8 @@ Vertex* Vertex::findBorder(Vertex* test)
             continue;
         }
 
-        if((e->getType()!=0)||(e->getSource()!=test))
+        //if((e->getType()!=0)||(e->getSource()!=test))
+        if((e->getType()!=Edge::BORDER)||(e->getSource()!=test))
         {
             ++ei;
             continue;

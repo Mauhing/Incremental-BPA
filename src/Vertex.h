@@ -41,6 +41,8 @@ using namespace std;
  */
 class Vertex : public Point
 {
+    public:
+    enum VertexType : unsigned int {ORPHAN=0, FRONT=1, INNER=2}; //VertexType itself does not form a namespace
     /** @brief overloading operator <<
      * @param out output stream
      * @param v vertex
@@ -64,7 +66,8 @@ class Vertex : public Point
         int m_index;
         
         /** @brief tag: 0 if orphan, 1 if on front, 2 if inner*/
-        unsigned int m_type;
+        //unsigned int m_type;
+        VertexType m_type;
 
     public : //constructor+destructor
     
@@ -163,12 +166,12 @@ class Vertex : public Point
         /** @brief return vertex types
          * @return type of the vertex (0,1,2)
          */
-        int getType() const;
+        VertexType getType() const;
         
         /** @brief set vertex type
          * @param type (0,1,2)
          */
-        void setType(int type);
+        void setType(VertexType type);
         
         /** @brief update the type of a vertex according to its connectivity
          */

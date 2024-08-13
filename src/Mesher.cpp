@@ -255,7 +255,7 @@ void Mesher::findSeedTriangle(OctreeNode* node, bool &found)
         while( pi != node->points_end())
         {
             //test if pi is an orphan vertex or active vertex
-            if(pi->getType() ==0)
+            if(pi->getType() ==Vertex::ORPHAN) //0
             {
                 if(trySeed(*pi))
                 {
@@ -285,7 +285,7 @@ bool Mesher::trySeed(Vertex& v)
     while(ni != neighbors.end())
     {
         Vertex &vtest = *(ni->second);
-        if( (vtest.getType() != 0) || (&vtest == &v) )
+        if( (vtest.getType() != Vertex::ORPHAN) || (&vtest == &v) ) //0
         {
             ++ni;
             continue;
@@ -353,7 +353,7 @@ bool Mesher::tryTriangleSeed(Vertex* v1, Vertex* v2, Vertex *v3,
                              Neighbor_star_map &neighbors,
                              Point &center) const
 {
-    if((v3->getType() != 0) || ( !v3->isCompatibleWith(*v1, *v2)))
+    if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWith(*v1, *v2)))
         return false;
 
     Edge *e1 = v1->getLinkingEdge(v3);
@@ -407,7 +407,7 @@ bool Mesher::checkEmptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
            continue;
        if(dist2(*v,center)<m_sq_ball_radius - 1e-16)
        {
-        //if(v->getType() == 2)
+        //if(v->getType() == Vertex::INNER)//2
         // print v type
         //std::cout << "v type: " << v->getType() << std::endl;
             //std::cout << "v is inner" << std::endl;
@@ -508,7 +508,7 @@ void Mesher::expandTriangulation()
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);
 
-        if((candidate == NULL) || (candidate->getType()==2)
+        if((candidate == NULL) || (candidate->getType()==Vertex::INNER) //2
             ||(! candidate->isCompatibleWith(*edge)))
         {
             // If the candidate is type 2, which means it is an inner vertex.
@@ -606,7 +606,7 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
     {
         Vertex *v = *vi;
 
-        //if(v->getType() == 2)
+        //if(v->getType() == Vertex::INNER) //2
         //    continue;
         // Type 2 is an inner vertex. In this function, we do not consider it
         // but it does matter since "findCandidateVertex" will check if the
@@ -819,7 +819,7 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
         Vertex_list::iterator pi = node->points_begin();
         while( pi != node->points_end())
         {
-            if(pi->getType()==1)
+            if(pi->getType()==Vertex::FRONT) //1
             {
                 Edge_set &edges = pi->adjacentEdges();
                 Edge_set::iterator ei;
@@ -830,7 +830,7 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
                     expandTriangulationAroundNode(containment_node, d);
                 } // added the parantheses for compiler warning
             }
-            else if(pi->getType() ==0)
+            else if(pi->getType() ==Vertex::ORPHAN) //0
             {
                 if(trySeed(*pi, containment_node, d))
                 {
@@ -859,7 +859,7 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
     while(ni != neighbors.end())
     {
         Vertex &vtest = *(ni->second);
-        if( (vtest.getType() != 0) || (&vtest == &v)
+        if( (vtest.getType() != Vertex::ORPHAN) || (&vtest == &v) //0
             || (! containment_node->isInside(vtest, d)) )
         {
             ++ni;
@@ -911,9 +911,9 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
 
             if(e1->getType() == Edge::FRONT) //1
                 m_edge_front.push_front(e1);
-            if(e2->getType() == Edge::FRONT)
+            if(e2->getType() == Edge::FRONT) //1
                 m_edge_front.push_front(e2);
-            if(e3->getType() == Edge::FRONT)
+            if(e3->getType() == Edge::FRONT) //1
                 m_edge_front.push_front(e3);
 
             if(m_edge_front.size() > 0)
@@ -951,7 +951,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);
 
-        if((candidate == NULL) || (candidate->getType()==2)
+        if((candidate == NULL) || (candidate->getType()==Vertex::INNER) //2
             ||  (! candidate->isCompatibleWith(*edge)))
         {
             edge->setType(Edge::BORDER);
@@ -1011,7 +1011,7 @@ void Mesher::collectActiveEdges(OctreeNode* containment_node,
         for(vi = containment_node->points_begin();
             vi != containment_node->points_end(); ++vi)
             {
-                if(vi->getType() != 1)
+                if(vi->getType() != Vertex::FRONT) //1
                     continue;
 
                 Edge_set &edges = vi->adjacentEdges();
@@ -1052,7 +1052,7 @@ void Mesher::collectBorderEdges(OctreeNode* containment_node,
         for(vi = containment_node->points_begin();
             vi != containment_node->points_end(); ++vi)
             {
-                if(vi->getType() != 1)
+                if(vi->getType() != Vertex::FRONT) //1
                     continue;
 
                 Edge_set &edges = vi->adjacentEdges();
