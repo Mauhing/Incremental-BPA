@@ -20,8 +20,7 @@
 #define EDGE_H
 
 #include "Vertex.h"
-
-enum EdgeType {BORDER=0, FRONT=1, INNER=2};
+#include <iostream>
 
 class Facet;
 
@@ -34,6 +33,11 @@ class Facet;
 */
 class Edge
 {
+  public :
+    enum EdgeType {BORDER=0, FRONT=1, INNER=2}; //EdgeType itself does not form a namespace
+
+    friend std::ostream& operator<<(std::ostream& os, const EdgeType& type);
+
   private : //properties
 
     /** @brief source vertex*/
@@ -50,8 +54,8 @@ class Edge
 
 
     /** @brief edge type (0: border, 1: front edge, 2: inner edge)*/
-    //EdgeType m_type;
-    int m_type;
+    EdgeType m_type;
+    //int m_type;
 
     public :
     //constructor+destructor
@@ -129,12 +133,13 @@ class Edge
    /** @brief return edge type
     * @return type of the edge (0,1,2)
     */
-    int getType() const;
+    EdgeType getType() const;
+    //int getType() const;
 
     /** @brief set edge type
      * @param type (0,1,2)
      */
-    void setType(int type);
+    //void setType(int type);
     
     void setType(EdgeType type);
 };

@@ -167,7 +167,7 @@ void Mesher::changeRadius(double radius)
         if(emptyBallConfiguration(f->vertex(0), f->vertex(1),
             f->vertex(2),center))
         {
-            e->setType(EdgeType::FRONT);
+            e->setType(Edge::FRONT);
             m_edge_front.push_back(e);
             ei = m_border_edges.erase(ei);
             continue;
@@ -502,7 +502,7 @@ void Mesher::expandTriangulation()
         m_edge_front.pop_front();
 
 
-        if(edge->getType() != 1)
+        if(edge->getType() != Edge::FRONT)
             continue;
 
         Point center;
@@ -512,8 +512,9 @@ void Mesher::expandTriangulation()
             ||(! candidate->isCompatibleWith(*edge)))
         {
             // If the candidate is type 2, which means it is an inner vertex.
-            // In this case, we set the type in the edge.
-            edge->setType(EdgeType::BORDER);
+            // In this case, we set the type of edge as BORDER.
+            // No expansion is done.
+            edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -521,10 +522,29 @@ void Mesher::expandTriangulation()
         Edge *e1 = candidate->getLinkingEdge(edge->getSource());
         Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if( ((e1!=NULL) && (e1->getType()!=1))
-            || ((e2!=NULL) && (e2->getType()!=1)))
+        if( ((e1!=NULL) && (e1->getType()!=Edge::FRONT))
+            || ((e2!=NULL) && (e2->getType()!=Edge::FRONT)))
         {
-            edge->setType(EdgeType::BORDER);
+            // if the edge (e1, e2) exists and is not a front edge, we set the type of edge as BORDER.
+            if (e1 == NULL)
+            {
+                std::cout << "e1 is NULL" << std::endl;
+            }
+            else
+            {
+                std::cout << "e1 type: " << e1->getType() << std::endl;
+            }
+            if (e2 == NULL)
+            {
+                std::cout << "e2 is NULL" << std::endl;
+            }
+            else
+            {
+                std::cout << "e2 type: " << e2->getType() << std::endl;
+            }
+            //std::cout << "e1 type: " << e1->getType() << std::endl;
+            //std::cout << "e2 type: " << e2->getType() << std::endl;
+            edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -535,10 +555,10 @@ void Mesher::expandTriangulation()
         e1 = candidate->getLinkingEdge(edge->getSource());
         e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if(e1->getType() == EdgeType::FRONT)
+        if(e1->getType() == Edge::FRONT)
             m_edge_front.push_front(e1);
 
-        if(e2->getType() == EdgeType::FRONT)
+        if(e2->getType() == Edge::FRONT)
             m_edge_front.push_front(e2);
 
         //if(m_nfacets % 10000 == 0)
@@ -936,7 +956,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         if((candidate == NULL) || (candidate->getType()==2)
             ||  (! candidate->isCompatibleWith(*edge)))
         {
-            edge->setType(EdgeType::BORDER);
+            edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -947,7 +967,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         if( ((e1!=NULL) && (e1->getType()!=1))
             || ((e2!=NULL) && (e2->getType()!=1)))
         {
-            edge->setType(EdgeType::BORDER);
+            edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
@@ -956,7 +976,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
         if(! containment_node->isInside(*candidate, d))
         {
             //edge->setType(1);
-            edge->setType(EdgeType::FRONT);
+            edge->setType(Edge::FRONT);
             m_node_border_edges.push_back(edge);
             continue;
         }

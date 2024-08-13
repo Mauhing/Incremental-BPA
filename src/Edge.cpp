@@ -27,6 +27,17 @@
 
 using namespace std;
 
+std::ostream& operator<<(std::ostream& os, const Edge::EdgeType& type)
+{
+    switch(type) {
+        case Edge::BORDER: os << "BORDER"; break;
+        case Edge::FRONT: os << "FRONT"; break;
+        case Edge::INNER: os << "INNER"; break;
+        default: os << "UNKNOWN"; break;
+    }
+    return os;
+}
+
 Edge::Edge()
 {
     m_src = NULL;
@@ -163,15 +174,15 @@ bool Edge::isInnerEdge() const
 }
 
 
-int Edge::getType() const
+Edge::EdgeType Edge::getType() const
 {
     return m_type;
 }
 
-void Edge::setType(int type)
-{
-    m_type = type;
-}
+//void Edge::setType(int type)
+//{
+//    m_type = type;
+//}
 
 void Edge::setType(EdgeType type)
 {
