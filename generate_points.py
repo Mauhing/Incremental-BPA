@@ -1,12 +1,12 @@
 import numpy as np
 
-def generate_points(n, xmin, xmax, ymin, ymax, filename):
+def generate_points(n, xmin, xmax, ymin, ymax, loc, filename):
     # Generate x and y uniformly distributed
     x = np.random.uniform(xmin, xmax, n)
     y = np.random.uniform(ymin, ymax, n)
     
     # Generate z normally distributed (mean=0, std=1 by default)
-    z = np.random.normal(size=n, scale= 0.1)
+    z = np.random.normal(size=n, loc=loc, scale= 1)
     
     # Normal vector is fixed at (0, 0, 1)
     nx = np.zeros(n)
@@ -19,8 +19,16 @@ def generate_points(n, xmin, xmax, ymin, ymax, filename):
             file.write(f"{xi} {yi} {zi} {nxi} {nyi} {nzi}\n")
 
 # Example usage
-n = 100000  # number of points
-xmin, xmax = -100, 100
+n = 10000  # number of points
+
+xmin, xmax = -100, 10
 ymin, ymax = -100, 100
-filename = "points.txt"
-generate_points(n, xmin, xmax, ymin, ymax, filename)
+loc = 0
+filename = "points_01.txt"
+generate_points(n, xmin, xmax, ymin, ymax, loc, filename)
+
+xmin, xmax = -10,  100
+ymin, ymax = -100, 100
+loc = 0
+filename = "points_02.txt"
+generate_points(n, xmin, xmax, ymin, ymax, loc, filename)

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit immediately if a command exits with a non-zero status
+set -e
+
 # Step 1: Generate points using a Python script
 echo "Generating points..."
 python generate_points.py
@@ -18,7 +21,8 @@ echo "Build complete."
 
 # Step 3: Run the ballpivoting executable with parameters
 echo "Running ballpivoting..."
-./ballpivoting -i "../points_01.txt ../points_02.txt" -o ../mesh.ply -r "3"
+#./ballpivoting -i "../points_01.txt ../points_02.txt" -o ../mesh.ply -r "3"
+./ballpivoting -i "../points_01.txt" -o ../mesh.ply -r "3"
 echo "ballpivoting execution complete."
 
 # Step 4: Run visualization Python script
