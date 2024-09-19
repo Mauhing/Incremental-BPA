@@ -49,6 +49,7 @@ Mesher::Mesher()
     m_iterator = NULL;
     m_nfacets = 0;
     m_nvertices = 0;
+    m_num_ball_centers = 0;
 }
 
 Mesher::Mesher(Octree* octree, OctreeIterator* iterator)
@@ -59,8 +60,8 @@ Mesher::Mesher(Octree* octree, OctreeIterator* iterator)
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
     m_nfacets = 0;
     m_nvertices = 0;
+    m_num_ball_centers = 0;
 }
-
 
 Mesher::~Mesher()
 {
@@ -121,6 +122,15 @@ unsigned int Mesher::nBorderEdges() const
     return (unsigned int) m_border_edges.size();
 }
 
+unsigned int Mesher::getNumBallCenters() const
+{
+    return m_num_ball_centers;
+}
+
+const Point_list& Mesher::getBallCenters() const
+{
+    return m_ball_centers;
+}
 
 void Mesher::reconstruct()
 {
@@ -254,7 +264,8 @@ void Mesher::findSeedTriangle(OctreeNode* node, bool &found)
         Vertex_list::iterator pi = node->points_begin();
         while( pi != node->points_end())
         {
-            //test if pi is an orphan vertex or active vertex
+            // current approach is find seed and expand
+            // then find a seed again and expand.
             if(pi->getType() ==Vertex::ORPHAN) //0
             {
                 if(trySeed(*pi))
@@ -526,22 +537,22 @@ void Mesher::expandTriangulation()
             || ((e2!=NULL) && (e2->getType()!=Edge::FRONT)))
         {
             // if the edge (e1, e2) exists and is not a front edge, we set the type of edge as BORDER.
-            if (e1 == NULL)
-            {
-                std::cout << "e1 is NULL" << std::endl;
-            }
-            else
-            {
-                std::cout << "e1 type: " << e1->getType() << std::endl;
-            }
-            if (e2 == NULL)
-            {
-                std::cout << "e2 is NULL" << std::endl;
-            }
-            else
-            {
-                std::cout << "e2 type: " << e2->getType() << std::endl;
-            }
+            //if (e1 == NULL)
+            //{
+            //    std::cout << "e1 is NULL" << std::endl;
+            //}
+            //else
+            //{
+            //    std::cout << "e1 type: " << e1->getType() << std::endl;
+            //}
+            //if (e2 == NULL)
+            //{
+            //    std::cout << "e2 is NULL" << std::endl;
+            //}
+            //else
+            //{
+            //    std::cout << "e2 type: " << e2->getType() << std::endl;
+            //}
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
@@ -664,6 +675,12 @@ void Mesher::addFacet(Facet* f)
 
     m_facets.push_back(f);
     m_nfacets++;
+    
+    // add ball center to ball center octree
+    Point ball_center = f->getBallCenter();
+    m_ball_centers.push_back(ball_center); // copy constructor
+    m_octree_ball_centers.addPoint(m_ball_centers.back());
+    m_num_ball_centers++;
 }
 
 

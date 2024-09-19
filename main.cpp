@@ -158,7 +158,6 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     std::time(&end);
-    
 
     std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
     std::cout<<"Octree contains "<<octree.getNpoints()
@@ -203,7 +202,29 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
 
-    //std::cout<<"Filling the holes... "<<std::flush;
+    std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
+    
+    // Function to write ball centers to a file
+    auto writeBallCentersToFile = [&mesher](const std::string& filename) {
+        std::ofstream outFile(filename);
+        if (!outFile.is_open()) {
+            std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+            return;
+        }
+        
+        outFile << "x y z" << std::endl;  // Header
+        
+        const auto& ballCenters = mesher.getBallCenters();
+        for (const auto& center : ballCenters) {
+            outFile << center.x() << " " << center.y() << " " << center.z() << std::endl;
+        }
+        
+        outFile.close();
+        std::cout << "Ball centers written to " << filename << std::endl;
+    };
+    
+    // Call the function to write ball centers
+    writeBallCentersToFile("ball_centers.txt");
 
     //std::time(&start);
     //mesher.fillHoles();

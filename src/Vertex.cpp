@@ -28,6 +28,7 @@ Vertex::Vertex() : Point()
     m_index = -1;
     //m_type = 0;
     m_type = Vertex::ORPHAN; //0
+    m_octreeNodeLeaf = NULL;
 }
 
 Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
@@ -39,6 +40,7 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
     m_index = -1;
     //m_type = 0;
     m_type = Vertex::ORPHAN; //0
+    m_octreeNodeLeaf = NULL;
 }
 
 Vertex::~Vertex()
@@ -49,6 +51,7 @@ Vertex::~Vertex()
     m_adjacentFacets.clear();
     //m_type = 0;
     m_type = Vertex::ORPHAN; //0
+    m_octreeNodeLeaf = NULL;
 }
 
 bool Vertex::addAdjacentEdge(Edge* edge)
@@ -255,3 +258,7 @@ Vertex* Vertex::findBorder(Vertex* test)
 }
 
 
+void Vertex::setOctreeNodeLeaf(TOctreeNode<Vertex>* node)
+{
+    m_octreeNodeLeaf = node;
+}

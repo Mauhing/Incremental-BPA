@@ -24,9 +24,12 @@
 
 #include "Point.h"
 #include "types.h"
+//#include "OctreeNode.h"
 
 class Edge;
 class Facet;
+//class OctreeNode;
+template<typename T> class TOctreeNode; // Forward declaration
 
 using namespace std;
 
@@ -68,6 +71,8 @@ class Vertex : public Point
         /** @brief tag: 0 if orphan, 1 if on front, 2 if inner*/
         //unsigned int m_type;
         VertexType m_type;
+
+        TOctreeNode<Vertex> *m_octreeNodeLeaf;
 
     public : //constructor+destructor
     
@@ -190,6 +195,8 @@ class Vertex : public Point
          * @return closure vertex or NULL
          */
          Vertex* findBorder(Vertex *test);
+
+        void setOctreeNodeLeaf(TOctreeNode<Vertex> *node);
 };
 
 

@@ -441,6 +441,7 @@ void TOctree<T>::checkSizeAndaddPoint(T& pt)
             std::cerr << "Error: n_max must be at least 1." << std::endl;
             std::exit(EXIT_FAILURE);
         }
+        std::cout << "Debug: expanding Octree" << std::endl;
         #endif
 
         // this for loop can not be parallelized
@@ -534,7 +535,8 @@ void TOctree<T>::addPoint(T& pt)
             child->setYLoc( node->getYLoc() + ( y<<(childDepth) ) );
             child->setZLoc( node->getZLoc() + ( z<<(childDepth) ) );
             m_nb_non_empty_cells[childDepth] += 1;
-            m_non_empty_nodes.insert(child);
+            m_non_empty_nodes.insert(child); 
+            //std::cout << "Adding child node at depth " << childDepth << std::endl;
         }
         node = node->getChild(childIndex);
         l--;
@@ -543,6 +545,13 @@ void TOctree<T>::addPoint(T& pt)
     //add the point to the leaf.
     node->addPoint(pt);
     m_npoints++;
+    pt.setOctreeNodeLeaf(node);
+    //if pt is class of vertex, then set the leaf node of the vertex
+    //if (typeid(T) == typeid(Vertex))
+    //{
+    //    Vertex* v = dynamic_cast<Vertex*>(&pt);
+    //    v->setOctreeNodeLeaf(node);
+    //}
 }
 
 

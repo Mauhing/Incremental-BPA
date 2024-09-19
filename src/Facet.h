@@ -38,6 +38,8 @@ class Facet
         /** @brief center of the ball that generated the facet*/
         Point m_ball_center;
 
+        Point* m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
+
     public : //constructor+destructor
 
         /** @brief constructor*/

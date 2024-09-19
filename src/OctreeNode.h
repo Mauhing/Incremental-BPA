@@ -521,7 +521,7 @@ typename std::list<T>::const_iterator TOctreeNode<T>::points_end() const
 template<class T>
 void TOctreeNode<T>::addPoint(T &t)
 {
-    m_points.push_back(t);
+    m_points.push_back(t); //copy constructor is used here.
     m_npts++;
 }
 

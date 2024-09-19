@@ -18,6 +18,9 @@
 #ifndef POINT_H
 #define POINT_H
 
+#include <iostream>
+
+template<typename T> class TOctreeNode;
 /**
  * @class Point
  * @brief Generic unoriented point
@@ -55,6 +58,12 @@ class Point
          * @return y
          */
         double z() const;
+
+        void setOctreeNodeLeaf(TOctreeNode<Point>* node)
+        {(void)node; // Mark the parameter as unused
+        };
+
+        friend std::ostream& operator << (std::ostream& out, const Point& v);
         
     private :
         

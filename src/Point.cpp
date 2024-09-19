@@ -16,6 +16,7 @@
  */
 
 #include "Point.h"
+#include <iostream>
 
 Point::Point()
 {
@@ -50,3 +51,8 @@ double Point::z() const
 }
 
 
+std::ostream& operator << (std::ostream& out, const Point& v)
+{
+    out << v.x() << "\t" << v.y() << "\t" << v.z();
+    return out;
+}

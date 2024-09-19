@@ -92,6 +92,12 @@ class Mesher
         /** @brief number of facets*/
         unsigned int m_nfacets;
 
+        Point_list m_ball_centers;
+
+        TOctree<Point> m_octree_ball_centers;
+
+        unsigned int m_num_ball_centers;
+
     public : //constructor-destructor
 
         /** @brief default constructor*/
@@ -102,7 +108,7 @@ class Mesher
          * @param iterator iterator over the octree
          */
         Mesher(Octree *octree, OctreeIterator *iterator);
-
+        
         /** @brief destructor*/
         ~Mesher();
 
@@ -169,6 +175,9 @@ class Mesher
          */
         unsigned int nBorderEdges() const;
 
+        unsigned int getNumBallCenters() const;
+
+        const Point_list& getBallCenters() const;
 
         /** @brief get access to the mesh vertices
          * @return begin iterator of the vertices

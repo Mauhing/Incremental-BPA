@@ -5,6 +5,12 @@ project(ballpivoting)
 # Set C++11 standard
 #set(CMAKE_CXX_STANDARD 11)
 
+# Set the path to Open3D
+set(Open3D_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/lib/cmake/Open3D")
+
+# Find Open3D package
+find_package(Open3D REQUIRED)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +49,7 @@ endif()
 message(STATUS "Using compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Compiler flags: ${CMAKE_CXX_FLAGS}")
 
+# Add your source files
 add_executable(ballpivoting main.cpp
 			src/Facet.cpp
 			src/Edge.cpp
@@ -51,3 +58,14 @@ add_executable(ballpivoting main.cpp
 			src/Mesher.cpp
 			src/FileIO.cpp)
 
+# Include Open3D headers
+target_include_directories(ballpivoting PRIVATE ${Open3D_INCLUDE_DIRS})
+
+# Link against Open3D libraries
+target_link_libraries(ballpivoting PRIVATE ${Open3D_LIBRARIES})
+
+# Set rpath for the executable
+set_target_properties(ballpivoting PROPERTIES
+    INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/lib"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
