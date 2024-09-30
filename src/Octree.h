@@ -179,9 +179,11 @@ class TOctree
                 std::cout << "Node: depth " << node->getDepth() << " size " << node->getSize() << std::endl;
                 std::cout << "X start " << node->getOrigin().x() << std::endl;
                 std::cout << "X end " << node->getOrigin().x() + node->getSize() << std::endl;
-                std::cout << "Number of pts contained: " << node->getNpts() << std::endl;
                 std::cout << "Depth in binary " << std::bitset<32>(node->getDepth()) << std::endl;
                 std::cout << "XLoc in binary: " << std::bitset<32>(node->getXLoc()) << std::endl;
+                if (node->getDepth() == 0) {
+                    std::cout << "Number of pts contained: " << node->getNpts() << std::endl;
+                }
             }
         }
 
@@ -331,6 +333,7 @@ unsigned int TOctree<T>::getNpoints() const
 template<class T>
 double TOctree<T>::getSize() const
 {
+    // The size is the physical length
     return m_size;
 }
 

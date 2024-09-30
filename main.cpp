@@ -169,7 +169,9 @@ int main(int argc, char **argv)
     octree.printOctreeStat();
 
     std::cout << "Octree root depth: " << octree.getRoot()->getDepth()<< std::endl;
-    //octree.debugPrint();
+    std::cout << "Octree root size: " << octree.getRoot()->getSize()<< std::endl;
+    octree.debugPrint();
+    return EXIT_SUCCESS;
 
     std::cout<<"****** Reconstructing with radii "<<std::flush;
     std::list<double>::const_iterator ri = radii.begin();
@@ -182,7 +184,6 @@ int main(int argc, char **argv)
 
     OctreeIterator iterator(&octree);
 
-    //return EXIT_SUCCESS;
 
     if(radius>0)
         iterator.setR(radius);
