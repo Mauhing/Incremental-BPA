@@ -106,7 +106,7 @@ class TOctreeNode
          * @brief list of points contained in the node
          * (empty if the node is not a leaf)
          */
-        list<T> m_points;
+        list<T> m_points; // It stores vertices, not pointers to vertices.
         
         
     public :

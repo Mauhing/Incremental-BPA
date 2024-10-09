@@ -160,7 +160,10 @@ class Vertex : public Point
          * @return true if the points are compatible
          */
         bool isCompatibleWith(const Vertex &v1, const Vertex &v2) const; 
-        
+
+        // added by mauhing
+        bool isCompatibleWithAndHandnessCheck(const Vertex &v1, const Vertex &v2, bool &changeHandness) const; 
+
         /** @brief test if a vertex is compatible with an oriented edge
          *@param e test edge
          *@return true if the edge and vertices are compatible

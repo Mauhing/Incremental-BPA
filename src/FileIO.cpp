@@ -191,6 +191,8 @@ bool FileIO::saveMesh(const char* filename, Mesher& mesher)
     out << "property list uchar int vertex_indices"<< endl;
     out << "end_header" << endl;
 
+    // Remark that edge is not needed for create the mesh.
+
     for( Vertex_star_list::const_iterator vi = mesher.vertices_begin();
         vi != mesher.vertices_end(); ++vi)
     {
@@ -260,3 +262,116 @@ void FileIO::saveContent(OctreeNode* node, ofstream& f)
     }
 }
 
+//add by mauhing
+std::vector<string> FileIO::readIntoFileBatch(const char *filenames)
+{
+    // get the filename first.
+    std::string filename = filenames;
+
+    // read the file line by line.
+    std::ifstream whole_data(filename);
+    std::string line;
+    std::vector<string> batch_data;
+
+    std::string temp_data;
+    while (std::getline(whole_data, line))
+    {
+        // if the line did not start with ===, we add it into temp_data
+        if (line.substr(0, 3) != "===")
+        {
+            temp_data += line + "\n";
+        }
+        if (line.substr(0, 3) == "===")
+        {
+            batch_data.push_back(temp_data);
+            temp_data = "";
+        }
+        // if next line is empty, we add the last temp_data into batch_data
+        if (whole_data.peek() == '\n')
+        {
+            batch_data.push_back(temp_data);
+            temp_data = "";
+        }
+        if (whole_data.eof())
+        {
+            batch_data.push_back(temp_data);
+        }
+    }
+    return batch_data;
+}
+
+//add by mauhing
+bool FileIO::readFromBatchAndSortPoints(const string &batch_data, Octree &octree, double min_radius)
+{
+    // batch data has format:
+    // x y z nx ny nz
+    // x y z nx ny nz
+    // ...
+
+    double x, y, z, nx, ny, nz;
+    istringstream batch_data_in(batch_data);
+    batch_data_in >> x >> y >> z >> nx >> ny >> nz;
+
+    list<Vertex> input_vertices;
+    input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
+
+    // >>> initialize bounding box
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    xmin = xmax = x;
+    ymin = ymax = y;
+    zmin = zmax = z;
+    // <<<
+
+    // >>> read the rest of the file and find the bounding box
+    while (batch_data_in >> x >> y >> z >> nx >> ny >> nz)
+    {
+        input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
+
+        xmin = x < xmin ? x : xmin;
+        xmax = x > xmax ? x : xmax;
+        ymin = y < ymin ? y : ymin;
+        ymax = y > ymax ? y : ymax;
+        zmin = z < zmin ? z : zmin;
+        zmax = z > zmax ? z : zmax;
+    }
+    // <<<
+    std::cout << input_vertices.size() << " points read" << std::endl;
+
+
+    double lx = xmax - xmin;
+    double ly = ymax - ymin;
+    double lz = zmax - zmin;
+
+    // Get size of one of the largest dimension
+    double size = lx > ly ? lx : ly;
+    size = size > lz ? size : lz;
+
+    size = 1.1 * size;
+    double margin;
+
+    if (min_radius > 0)
+    {
+        unsigned int depth = (unsigned int)ceil(log2(size / (min_radius)));
+        double adapted_size = pow2(depth) * min_radius;
+        margin = 0.5 * (adapted_size - size);
+        size = adapted_size;
+        octree.setDepth(depth);
+    }
+    else
+    {
+        margin = 0.05 * size;
+    }
+
+    // The orgin of the octree is the lower left corner (2D) of the bounding box
+    double ox = xmin - margin;
+    double oy = ymin - margin;
+    double oz = zmin - margin;
+    Point origin(ox, oy, oz);
+
+    // a root node is created in the function initialize.
+    octree.initialize(origin, size);
+
+    octree.addPoints(input_vertices.begin(), input_vertices.end());
+
+    return true;
+}

@@ -30,6 +30,16 @@ class Facet;
 
 using namespace std;
 
+enum ReconstructionType
+{
+    EXPANSION,
+    HOLE_FILLING,
+    EAR_FILLING_FrontEdge_SOURCE,
+    EAR_FILLING_FrontEdge_TARGET,
+    GLUE, 
+    NO_RECONSTRUCTION
+};
+
 
 /** @brief get the common element of two sets, if any
  * @param set1 first set to compare
@@ -39,6 +49,12 @@ using namespace std;
 template <class T>
 T getCommonElement(const set<T> &set1, const set<T> &set2)
 {
+
+    // Let be a little careful here.
+    // Set needs to guarantee that the elements are unique.
+    // Since when we the template, it is actually a pointer.
+    // The unique is the address. Not the edge itself.
+
     if(set1.empty() || set2.empty()) return NULL;
     
     typename set<T>::const_iterator it1 = set1.begin(); 

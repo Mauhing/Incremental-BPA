@@ -1,15 +1,5 @@
-#cmake_minimum_required(VERSION 2.8)
 cmake_minimum_required(VERSION 3.10)
 project(ballpivoting)
-
-# Set C++11 standard
-#set(CMAKE_CXX_STANDARD 11)
-
-# Set the path to Open3D
-set(Open3D_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/lib/cmake/Open3D")
-
-# Find Open3D package
-find_package(Open3D REQUIRED)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -49,23 +39,45 @@ endif()
 message(STATUS "Using compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Compiler flags: ${CMAKE_CXX_FLAGS}")
 
-# Add your source files
-add_executable(ballpivoting main.cpp
-			src/Facet.cpp
-			src/Edge.cpp
-			src/Vertex.cpp
-			src/Point.cpp
-			src/Mesher.cpp
-			src/FileIO.cpp)
+# Set the path to Open3D
+set(Open3D_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/lib/cmake/Open3D")
 
-# Include Open3D headers
+# Find Open3D package
+find_package(Open3D REQUIRED)
+
+# Print Open3D include directories for debugging
+message(STATUS "Open3D include dirs: ${Open3D_INCLUDE_DIRS}")
+
+# Add your source files
+add_executable(ballpivoting 
+    main.cpp
+    src/Edge.cpp
+    src/Facet.cpp
+    src/FileIO.cpp
+    src/Mesher.cpp
+    src/Point.cpp
+    src/Vertex.cpp
+)
+
+# Add Open3D include directories
 target_include_directories(ballpivoting PRIVATE ${Open3D_INCLUDE_DIRS})
 
 # Link against Open3D libraries
 target_link_libraries(ballpivoting PRIVATE ${Open3D_LIBRARIES})
+
+# Add compile definitions required by Open3D
+#target_compile_definitions(ballpivoting PRIVATE ${Open3D_DEFINITIONS})
 
 # Set rpath for the executable
 set_target_properties(ballpivoting PROPERTIES
     INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/lib"
     BUILD_WITH_INSTALL_RPATH TRUE
 )
+
+# Export compile commands
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+#enable_testing()
+
+add_subdirectory(src)
+add_subdirectory(tests)

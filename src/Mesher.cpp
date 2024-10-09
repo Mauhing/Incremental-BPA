@@ -39,6 +39,7 @@
 #endif
 #include <sstream>
 
+
 const double PI = 3.1415926535;
 
 using namespace std;
@@ -148,6 +149,7 @@ void Mesher::reconstruct()
     }
     else
     {
+        // If there are only one radius. This scope will never be executed.
         expandTriangulation();
     }
 }
@@ -266,7 +268,7 @@ void Mesher::findSeedTriangle(OctreeNode* node, bool &found)
         {
             // current approach is find seed and expand
             // then find a seed again and expand.
-            if(pi->getType() ==Vertex::ORPHAN) //0
+            if(pi->getType() == Vertex::ORPHAN) //0
             {
                 if(trySeed(*pi))
                 {
@@ -283,6 +285,10 @@ void Mesher::findSeedTriangle(OctreeNode* node, bool &found)
 
 bool Mesher::trySeed(Vertex& v)
 {
+    // First, get the neighbors of the current vertex v.
+    // ni are the next vertices in the sorted neighbor list
+    // nj are the second next vertices in the sorted neighbor list
+    // than sliding over the sorted neighbor list until we find a valid seed triangle
 
     Neighbor_star_map neighbors;
     m_iterator->setR(2.0 * m_ball_radius);
@@ -295,7 +301,7 @@ bool Mesher::trySeed(Vertex& v)
     Neighbor_iterator ni = neighbors.begin();
     while(ni != neighbors.end())
     {
-        Vertex &vtest = *(ni->second);
+        Vertex &vtest = *(ni->second); // The "second" is the vertex pointer stored in the neighbor star map
         if( (vtest.getType() != Vertex::ORPHAN) || (&vtest == &v) ) //0
         {
             ++ni;
@@ -307,9 +313,11 @@ bool Mesher::trySeed(Vertex& v)
 
         Vertex *candidate = NULL;
         Point center;
+        
+        bool changeHandness = false;
         while(nj != neighbors.end())
         {
-            if(tryTriangleSeed(&v, &vtest, nj->second, neighbors, center))
+            if(tryTriangleSeed(&v, &vtest, nj->second, neighbors, center, changeHandness))
             {
                 candidate = nj->second;
                 break;
@@ -319,6 +327,8 @@ bool Mesher::trySeed(Vertex& v)
 
         if(candidate != NULL)
         {
+            // <<<
+            // To check any of the edges are not a front edge, we can use the getLinkingEdge method
             Edge *e1 = v.getLinkingEdge(candidate);
             Edge *e2 = vtest.getLinkingEdge(candidate);
             Edge *e3 = v.getLinkingEdge(&vtest);
@@ -330,8 +340,22 @@ bool Mesher::trySeed(Vertex& v)
                 ++ni;
                 continue;
             }
-
-            Facet *facet = new Facet(&v, &vtest, candidate, center);
+            // >>>
+            // continue tommorrow with adding the flipIndex part.
+            Vertex *v0 = &v;
+            Vertex *v1 = &vtest;
+            Vertex *v2 = candidate;
+            if(changeHandness)
+            {
+                Vertex temp = *v1;
+                *v1 = *v2;
+                *v2 = temp;
+            } 
+            // <<<
+            // Now, the seed triangle will take account of the handness.
+            //Facet *facet = new Facet(&v, &vtest, candidate, center);
+            Facet *facet = new Facet(v0, v1, v2, center);
+            // >>>
             addFacet(facet);
 
             if(m_nfacets % 10000 == 0)
@@ -339,10 +363,14 @@ bool Mesher::trySeed(Vertex& v)
             <<m_edge_front.size()<<" front edges. "
             <<m_border_edges.size()<<" border edges."<<std::endl;
 
-
             e1 = v.getLinkingEdge(candidate);
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
+
+            //std::cout << "e1 start vertex: " << e1->getSource()->index() << std::endl;
+            //std::cout << "e2 start vertex: " << e2->getSource()->index() << std::endl;
+            //std::cout << "e3 start vertex: " << e3->getSource()->index() << std::endl; 
+            //std::cout << "================================" << std::endl; 
 
             if(e1->getType() == Edge::FRONT)
                 m_edge_front.push_front(e1);
@@ -362,9 +390,12 @@ bool Mesher::trySeed(Vertex& v)
 
 bool Mesher::tryTriangleSeed(Vertex* v1, Vertex* v2, Vertex *v3, 
                              Neighbor_star_map &neighbors,
-                             Point &center) const
+                             Point &center,
+                             bool &changeHandness) const
 {
-    if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWith(*v1, *v2)))
+    //if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWith(*v1, *v2)))
+    //    return false;
+    if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWithAndHandnessCheck(*v1, *v2, changeHandness)))
         return false;
 
     Edge *e1 = v1->getLinkingEdge(v3);
@@ -503,6 +534,96 @@ void Mesher::computeNormal(const Vertex& v1, const Vertex& v2, const Vertex& v3,
     }
 }
 
+ReconstructionType Mesher::computeReconstructionType(
+                                                    const Edge* eSource, 
+                                                    const Edge* eTarget,
+                                                    const Vertex* candidate) const
+{
+    // We can already assume the candidate is not INNER vertex.
+    bool doesESourceExist = eSource != NULL;
+    bool doesETargetExist = eTarget != NULL;
+    bool isCandidateORPHAN = candidate->getType() == Vertex::ORPHAN;
+
+    // If both e1 and e2 do not exist, then the reconstruction type is expansion.
+    if (!doesESourceExist && !doesETargetExist && isCandidateORPHAN)
+    {
+        return ReconstructionType::EXPANSION;
+    }
+
+    // If both e1 and e2 exist, then the reconstruction type is glue.
+    if (!doesESourceExist && !doesETargetExist && !isCandidateORPHAN)
+    {
+        return ReconstructionType::GLUE;
+    }
+
+    // If e1 or e2 is not a front edge, then no reconstruction is needed.
+    bool isESourceNotFront = doesESourceExist && (eSource->getType() != Edge::FRONT);
+    bool isETargetNotFront = doesETargetExist && (eTarget->getType() != Edge::FRONT);
+    
+    if (isESourceNotFront || isETargetNotFront)
+    {
+        return ReconstructionType::NO_RECONSTRUCTION;
+    }
+
+    bool isESourceFront = doesESourceExist && (eSource->getType() == Edge::FRONT);
+    bool isETargetFront = doesETargetExist && (eTarget->getType() == Edge::FRONT);
+
+    if (isESourceFront != isETargetFront)
+    {
+        if (isESourceFront)
+            return ReconstructionType::EAR_FILLING_FrontEdge_SOURCE;
+        else
+            return ReconstructionType::EAR_FILLING_FrontEdge_TARGET;
+    }
+
+    if (isESourceFront == true && isETargetFront == true)
+    {
+        return ReconstructionType::HOLE_FILLING;
+    }
+
+    // If none of the above conditions are met, there are something wrong with the code.
+    throw std::runtime_error("Unknown reconstruction type in computeReconstructionType");    
+}
+
+static bool isGoodOrentationWithSource(Edge *sideFrontEdge, Vertex *Source, Vertex *candidate)
+{
+    Facet *facet = sideFrontEdge->getFacet1(); // Since it is sideFrontEdge, there should only one facet.
+    bool isGoodOrentation = false;
+    
+    // We expect the facet go from candidate to source
+    // such that the twin we are creating will go from source to candidate.
+    for(int i = 0; i < 3; i++)
+    {
+        Vertex *v0 = facet->vertex(i);
+        Vertex *v1 = facet->vertex((i+1)%3);
+        if(v0 == candidate && v1 == Source)
+        {
+            isGoodOrentation = true;
+            break;
+        }
+    }
+    return isGoodOrentation;
+}
+
+static bool isGoodOrentationWithTarget(Edge *sideFrontEdge, Vertex *Target, Vertex *candidate)
+{
+    Facet *facet = sideFrontEdge->getFacet1(); // Since it is sideFrontEdge, there should only one facet.
+    bool isGoodOrentation = false;
+    
+    // We expect the facet go from target to candidate
+    // such that the twin we are creating will go from candidate to target.
+    for(int i = 0; i < 3; i++)
+    {
+        Vertex *v0 = facet->vertex(i);
+        Vertex *v1 = facet->vertex((i+1)%3);
+        if(v0 == Target && v1 == candidate)
+        {
+            isGoodOrentation = true;
+            break;
+        }
+    }
+    return isGoodOrentation;
+}
 
 
 void Mesher::expandTriangulation()
@@ -530,39 +651,48 @@ void Mesher::expandTriangulation()
             continue;
         }
 
-        Edge *e1 = candidate->getLinkingEdge(edge->getSource());
-        Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
+        Edge *eSource = candidate->getLinkingEdge(edge->getSource());
+        Edge *eTarget = candidate->getLinkingEdge(edge->getTarget());
 
-        if( ((e1!=NULL) && (e1->getType()!=Edge::FRONT))
-            || ((e2!=NULL) && (e2->getType()!=Edge::FRONT)))
+        ReconstructionType reconstructionType = computeReconstructionType(eSource, eTarget, candidate);
+
+        if(reconstructionType == ReconstructionType::NO_RECONSTRUCTION)
         {
-            // if the edge (e1, e2) exists and is not a front edge, we set the type of edge as BORDER.
-            //if (e1 == NULL)
-            //{
-            //    std::cout << "e1 is NULL" << std::endl;
-            //}
-            //else
-            //{
-            //    std::cout << "e1 type: " << e1->getType() << std::endl;
-            //}
-            //if (e2 == NULL)
-            //{
-            //    std::cout << "e2 is NULL" << std::endl;
-            //}
-            //else
-            //{
-            //    std::cout << "e2 type: " << e2->getType() << std::endl;
-            //}
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
 
+
+        // <<< One more condition with good orentation.
+        if(reconstructionType == ReconstructionType::EAR_FILLING_FrontEdge_SOURCE)
+        {
+            if(!isGoodOrentationWithSource(eSource, edge->getSource(), candidate))
+            {
+                std::cout << "Edge is not good orentation with source" << std::endl;
+                edge->setType(Edge::BORDER);
+                m_border_edges.push_back(edge);
+                continue;
+            }
+        }
+        if(reconstructionType == ReconstructionType::EAR_FILLING_FrontEdge_TARGET)
+        {
+            if(!isGoodOrentationWithTarget(eTarget, edge->getTarget(), candidate))
+            {
+                std::cout << "Edge is not good orentation with target" << std::endl;
+                edge->setType(Edge::BORDER);
+                m_border_edges.push_back(edge);
+                continue;
+            }
+        }
+        // >>>
+        
+
         Facet * facet = new Facet(edge, candidate, center);
         addFacet(facet);
 
-        e1 = candidate->getLinkingEdge(edge->getSource());
-        e2 = candidate->getLinkingEdge(edge->getTarget());
+        Edge *e1 = candidate->getLinkingEdge(edge->getSource());
+        Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
 
         if(e1->getType() == Edge::FRONT)
             m_edge_front.push_front(e1);
@@ -590,10 +720,12 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
     m_iterator->getNeighbors(mp,neighbors);
     m_iterator->setR(m_ball_radius);
 
-    Facet *facet = edge->getFacet1();
+    Facet *facet = edge->getFacet1(); // Get the first facet.
     const Point &center = facet->getBallCenter();
 
+    // <<< opp is used later to avoid adding the same vertex twice.
     Vertex * opp = edge->getOppositeVertex();
+    // >>>
 
     double vx,vy,vz;
     vx = tgt->x()-src->x();
@@ -602,12 +734,13 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 
     normalize(vx,vy,vz);
 
+    // <<< ax, ay, az will be used to determine the angle between two vectors.
     double ax,ay,az;
     ax = center.x() - mp.x();
     ay = center.y() - mp.y();
     az = center.z() - mp.z();
     normalize(ax,ay,az);
-
+    // >>>
 
     Vertex *candidate = NULL;
     double min_angle = 2.0 * PI;
@@ -623,14 +756,17 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
         // but it does matter since "findCandidateVertex" will check if the
         // candidate is type 2. If it is, it will set the edge type to 0, which is a border edge.
 
+        // <<< Avoid adding the same vertex twice.
         if(( v == src)||(v == tgt)||(v == opp))
           continue;
+        // >>>
+
 
         Point new_center;
         if(! computeBallCenter(*src, *tgt, *v, new_center))
           continue;
 
-        //angle computation
+        // <<< angle computation
         double bx,by,bz;
         bx = new_center.x() - mp.x();
         by = new_center.y() - mp.y();
@@ -649,6 +785,7 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 
         if( cpx * vx + cpy * vy + cpz * vz < 0)
           angle = 2.0 * PI - angle; //This is the angle correction since acos is only in [0,PI]
+        // >>>
 
         if(angle > min_angle)
           continue;
@@ -863,6 +1000,7 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
 
 bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
 {
+ 
 
     Neighbor_star_map neighbors;
     m_iterator->setR(2.0 * m_ball_radius);
@@ -888,9 +1026,10 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
 
         Vertex *candidate = NULL;
         Point center;
+        bool changeHandness = false; // just add it now for the program to run. Have to check if it works.
         while(nj != neighbors.end())
         {
-            if(tryTriangleSeed(&v, &vtest, nj->second, neighbors, center))
+            if(tryTriangleSeed(&v, &vtest, nj->second, neighbors, center, changeHandness))
             {
                 candidate = nj->second;
                 break;
@@ -898,6 +1037,7 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
             ++nj;
         }
 
+        // TODO: Use info from Handness further.
 
         if(candidate == NULL)
         {

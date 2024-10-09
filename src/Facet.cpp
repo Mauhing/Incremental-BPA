@@ -59,6 +59,9 @@ Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2)
     }
 }
 
+//added by mauhing
+//bool Facet::
+
 Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
 {
     m_vertex[0] = v0;

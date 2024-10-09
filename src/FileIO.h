@@ -55,6 +55,12 @@ class FileIO
         static bool readAndSortPoints(const char *filename, Octree &octree,
                                       double min_radius = -1);
 
+        //added by mauhing
+        static std::vector<std::string> readIntoFileBatch(const char *filename);
+
+        //added by mauhing
+        static bool readFromBatchAndSortPoints(const string &batch_data, Octree &octree, double min_radius);
+
         /** @brief save points from an octree to a file
          * @param filename name of the file to save to
          * @param octree octree to save the points from

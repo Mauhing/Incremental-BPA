@@ -29,8 +29,9 @@
 #include "src/Vertex.h"
 #include "src/Mesher.h"
 #include "src/FileIO.h"
-
 #include "src/types.h"
+
+//#include <open3d/Open3D.h>
 
 /**
  * @brief main function for the ball pivoting reconstruction
@@ -52,7 +53,6 @@ int main(int argc, char **argv)
     stringstream f;
     string input_infiles, outfile, input_radii;
     std::list<string> infile_list;
-    unsigned int depth = 7;
     double radius = -1;
     int radius_flag = -1;
     int infile_flag = -1;
@@ -68,11 +68,6 @@ int main(int argc, char **argv)
             {
                 string infile;
                 input_infiles=optarg;
-                istringstream iss(input_infiles, istringstream::in);
-                while (iss>>infile)
-                {
-                    infile_list.push_back(infile);
-                }
                 infile_flag = 1;
                 break;
 
@@ -88,13 +83,6 @@ int main(int argc, char **argv)
                 f<<optarg;
                 f>>outfile;
                 outfile_flag = 1;
-                break;
-            }
-            case 'd':
-            {
-                f.clear();
-                f<<optarg;
-                f>>depth;
                 break;
             }
             case 'p':
@@ -139,19 +127,20 @@ int main(int argc, char **argv)
     Octree octree;
     //Mesher mesher;
 
-
     std::time(&start);
     bool ok;
-    std::string infile = infile_list.front();
+    std::string infile = input_infiles;
+
+    // Turn the whole data into batch data
+    std::vector<string> batch_data = FileIO::readIntoFileBatch(input_infiles.c_str());
+    std::cout << "batch_data size: " << batch_data.size() << std::endl;
+
+
     if(radius >0)
     {
-        ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
-    }
-    else
-    {
-        octree.setDepth(depth);
-        ok = FileIO::readAndSortPoints(infile.c_str(),octree);  
-    }
+        //ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
+        ok = FileIO::readFromBatchAndSortPoints(batch_data[0], octree, radius);
+    } 
     if( !ok )
     {
         std::cerr<<"Pb opening the file; exiting."<<std::endl;
@@ -170,8 +159,7 @@ int main(int argc, char **argv)
 
     std::cout << "Octree root depth: " << octree.getRoot()->getDepth()<< std::endl;
     std::cout << "Octree root size: " << octree.getRoot()->getSize()<< std::endl;
-    octree.debugPrint();
-    return EXIT_SUCCESS;
+    //octree.debugPrint();
 
     std::cout<<"****** Reconstructing with radii "<<std::flush;
     std::list<double>::const_iterator ri = radii.begin();
@@ -215,7 +203,8 @@ int main(int argc, char **argv)
         
         outFile << "x y z" << std::endl;  // Header
         
-        const auto& ballCenters = mesher.getBallCenters();
+        //const auto& ballCenters = mesher.getBallCenters();
+        const Point_list& ballCenters = mesher.getBallCenters();
         for (const auto& center : ballCenters) {
             outFile << center.x() << " " << center.y() << " " << center.z() << std::endl;
         }

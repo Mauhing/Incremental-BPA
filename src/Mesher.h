@@ -45,7 +45,6 @@
 #include "Edge.h"
 #include "utilities.h"
 #include "types.h"
-
 /**
  * @class Mesher
  * @brief Performs the triangulation of the input points
@@ -96,7 +95,7 @@ class Mesher
 
         TOctree<Point> m_octree_ball_centers;
 
-        unsigned int m_num_ball_centers;
+        unsigned int m_num_ball_centers;        
 
     public : //constructor-destructor
 
@@ -137,6 +136,19 @@ class Mesher
          * (post-processing methods)
          */
         void fillHoles();
+
+        //added by mauhing
+        /** @brief get the reconstruction type of the edge
+         * @param frontEdge the current focusing front edge
+         * @param e1 the first candidate edge
+         * @param e2 the second candidate edge
+         * @param candidate the candidate vertex
+         * @return the reconstruction type
+         */
+        ReconstructionType computeReconstructionType(
+                                                 const Edge* e1, 
+                                                 const Edge* e2,
+                                                 const Vertex* candidate) const;
 
     public : //accessors+modifyers
 
@@ -250,6 +262,7 @@ class Mesher
          * @return third vertex if any was found, NULL otherwise
          */
         Vertex* tryTriangleSeed(Vertex *v1,Vertex *v2, Point &center) const;
+        
 
         /** @brief test if a facet can be built from three vertices
          * test if a facet can be built from three given vertices
@@ -260,9 +273,13 @@ class Mesher
          * @param center center of the facet circumsphere if it exists
          * @return true if the facet is valid, false otherwose
          */
+        //bool tryTriangleSeed(Vertex *v1,Vertex *v2, Vertex *v3,
+        //                     Neighbor_star_map &neighbors,
+        //                     Point &center) const;
         bool tryTriangleSeed(Vertex *v1,Vertex *v2, Vertex *v3,
                              Neighbor_star_map &neighbors,
-                             Point &center) const;
+                             Point &center,
+                             bool &flipIndex) const;
 
         /** @brief expand the triangulation around each of the front edge*/
         void expandTriangulation();
