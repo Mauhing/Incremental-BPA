@@ -109,6 +109,17 @@ class Facet
          * @return true if the vertex is a vertex of the facet
          */
         bool hasVertex(Vertex *vertex);
+
+        Vertex* getVertex(unsigned int index);
+
+    private :
+        static std::set<Edge*> sb_recordedNewBoundaryEdges;
+        
+    public :
+        void insertNewBoundaryEdge(Edge* edge);
+        void removeNewBoundaryEdge(Edge* edge);
+
+        static std::set<Edge*> getRecordedNewBoundaryEdges();
 };
 
 #endif

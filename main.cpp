@@ -191,6 +191,13 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
 
+    std::cout << "Filling holes..." << std::endl;
+    mesher.fillHoles();
+
+    std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
+    std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
+    mesher.trimBoundaryFacets(boundary_facets);
+
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     
     // Function to write ball centers to a file
@@ -225,6 +232,7 @@ int main(int argc, char **argv)
     //         <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
     //std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
 
+    std::cout << "Saving mesh to " << outfile << std::endl;
     if(! FileIO::saveMesh(outfile.c_str(), mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;

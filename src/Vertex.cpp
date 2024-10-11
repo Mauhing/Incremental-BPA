@@ -243,6 +243,7 @@ void Vertex::updateType()
     m_type = Vertex::INNER; //2
 }
 
+
 ostream& operator << (ostream& out, const Vertex& v)
 {
     out << v.x() << "\t" << v.y() << "\t" << v.z()
@@ -303,4 +304,9 @@ Vertex* Vertex::findBorder(Vertex* test)
 void Vertex::setOctreeNodeLeaf(TOctreeNode<Vertex>* node)
 {
     m_octreeNodeLeaf = node;
+}
+
+const Facet_set& Vertex::adjacentFacets() const
+{
+    return m_adjacentFacets;
 }

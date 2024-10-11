@@ -118,6 +118,8 @@ bool Edge::removeAdjacentFacet(Facet* facet)
     if(m_facet1 == facet)
     {
         m_facet1 = NULL;
+        //m_facet1 = m_facet2;
+        //m_facet2 = NULL;
         setType(EdgeType::FRONT);
         return true;
     }

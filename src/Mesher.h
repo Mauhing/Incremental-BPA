@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <cstdio>
 
+
 #include "Octree.h"
 #include "OctreeIterator.h"
 
@@ -223,6 +224,9 @@ class Mesher
          */
         //void allBoundaryEdgesToFrontEdges();
 
+    public:
+        std::set<Facet*>& getBoundaryFacets() const;
+        
 
     protected :
 
@@ -407,6 +411,9 @@ class Mesher
          */
         void collectBorderEdges(OctreeNode* containment_node,
                                 Edge_set &border_edges);
+
+    public:
+        void trimBoundaryFacets(std::set<Facet*> &boundary_facets);
 
 };
 

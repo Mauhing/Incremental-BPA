@@ -38,7 +38,8 @@
     #include <omp.h>
 #endif
 #include <sstream>
-
+#include <memory>
+#include <algorithm>
 
 const double PI = 3.1415926535;
 
@@ -1289,4 +1290,43 @@ void Mesher::merge(Mesher& mesher)
     m_nvertices = m_vertices.size();
 }
 
+std::set<Facet*>& Mesher::getBoundaryFacets() const
+{
+    std::set<Facet*> *boundary_facets = new std::set<Facet*>();
+    //auto boundary_facets = std::make_unique<std::set<Facet*>>(); // Smart pointer to manage the memory, please use #include <memory>
+    for (const auto& edge : m_border_edges)
+    {
+        Vertex *v1 = edge->getSource();
+        Vertex *v2 = edge->getTarget();
+        
+        Facet_set facets_set1 = v1->adjacentFacets();
+        Facet_set facets_set2 = v2->adjacentFacets();
+        for (const auto& facet : facets_set1)
+        {
+            boundary_facets->insert(facet);
+        }
+        for (const auto& facet : facets_set2)
+        {
+            boundary_facets->insert(facet);
+        }
+    }
+    std::cout << "Address of boundary_facets in getBoundaryFacets: " << boundary_facets << std::endl;
+    return *boundary_facets;
+}
 
+void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
+{
+    for (auto facet : boundary_facets)
+    {
+        auto it = std::find(m_facets.begin(), m_facets.end(), facet);
+        if (it != m_facets.end())
+        {
+            m_facets.erase(it);
+        }
+
+        delete facet;
+        facet = NULL;
+    }
+
+    // TODO: Go into octree and remove the points that are no longer in use, which it is orphan.
+}

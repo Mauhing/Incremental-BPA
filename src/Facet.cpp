@@ -18,6 +18,8 @@
 #include "Edge.h"
 #include "Vertex.h"
 
+// Initialize the static member.
+std::set<Edge*> Facet::sb_recordedNewBoundaryEdges;
 
 Facet::Facet()
 {
@@ -76,6 +78,7 @@ Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
     Edge *e0 = v0->getLinkingEdge(v1);
     if(e0 == NULL)
     {
+        // It is the Facet class own the edge object.
         e0 = new Edge(v0,v1);
     }
     e0->addAdjacentFacet(this);
@@ -162,29 +165,73 @@ Facet::Facet(Edge* edge, Vertex* vertex, Point &ball_center)
 }
 
 Facet::~Facet()
-{
-    for(unsigned int i=0;i<3;++i)
-        m_vertex[i]->removeAdjacentFacet(this);
-
+{ 
+    // Deal with the edges first.
     for(int i = 0; i < 2; ++i)
     {
         Edge *e = m_vertex[i]->getLinkingEdge(m_vertex[i+1]);
+        
+        //std::cout << "This facet address: " << this << std::endl;
+        //if (e->getFacet1() == NULL && e->getFacet2() != NULL)
+        //{
+        //    std::cerr << "Facet address: " << e->getFacet2() << std::endl;
+        //    std::cerr << "Error: Facet1 is NULL and Facet2 is not NULL" << std::endl;
+        //    std::exit(EXIT_FAILURE);
+        //}
 
-        if((e->getFacet2() == NULL)&&(e->getFacet2()==NULL))
+        bool doesFacet1Exist = (e->getFacet1() != NULL);
+        bool doesFacet2Exist = (e->getFacet2() != NULL);
+
+        if(doesFacet1Exist != doesFacet2Exist) 
         {
             m_vertex[i]->removeAdjacentEdge(e);
             m_vertex[i+1]->removeAdjacentEdge(e);
+            removeNewBoundaryEdge(e);
             delete e;
             e=NULL;
         }
         else
         {
+            // In this case, the edge is shared by two facets.
             e->removeAdjacentFacet(this);
+            e->setType(Edge::EdgeType::BORDER);
+            insertNewBoundaryEdge(e);
+        }
+    }
+
+    // Deal with the vertices.
+    for(unsigned int i=0;i<3;++i)
+    {
+        m_vertex[i]->removeAdjacentFacet(this);
+        bool vertex_still_has_adjacent_facets = (m_vertex[i]->adjacentFacets().size() != 0);
+        if (vertex_still_has_adjacent_facets)
+        {
+            m_vertex[i]->setType(Vertex::VertexType::FRONT);
+        }
+        else // The vertex is not shared by any other facets.
+        {
+            m_vertex[i]->setType(Vertex::VertexType::TRIMMED);
         }
     }
 }
 
+void Facet::insertNewBoundaryEdge(Edge* edge)
+{
+    sb_recordedNewBoundaryEdges.insert(edge);
+}
+
+void Facet::removeNewBoundaryEdge(Edge* edge)
+{
+    sb_recordedNewBoundaryEdges.erase(edge);
+}
+
 Vertex* Facet::vertex(unsigned int i) const
+{
+    unsigned int index = i %3;
+    return m_vertex[index];
+}
+
+Vertex* Facet::getVertex(unsigned int i)
 {
     unsigned int index = i %3;
     return m_vertex[index];

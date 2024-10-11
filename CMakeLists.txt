@@ -77,7 +77,6 @@ set_target_properties(ballpivoting PROPERTIES
 # Export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-#enable_testing()
-
+enable_testing()
 add_subdirectory(src)
 add_subdirectory(tests)
