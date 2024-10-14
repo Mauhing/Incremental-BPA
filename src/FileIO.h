@@ -76,6 +76,8 @@ class FileIO
          */
         static bool saveMesh(const char* filename, Mesher &mesher);
 
+        static bool saveMeshDebug(const char* filename, Mesher &mesher);
+
     private :
 
         /** @brief save all vertices contained in a node

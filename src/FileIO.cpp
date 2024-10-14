@@ -382,3 +382,82 @@ bool FileIO::readFromBatchAndSortPoints(const string &batch_data, Octree &octree
 
     return true;
 }
+
+bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
+{
+    ofstream out;
+    out.open(filename);
+    out.precision( numeric_limits<double>::digits10 + 1);
+    
+    if(!out)
+    { // file couldn't be opened
+    cerr << "Error: file could not be opened" << endl;
+    return false;
+    }
+
+    out << "The first section will be idx, x, y, z, nx, ny, nz" << endl;
+    out << "The second section will be 3, idx0, idx1, idx2" << endl;
+    
+    std::unordered_map<int, Vertex*> vertices;
+    for( Facet_star_list::const_iterator fi = mesher.facets_begin();
+        fi != mesher.facets_end(); ++fi)
+    {
+       for(int i = 0; i < 3; ++i)
+       {
+            const Facet* f = *fi;
+            Vertex *v = f->vertex(i);
+            vertices[v->index()] = v;
+       }
+    } 
+    for (auto &pair : vertices)
+    {
+        Vertex *v = pair.second;
+        out << v->index() << "\t" << v->x() << "\t" << v->y() << "\t" << v->z() << "\t" << v->nx() << "\t" << v->ny() << "\t" << v->nz() << endl;
+    }
+
+    // add a blank line
+    out << endl;
+    
+    for( Facet_star_list::const_iterator fi = mesher.facets_begin();
+        fi != mesher.facets_end(); ++fi)
+    {
+        out << 3 << "\t";
+        const Facet* f = *fi;
+
+        Vertex *v0 = f->vertex(0);
+        Vertex *v1 = f->vertex(1);
+        Vertex *v2 = f->vertex(2);
+
+        double nx = v0->nx() + v1->nx() + v2->nx();
+        double ny = v0->ny() + v1->ny() + v2->ny();
+        double nz = v0->nz() + v1->nz() + v2->nz();
+
+        double tx = v1->x() - v0->x();
+        double ty = v1->y() - v0->y();
+        double tz = v1->z() - v0->z();
+
+        double sx = v2->x() - v0->x();
+        double sy = v2->y() - v0->y();
+        double sz = v2->z() - v0->z();
+
+        double cprodx, cprody, cprodz;
+        cross_product(tx, ty, tz, sx, sy, sz, cprodx, cprody, cprodz);
+
+
+        // << Ensure orientation
+        if( nx * cprodx + ny * cprody + nz * cprodz > 0)
+        {
+            out << v0->index() <<"\t";
+            out << v1->index() <<"\t";
+            out << v2->index() <<endl;
+        }
+        else
+        {
+            out << v0->index() <<"\t";
+            out << v2->index() <<"\t";
+            out << v1->index() <<endl;
+        }
+        // >>
+    }
+    return true;
+}

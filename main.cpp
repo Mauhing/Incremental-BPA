@@ -194,9 +194,9 @@ int main(int argc, char **argv)
     std::cout << "Filling holes..." << std::endl;
     mesher.fillHoles();
 
-    //std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
-    //std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
-    //mesher.trimBoundaryFacets(boundary_facets);
+    std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
+    std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
+    mesher.trimBoundaryFacets(boundary_facets);
 
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     
@@ -239,5 +239,19 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     std::cout<<"Mesh saved in "<<outfile<<std::endl;
+
+    std::cout << "Saving the debug mesh to " << outfile << std::endl;
+
+    std::string debug_outfile = outfile;
+    debug_outfile.erase(debug_outfile.find(".ply"), 4);
+    debug_outfile += "_debug.txt";
+
+    if(! FileIO::saveMeshDebug(debug_outfile.c_str(), mesher))
+    {
+        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+        return EXIT_FAILURE;
+    }
+    std::cout<<"Mesh saved in "<<debug_outfile<<std::endl;
+
     return EXIT_SUCCESS;
 }
