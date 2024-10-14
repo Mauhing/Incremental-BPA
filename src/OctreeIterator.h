@@ -675,12 +675,20 @@ void TOctreeIterator<T>::explore(TOctreeNode<T>* node,
     }
     else if(node->getNpts() != 0)
     {
-        typename std::list<T>::iterator iter;
+        //typename std::list<T>::iterator iter;
+        //for(iter = node->points_begin(); iter != node->points_end(); ++iter)
+        //{
+        //    double dist = dist2( query_point, *iter);
+        //    if(dist < m_sqradius)
+        //        neighbors.push_back(&(*iter));
+        //}
+        typename std::unordered_set<T*>::iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
-            double dist = dist2( query_point, *iter);
+            T* v = *iter;
+            double dist = dist2( query_point, *v);
             if(dist < m_sqradius)
-                neighbors.push_back(&(*iter));
+                neighbors.push_back(v);
         }
     }
 }
@@ -852,12 +860,20 @@ void TOctreeIterator<T>::exploreSort(TOctreeNode<T>* node,
     }
     else if(node->getNpts() != 0)
     {
-        typename std::list<T>::iterator iter;
+        //typename std::list<T>::iterator iter;
+        //for(iter = node->points_begin(); iter != node->points_end(); ++iter)
+        //{
+        //    double dist = dist2( query_point, *iter);
+        //    if(dist < m_sqradius)
+        //        neighbors.insert( pair<double, T*>(dist, &(*iter)) );
+        //}
+        typename std::unordered_set<T*>::iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
-            double dist = dist2( query_point, *iter);
+            T* v = *iter;
+            double dist = dist2( query_point, *v);
             if(dist < m_sqradius)
-                neighbors.insert( pair<double, T*>(dist, &(*iter)) );
+                neighbors.insert( pair<double, T*>(dist, v) );
         }
     }
 }
@@ -1084,12 +1100,24 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
     }
     else if(node->getNpts() != 0)
     {
-        typename std::list<T>::iterator iter;
+        //typename std::list<T>::iterator iter;
+        //for(iter = node->points_begin(); iter != node->points_end(); ++iter)
+        //{
+        //    double sqdist = dist2( query_point, *iter);
+        //    if((sqdist < m_sqradius)
+        //        && (exceptions.find(&(*iter)) == exceptions.end()))
+        //    {
+        //        check = false;
+        //        return;
+        //    }
+        //}
+        typename std::unordered_set<T*>::iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
-            double sqdist = dist2( query_point, *iter);
+            T* v = *iter;
+            double sqdist = dist2( query_point, *v);
             if((sqdist < m_sqradius)
-                && (exceptions.find(&(*iter)) == exceptions.end()))
+                && (exceptions.find(v) == exceptions.end()))
             {
                 check = false;
                 return;

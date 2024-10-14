@@ -194,9 +194,9 @@ int main(int argc, char **argv)
     std::cout << "Filling holes..." << std::endl;
     mesher.fillHoles();
 
-    std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
-    std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
-    mesher.trimBoundaryFacets(boundary_facets);
+    //std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
+    //std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
+    //mesher.trimBoundaryFacets(boundary_facets);
 
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     

@@ -264,14 +264,16 @@ void Mesher::findSeedTriangle(OctreeNode* node, bool &found)
     }
     else if( node->getNpts() != 0)
     {
-        Vertex_list::iterator pi = node->points_begin();
+        //Vertex_list::iterator pi = node->points_begin();
+        typename Vertex_UnOrdSet::iterator pi = node->points_begin();
         while( pi != node->points_end())
         {
             // current approach is find seed and expand
             // then find a seed again and expand.
-            if(pi->getType() == Vertex::ORPHAN) //0
+            Vertex* v = *pi;
+            if(v->getType() == Vertex::ORPHAN) //0
             {
-                if(trySeed(*pi))
+                if(trySeed(*v))
                 {
                     found = true;
                     expandTriangulation();
@@ -971,12 +973,14 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
     }
     else if( node->getNpts() != 0)
     {
-        Vertex_list::iterator pi = node->points_begin();
+        //Vertex_list::iterator pi = node->points_begin();
+        Vertex_UnOrdSet::iterator pi = node->points_begin();
         while( pi != node->points_end())
         {
-            if(pi->getType()==Vertex::FRONT) //1
+            Vertex* v = *pi;
+            if(v->getType()==Vertex::FRONT) //1
             {
-                Edge_set &edges = pi->adjacentEdges();
+                Edge_set &edges = v->adjacentEdges();
                 Edge_set::iterator ei;
                 for( ei = edges.begin(); ei != edges.end(); ++ei)
                 { // added the parantheses for compiler warning
@@ -985,9 +989,9 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
                     expandTriangulationAroundNode(containment_node, d);
                 } // added the parantheses for compiler warning
             }
-            else if(pi->getType() ==Vertex::ORPHAN) //0
+            else if(v->getType() ==Vertex::ORPHAN) //0
             {
-                if(trySeed(*pi, containment_node, d))
+                if(trySeed(*v, containment_node, d))
                 {
                     found = true;
                     expandTriangulationAroundNode(containment_node, d);
@@ -1165,14 +1169,16 @@ void Mesher::collectActiveEdges(OctreeNode* containment_node,
     }
     else
     {
-        Vertex_list::iterator vi;
+        //Vertex_list::iterator vi;
+        Vertex_UnOrdSet::iterator vi;
         for(vi = containment_node->points_begin();
             vi != containment_node->points_end(); ++vi)
             {
-                if(vi->getType() != Vertex::FRONT) //1
+                Vertex* v = *vi;
+                if(v->getType() != Vertex::FRONT) //1
                     continue;
 
-                Edge_set &edges = vi->adjacentEdges();
+                Edge_set &edges = v->adjacentEdges();
                 Edge_set::iterator ei;
                 for(ei = edges.begin(); ei != edges.end(); ++ei)
                 {
@@ -1206,14 +1212,16 @@ void Mesher::collectBorderEdges(OctreeNode* containment_node,
     }
     else
     {
-        Vertex_list::iterator vi;
+        //Vertex_list::iterator vi;
+        Vertex_UnOrdSet::iterator vi;
         for(vi = containment_node->points_begin();
             vi != containment_node->points_end(); ++vi)
             {
-                if(vi->getType() != Vertex::FRONT) //1
+                Vertex* v = *vi;
+                if(v->getType() != Vertex::FRONT) //1
                     continue;
 
-                Edge_set &edges = vi->adjacentEdges();
+                Edge_set &edges = v->adjacentEdges();
                 Edge_set::iterator ei;
                 for(ei = edges.begin(); ei != edges.end(); ++ei)
                 {
@@ -1323,10 +1331,18 @@ void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
         {
             m_facets.erase(it);
         }
+        
+        for (int i = 0; i < 3; ++i) {
+            Vertex *v = facet->vertex(i);
+            if (v->getType() == Vertex::ORPHAN) {
+                m_vertices.erase(std::find(m_vertices.begin(), m_vertices.end(), v));
+            }
+        }
 
         delete facet;
         facet = NULL;
     }
+      
 
     // TODO: Go into octree and remove the points that are no longer in use, which it is orphan.
 }

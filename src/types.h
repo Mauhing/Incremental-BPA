@@ -22,6 +22,7 @@
 #include<list>
 #include<set>
 #include<map>
+#include<unordered_map>
 #include "Point.h"
 
 class Vertex;
@@ -54,6 +55,9 @@ typedef std::list<Facet*>::iterator Facet_star_iterator;
 
 typedef std::map<double, Vertex*> Neighbor_star_map;
 typedef Neighbor_star_map::iterator Neighbor_iterator;
+
+#include "unordered_set"
+typedef std::unordered_set<Vertex*> Vertex_UnOrdSet;
 
 #include "Octree.h"
 typedef TOctree<Vertex> Octree;

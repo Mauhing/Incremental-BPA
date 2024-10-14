@@ -25,6 +25,7 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <unordered_set>
 
 /**
  * @class TOctreeNode
@@ -106,8 +107,10 @@ class TOctreeNode
          * @brief list of points contained in the node
          * (empty if the node is not a leaf)
          */
-        list<T> m_points; // It stores vertices, not pointers to vertices.
+        //list<T> m_points; // It stores vertices, not pointers to vertices.
         
+        std::unordered_set<T*> m_points;
+
         
     public :
         /**
@@ -272,22 +275,24 @@ class TOctreeNode
         /** @brief get a pointer to the list of points
          * @return pointer to the beginning of the list
          */
-        typename std::list<T>::iterator points_begin();
+        //typename std::list<T>::iterator points_begin();
+        typename std::unordered_set<T*>::iterator points_begin();
         
         /** @brief get a pointer to the end of the list of points
          * @return pointer to the end of 'points'
          */
-        typename std::list<T>::iterator points_end();
+        //typename std::list<T>::iterator points_end();
+        typename std::unordered_set<T*>::iterator points_end();
         
         /** @brief get a const pointer to the list of points
          * @return const pointer to the beginning of the list
          */
-        typename std::list<T>::const_iterator points_begin() const;
+        //typename std::list<T>::const_iterator points_begin() const;
         
         /** @brief get a const pointer to the end of the list of points
          * @return const pointer to the end of 'points'
          */
-        typename std::list<T>::const_iterator points_end() const;
+        //typename std::list<T>::const_iterator points_end() const;
         
         /** @brief add a point to the list of points included in the cell
          * PREREQUISITE: the node is a leaf in the octree
@@ -301,6 +306,8 @@ class TOctreeNode
          * @return pointer to the created node 
          */
         TOctreeNode<T>* initializeChild(unsigned int index, Point origin);
+
+        std::unordered_set<T*>& GetPoints();
 };
 
 
@@ -496,32 +503,35 @@ Point TOctreeNode<T>::getOrigin() const
 }
 
 template<class T>
-typename std::list<T>::iterator TOctreeNode<T>::points_begin()
+typename std::unordered_set<T*>::iterator TOctreeNode<T>::points_begin()
 {
     return m_points.begin();
 }
 
 template<class T>
-typename std::list<T>::iterator TOctreeNode<T>::points_end()
+typename std::unordered_set<T*>::iterator TOctreeNode<T>::points_end()
 {
     return m_points.end();
 }
 
-template<class T>
-typename std::list<T>::const_iterator TOctreeNode<T>::points_begin() const
-{
-    return m_points.begin();
-}
+//template<class T>
+//typename std::list<T>::const_iterator TOctreeNode<T>::points_begin() const
+//{
+//    return m_points.begin();
+//}
+//
+//template<class T>
+//typename std::list<T>::const_iterator TOctreeNode<T>::points_end() const
+//{
+//    return m_points.end();
+//}
 
-template<class T>
-typename std::list<T>::const_iterator TOctreeNode<T>::points_end() const
-{
-    return m_points.end();
-}
 template<class T>
 void TOctreeNode<T>::addPoint(T &t)
 {
-    m_points.push_back(t); //copy constructor is used here.
+    T* t_ptr = new T(t);
+    m_points.insert(t_ptr);
+    //m_points.push_back(t); //copy constructor is used here.
     m_npts++;
 }
 
@@ -544,6 +554,9 @@ void TOctreeNode<T>::setChild(unsigned int index, TOctreeNode<T>* node)
 {
     m_child[index] = node;
 }
+
+template<class T>
+std::unordered_set<T*>& TOctreeNode<T>::GetPoints() { return m_points; }
 
 
 #endif
