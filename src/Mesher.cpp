@@ -47,30 +47,30 @@ using namespace std;
 
 Mesher::Mesher()
 {
-    m_octree = NULL;
-    m_iterator = NULL;
+    m_vertices_octree = NULL;
+    m_vertices_iterator = NULL;
     m_nfacets = 0;
     m_nvertices = 0;
     m_num_ball_centers = 0;
-    m_recycle_vertices_idx = std::list<unsigned int>();
+    m_recycle_vertices_idx = std::unordered_set<unsigned int>();
 }
 
 Mesher::Mesher(Octree* octree, OctreeIterator* iterator)
 {
-    m_octree = octree;
-    m_iterator = iterator;
+    m_vertices_octree = octree;
+    m_vertices_iterator = iterator;
     m_ball_radius = iterator->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
     m_nfacets = 0;
     m_nvertices = 0;
     m_num_ball_centers = 0;
-    m_recycle_vertices_idx = std::list<unsigned int>();
+    m_recycle_vertices_idx = std::unordered_set<unsigned int>();
 }
 
 Mesher::~Mesher()
 {
-    m_octree = NULL;
-    m_iterator = NULL;
+    m_vertices_octree = NULL;
+    m_vertices_iterator = NULL;
     m_edge_front.clear();
     m_border_edges.clear();
 
@@ -241,15 +241,15 @@ void Mesher::allBoundaryEdgesToFrontEdges()
 
 void Mesher::resetOctree(Octree *octree, OctreeIterator *iterator)
 {
-    m_octree = octree;
-    m_iterator = iterator;
+    m_vertices_octree = octree;
+    m_vertices_iterator = iterator;
 }
 
 
 bool Mesher::findSeedTriangle()
 {
     bool found = false;
-    OctreeNode *node = m_octree->getRoot();
+    OctreeNode *node = m_vertices_octree->getRoot();
     findSeedTriangle(node, found);
     return found;
 }
@@ -296,9 +296,9 @@ bool Mesher::trySeed(Vertex& v)
     // than sliding over the sorted neighbor list until we find a valid seed triangle
 
     Neighbor_star_map neighbors;
-    m_iterator->setR(2.0 * m_ball_radius);
-    m_iterator->getSortedNeighbors(v, neighbors);
-    m_iterator->setR(m_ball_radius);
+    m_vertices_iterator->setR(2.0 * m_ball_radius);
+    m_vertices_iterator->getSortedNeighbors(v, neighbors);
+    m_vertices_iterator->setR(m_ball_radius);
 
     if(neighbors.size()<3)
         return false;
@@ -409,7 +409,7 @@ bool Mesher::tryTriangleSeed(Vertex* v1, Vertex* v2, Vertex *v3,
         || ((e2!=NULL)&&(e2->getType()==Edge::INNER)))
         return false;
 
-    m_iterator->setR(m_ball_radius);
+    m_vertices_iterator->setR(m_ball_radius);
     if(! computeBallCenter(*v1, *v2, *v3, center))
         return false;
 
@@ -429,7 +429,7 @@ bool Mesher::tryTriangleSeed(Vertex* v1, Vertex* v2, Vertex *v3,
 bool Mesher::emptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
                                     Point & center) const
 {
-    m_iterator->setR(m_ball_radius);
+    m_vertices_iterator->setR(m_ball_radius);
     if(! computeBallCenter(*v1, *v2, *v3, center))
         return false;
 
@@ -439,7 +439,7 @@ bool Mesher::emptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
     facet_vertices.insert(v2);
     facet_vertices.insert(v3);
 
-    return m_iterator->containsOnly(center, facet_vertices);
+    return m_vertices_iterator->containsOnly(center, facet_vertices);
 }
 
 bool Mesher::checkEmptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
@@ -721,9 +721,9 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
     Vertex_star_list neighbors;
 
     double d = m_ball_radius + sqrt( m_sq_ball_radius - dist2(mp, *src) );
-    m_iterator->setR(d);
-    m_iterator->getNeighbors(mp,neighbors);
-    m_iterator->setR(m_ball_radius);
+    m_vertices_iterator->setR(d);
+    m_vertices_iterator->getNeighbors(mp,neighbors);
+    m_vertices_iterator->setR(m_ball_radius);
 
     Facet *facet = edge->getFacet1(); // Get the first facet.
     const Point &center = facet->getBallCenter();
@@ -906,24 +906,24 @@ void Mesher::fillHoles()
 
 void Mesher::parallelReconstruct(std::list< double >& radii)
 {
-    OctreeNode *root = m_octree->getRoot();
-    unsigned int depth = m_iterator->getDepth();
+    OctreeNode *root = m_vertices_octree->getRoot();
+    unsigned int depth = m_vertices_iterator->getDepth();
 
     const double d = 2.1 * radii.back();//largest chosen radius
-    depth = (unsigned int)(m_octree->getDepth()
-    - floor( log2( m_octree->getSize() / (1.5 * d) )));
+    depth = (unsigned int)(m_vertices_octree->getDepth()
+    - floor( log2( m_vertices_octree->getSize() / (1.5 * d) )));
 
-    if(depth < m_octree->getDepth() - 3)
-        depth = m_octree->getDepth() - 3 ;
-    else if(depth > m_octree->getDepth() )
-        depth = m_octree->getDepth();
+    if(depth < m_vertices_octree->getDepth() - 3)
+        depth = m_vertices_octree->getDepth() - 3 ;
+    else if(depth > m_vertices_octree->getDepth() )
+        depth = m_vertices_octree->getDepth();
 
     std::cout<<"Processing depth "<<depth<<" ; size "
-             <<m_octree->getSize()/(double)pow2(m_octree->getDepth()-depth)
+             <<m_vertices_octree->getSize()/(double)pow2(m_vertices_octree->getDepth()-depth)
              <<" ; dilatation radius "<<d<<std::endl;
 
     OctreeNode_collection node_collection;
-    m_octree->getNodes(depth, root, node_collection);
+    m_vertices_octree->getNodes(depth, root, node_collection);
 
     std::list<double>::iterator ri = radii.begin();
     int init = 0;
@@ -937,8 +937,8 @@ void Mesher::parallelReconstruct(std::list< double >& radii)
             for(int j = 0; j < (int)node_collection[i].size(); ++j)
             {
                 OctreeNode *node = node_collection[i][j];
-                OctreeIterator iter(m_octree);
-                Mesher mesher(m_octree, &iter);
+                OctreeIterator iter(m_vertices_octree);
+                Mesher mesher(m_vertices_octree, &iter);
 
                 if(init>0)
                     mesher.collectBorderEdges(node);
@@ -1025,9 +1025,9 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
  
 
     Neighbor_star_map neighbors;
-    m_iterator->setR(2.0 * m_ball_radius);
-    m_iterator->getSortedNeighbors(v, neighbors);
-    m_iterator->setR(m_ball_radius);
+    m_vertices_iterator->setR(2.0 * m_ball_radius);
+    m_vertices_iterator->getSortedNeighbors(v, neighbors);
+    m_vertices_iterator->setR(m_ball_radius);
 
     if(neighbors.size()<3)
         return false;
@@ -1401,8 +1401,8 @@ void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
     }
 
     // Update Octree to remove the points that are no longer in use, which it is orphan.
-    //m_iterator->loopOverAllNodes(&Mesher::removeOrphanVertices);
-    m_iterator->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
+    //m_vertices_iterator->loopOverAllNodes(&Mesher::removeOrphanVertices);
+    m_vertices_iterator->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
         this->removeOrphanVertices(node); // m_vertices also gets updated.
         // TODO: If the node is empty, remove it from it's parent.
     });
