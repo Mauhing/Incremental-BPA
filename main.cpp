@@ -212,6 +212,25 @@ int main(int argc, char **argv)
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
     mesher.trimBoundaryFacets(boundary_facets);
 
+    // Sanity check 
+    #ifdef _DEBUG
+    std::cout << "Sanity check" << std::endl;
+    std::list<Facet*> facets = mesher.getFacets();
+    for (auto& facet : facets) {
+        // Get all three edges of the facet and check their facets
+        for (int i = 0; i < 3; ++i) {
+            Vertex* vertex1 = facet->getVertex(i);
+            Vertex* vertex2 = facet->getVertex((i+1)%3);
+            Edge* edge = vertex1->getLinkingEdge(vertex2);
+            if (edge->getFacet2() != nullptr && edge->getFacet1() == nullptr) {
+                std::cerr << "Facet " << i+1 << " does not exist" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+    }
+    #endif
+
+
     std::cout << "Setting all facets to old" << std::endl;
     mesher.setAllFacetsToOld();
     
@@ -219,7 +238,18 @@ int main(int argc, char **argv)
     mesher.putBallCentersInOctree();
 
     std::cout << "Remove overlape vertices in next batch" << std::endl;
+    std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
+    std::cout << "Vertices size: " << vertices.size() << std::endl;
     
+    std::unordered_set<Vertex*> vertices_set;
+    for (auto& vertex : vertices) {
+        // Check if the vertex is in side the any ball
+        //Point point = Point(vertex.x(), vertex.y(), vertex.z());
+        std::map<double, Point*> neighbors;
+        octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+    }
+
+
 
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     
