@@ -92,7 +92,7 @@ class Mesher
         /** @brief number of facets*/
         unsigned int m_nfacets;
         
-        std::list<unsigned int> m_recycle_vertices_idx;
+        std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
         Point_list m_ball_centers;
 

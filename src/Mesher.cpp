@@ -819,10 +819,11 @@ void Mesher::addFacet(Facet* f)
     m_nfacets++;
     
     // add ball center to ball center octree
-    Point ball_center = f->getBallCenter();
-    m_ball_centers.push_back(ball_center); // copy constructor
-    m_octree_ball_centers.addPoint(m_ball_centers.back());
-    m_num_ball_centers++;
+    //Point ball_center = f->getBallCenter();
+    //Point* ball_center_ptr = new Point(f->getBallCenter());
+    //m_ball_centers.push_back(ball_center); // copy constructor
+    //m_octree_ball_centers.addPoint(m_ball_centers.back());
+    //m_num_ball_centers++;
 }
 
 
@@ -830,10 +831,24 @@ void Mesher::addVertex(Vertex* v)
 {
     if(v->index() != -1)
         return;
+    
+    bool is_empty_recycle_set = m_recycle_vertices_idx.empty();
+    if (is_empty_recycle_set)
+    {
+        v->setIndex(m_nvertices);
+        m_vertices.push_back(v);
+        m_nvertices++;
+    }
+    else
+    {
+        unsigned int idx = *(m_recycle_vertices_idx.begin());
+        m_recycle_vertices_idx.erase(idx);
 
-    v->setIndex(m_nvertices);
-    m_vertices.push_back(v);
-    m_nvertices++;
+        v->setIndex(idx);
+        m_vertices.push_back(v);
+        m_nvertices++; 
+    }
+
 }
 
 
