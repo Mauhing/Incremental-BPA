@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 
     time_t start,end;
 
-    Octree octree;
+    OctreeVertices octree;
     //Mesher mesher;
 
     std::time(&start);
@@ -148,17 +148,17 @@ int main(int argc, char **argv)
     }
     std::time(&end);
 
-    std::cout<<"Octree with depth "<<octree.getDepth()<<" created."<<std::endl;
-    std::cout<<"Octree contains "<<octree.getNpoints()
+    std::cout<<"OctreeVertices with depth "<<octree.getDepth()<<" created."<<std::endl;
+    std::cout<<"OctreeVertices contains "<<octree.getNpoints()
             <<" points. The bounding box size is "
             <<octree.getSize()<<std::endl;
     std::cout<<"Reading and sorting points in this octree took "
             <<difftime(end,start)<<" s."<<std::endl;
-    std::cout<<"Octree statistics"<<std::endl;
+    std::cout<<"OctreeVertices statistics"<<std::endl;
     octree.printOctreeStat();
 
-    std::cout << "Octree root depth: " << octree.getRoot()->getDepth()<< std::endl;
-    std::cout << "Octree root size: " << octree.getRoot()->getSize()<< std::endl;
+    std::cout << "OctreeVertices root depth: " << octree.getRoot()->getDepth()<< std::endl;
+    std::cout << "OctreeVertices root size: " << octree.getRoot()->getSize()<< std::endl;
     //octree.debugPrint();
 
     std::cout<<"****** Reconstructing with radii "<<std::flush;
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
     }
     std::cout<<"******"<<std::endl;
 
-    OctreeIterator iterator(&octree);
+    OctreeIteratorVertices iterator(&octree);
 
     if(radius>0)
         iterator.setR(radius);

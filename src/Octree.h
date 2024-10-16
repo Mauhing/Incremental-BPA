@@ -1,5 +1,5 @@
 /**
- * @file Octree.h
+ * @file OctreeVertices.h
  * @brief declares an octree storing structure 
  * @author Julie Digne
  * @date 2012/10/10
@@ -438,14 +438,14 @@ void TOctree<T>::checkSizeAndaddPoint(T& pt)
         //std::cerr<<"Point out of the octree bounding box"<<std::endl;
         //std::cout << "n_max: " << n_max << std::endl;
 
-        #ifndef NDEBUG
-        std::cout << "Debug: n_max: " << n_max << std::endl; 
-        if (n_max < 1) {
-            std::cerr << "Error: n_max must be at least 1." << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        std::cout << "Debug: expanding Octree" << std::endl;
-        #endif
+        //#ifndef NDEBUG
+        //std::cout << "Debug: n_max: " << n_max << std::endl; 
+        //if (n_max < 1) {
+        //    std::cerr << "Error: n_max must be at least 1." << std::endl;
+        //    std::exit(EXIT_FAILURE);
+        //}
+        //std::cout << "Debug: expanding OctreeVertices" << std::endl;
+        //#endif
 
         // this for loop can not be parallelized
         for (unsigned int i =0; i < n_max; ++i)

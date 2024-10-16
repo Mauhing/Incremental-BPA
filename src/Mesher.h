@@ -58,12 +58,12 @@ class Mesher
     protected : //class members
 
         /**
-         * @brief Octree containing the points to mesh
+         * @brief OctreeVertices containing the points to mesh
          * */
-        Octree *m_octree_vertices;
+        OctreeVertices *m_octree_vertices;
 
         /** @brief iterator over the octree*/
-        OctreeIterator *m_iterator_vertices;
+        OctreeIteratorVertices *m_iterator_vertices;
 
         /** @brief list of active edges (edge front)*/
         Edge_star_list m_edge_front;
@@ -109,7 +109,7 @@ class Mesher
          * @param octree octree containing the points to mesh
          * @param iterator iterator over the octree
          */
-        Mesher(Octree *octree, OctreeIterator *iterator);
+        Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator);
         
         /** @brief destructor*/
         ~Mesher();
@@ -220,7 +220,7 @@ class Mesher
         * @param octree octree containing the points to mesh
         * @param iterator iterator over the octree
         */
-        void resetOctree(Octree *octree, OctreeIterator *iterator);
+        void resetOctree(OctreeVertices *octree, OctreeIteratorVertices *iterator);
 
         /** @brief find all boundary edges and mark it as front edges
          */
@@ -236,7 +236,7 @@ class Mesher
          * @param node confinement node
          * @param d band width
          */
-        void  reconstructAroundNode(OctreeNode *node, double d);
+        void  reconstructAroundNode(OctreeNodeV *node, double d);
 
 
     private : //auxilliary methods for performing the triangulation
@@ -251,7 +251,7 @@ class Mesher
          * @param node node to search for a seed triangle
          * @param found 1 if a seed triangle was found; false otherwise
          */
-        void findSeedTriangle(OctreeNode *node, bool &found);
+        void findSeedTriangle(OctreeNodeV *node, bool &found);
 
 
         /** @brief try to find a triangle around a given point
@@ -373,8 +373,8 @@ class Mesher
          * @param d band width around the node
          * @param found 1 if a seed triangle was found; false otherwise
          */
-         void findSeedTriangle(OctreeNode *containment_node,
-                               OctreeNode *node, double d, bool &found);
+         void findSeedTriangle(OctreeNodeV *containment_node,
+                               OctreeNodeV *node, double d, bool &found);
 
         /** @brief try to find a triangle around a given point
          * @param v candidate point
@@ -383,14 +383,14 @@ class Mesher
          * @param d band width around the node
          * @return true if a seed triangle was found
          */
-        bool trySeed(Vertex& v, OctreeNode *containment_node, double d);
+        bool trySeed(Vertex& v, OctreeNodeV *containment_node, double d);
 
 
         /**expand triangulation in a loose box around the node
          * @param containment_node for restricting the triangulation
          * @param d bandwidth around the node
          */
-        void expandTriangulationAroundNode(OctreeNode* containment_node,
+        void expandTriangulationAroundNode(OctreeNodeV* containment_node,
                                            double d);
 
         /** @brief get all active edges in a node and add it to the
@@ -398,20 +398,20 @@ class Mesher
          * @param containment_node for restricting the triangulation
          * @param[out] active_egdes set of active edges
          */
-        void collectActiveEdges(OctreeNode* containment_node,
+        void collectActiveEdges(OctreeNodeV* containment_node,
                                 Edge_set &active_edges);
 
         /** @brief get all border edges in a node and add it to mesher border
          * @param containment_node for restricting the triangulation
          */
-        void collectBorderEdges(OctreeNode* containment_node);
+        void collectBorderEdges(OctreeNodeV* containment_node);
 
         /** @brief get all border edges in a node and add it to
          * the parameter set of border_edges
          * @param containment_node for restricting the triangulation
          * @param[out] border_egdes set of border edges
          */
-        void collectBorderEdges(OctreeNode* containment_node,
+        void collectBorderEdges(OctreeNodeV* containment_node,
                                 Edge_set &border_edges);
 
     public:

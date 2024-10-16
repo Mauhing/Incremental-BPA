@@ -37,7 +37,7 @@ FileIO::~FileIO()
 
 
 
-bool FileIO::readAndSortPoints(const char* filename, Octree& octree,
+bool FileIO::readAndSortPoints(const char* filename, OctreeVertices& octree,
                                double min_radius)
 {
     ifstream in;
@@ -145,7 +145,7 @@ bool FileIO::readAndSortPoints(const char* filename, Octree& octree,
     return true;
 }
 
-bool FileIO::savePoints(const char* filename, Octree& octree)
+bool FileIO::savePoints(const char* filename, OctreeVertices& octree)
 {
     ofstream out;
     out.open(filename);
@@ -154,7 +154,7 @@ bool FileIO::savePoints(const char* filename, Octree& octree)
     if(!out)
         return false;
 
-    OctreeNode *node = octree.getRoot();
+    OctreeNodeV *node = octree.getRoot();
     saveContent(node, out);
 
     out.close();
@@ -243,7 +243,7 @@ bool FileIO::saveMesh(const char* filename, Mesher& mesher)
 }
 
 
-void FileIO::saveContent(OctreeNode* node, ofstream& f)
+void FileIO::saveContent(OctreeNodeV* node, ofstream& f)
 {
     if(node->getDepth() != 0)
     {
@@ -308,7 +308,7 @@ std::vector<string> FileIO::readIntoFileBatch(const char *filenames)
 }
 
 //add by mauhing
-bool FileIO::readFromBatchAndSortPoints(const string &batch_data, Octree &octree, double min_radius)
+bool FileIO::readFromBatchAndSortPoints(const string &batch_data, OctreeVertices &octree, double min_radius)
 {
     // batch data has format:
     // x y z nx ny nz

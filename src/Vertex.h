@@ -28,7 +28,7 @@
 
 class Edge;
 class Facet;
-//class OctreeNode;
+//class OctreeNodeV;
 template<typename T> class TOctreeNode; // Forward declaration
 
 using namespace std;

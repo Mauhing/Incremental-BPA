@@ -60,16 +60,17 @@ typedef Neighbor_star_map::iterator Neighbor_iterator;
 typedef std::unordered_set<Vertex*> Vertex_UnOrdSet;
 
 #include "Octree.h"
-typedef TOctree<Vertex> Octree;
+typedef TOctree<Vertex> OctreeVertices;
+typedef TOctree<Point> OctreePoints;
 
 #include "OctreeNode.h"
-typedef TOctreeNode<Vertex> OctreeNode;
-typedef std::vector<OctreeNode*> OctreeNode_vector;
-typedef std::vector<OctreeNode_vector> OctreeNode_collection;
+typedef TOctreeNode<Vertex> OctreeNodeV;
+typedef std::vector<OctreeNodeV*> OctreeNodeV_vector;
+typedef std::vector<OctreeNodeV_vector> OctreeNodeV_collection;
 
 
 #include "OctreeIterator.h"
-typedef TOctreeIterator<Vertex> OctreeIterator;
-
+typedef TOctreeIterator<Vertex> OctreeIteratorVertices;
+typedef TOctreeIterator<Point> OctreeIteratorPoints;
 
 #endif

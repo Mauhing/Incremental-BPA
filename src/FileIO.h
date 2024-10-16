@@ -52,21 +52,21 @@ class FileIO
          * the smallest cell has size 2*min_radius
          * @return false if the file could not be opened
          */
-        static bool readAndSortPoints(const char *filename, Octree &octree,
+        static bool readAndSortPoints(const char *filename, OctreeVertices &octree,
                                       double min_radius = -1);
 
         //added by mauhing
         static std::vector<std::string> readIntoFileBatch(const char *filename);
 
         //added by mauhing
-        static bool readFromBatchAndSortPoints(const string &batch_data, Octree &octree, double min_radius);
+        static bool readFromBatchAndSortPoints(const string &batch_data, OctreeVertices &octree, double min_radius);
 
         /** @brief save points from an octree to a file
          * @param filename name of the file to save to
          * @param octree octree to save the points from
          * @return false if something went wrong
          */
-        static bool savePoints(const char* filename, Octree &octree);
+        static bool savePoints(const char* filename, OctreeVertices &octree);
 
 
         /** @brief save triangulation
@@ -86,7 +86,7 @@ class FileIO
          * @param node node to save from
          * @param f stream to save to
          */
-        static void saveContent(OctreeNode *node, std::ofstream &f);
+        static void saveContent(OctreeNodeV *node, std::ofstream &f);
 
 };
 

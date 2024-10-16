@@ -55,7 +55,7 @@ Mesher::Mesher()
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
 }
 
-Mesher::Mesher(Octree* octree, OctreeIterator* iterator)
+Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator)
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
@@ -239,7 +239,7 @@ void Mesher::allBoundaryEdgesToFrontEdges()
     }
 }*/
 
-void Mesher::resetOctree(Octree *octree, OctreeIterator *iterator)
+void Mesher::resetOctree(OctreeVertices *octree, OctreeIteratorVertices *iterator)
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
@@ -249,12 +249,12 @@ void Mesher::resetOctree(Octree *octree, OctreeIterator *iterator)
 bool Mesher::findSeedTriangle()
 {
     bool found = false;
-    OctreeNode *node = m_octree_vertices->getRoot();
+    OctreeNodeV *node = m_octree_vertices->getRoot();
     findSeedTriangle(node, found);
     return found;
 }
 
-void Mesher::findSeedTriangle(OctreeNode* node, bool &found)
+void Mesher::findSeedTriangle(OctreeNodeV* node, bool &found)
 {
     if( node->getDepth() != 0)
     {
@@ -906,7 +906,7 @@ void Mesher::fillHoles()
 
 void Mesher::parallelReconstruct(std::list< double >& radii)
 {
-    OctreeNode *root = m_octree_vertices->getRoot();
+    OctreeNodeV *root = m_octree_vertices->getRoot();
     unsigned int depth = m_iterator_vertices->getDepth();
 
     const double d = 2.1 * radii.back();//largest chosen radius
@@ -922,8 +922,8 @@ void Mesher::parallelReconstruct(std::list< double >& radii)
              <<m_octree_vertices->getSize()/(double)pow2(m_octree_vertices->getDepth()-depth)
              <<" ; dilatation radius "<<d<<std::endl;
 
-    OctreeNode_collection node_collection;
-    m_octree_vertices->getNodes(depth, root, node_collection);
+    OctreeNodeV_collection nodeV_collection;
+    m_octree_vertices->getNodes(depth, root, nodeV_collection);
 
     std::list<double>::iterator ri = radii.begin();
     int init = 0;
@@ -934,10 +934,10 @@ void Mesher::parallelReconstruct(std::list< double >& radii)
 #ifndef USE_CLANG
            #pragma omp parallel for default(shared)
 #endif
-            for(int j = 0; j < (int)node_collection[i].size(); ++j)
+            for(int j = 0; j < (int)nodeV_collection[i].size(); ++j)
             {
-                OctreeNode *node = node_collection[i][j];
-                OctreeIterator iter(m_octree_vertices);
+                OctreeNodeV *node = nodeV_collection[i][j];
+                OctreeIteratorVertices iter(m_octree_vertices);
                 Mesher mesher(m_octree_vertices, &iter);
 
                 if(init>0)
@@ -977,7 +977,7 @@ void Mesher::parallelReconstruct(std::list< double >& radii)
 
 
 
-void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
+void Mesher::findSeedTriangle(OctreeNodeV* containment_node, OctreeNodeV* node,
                                 double d, bool& found)
 {
     if( node->getDepth() != 0)
@@ -1020,7 +1020,7 @@ void Mesher::findSeedTriangle(OctreeNode* containment_node, OctreeNode* node,
     }
 }
 
-bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
+bool Mesher::trySeed(Vertex& v, OctreeNodeV *containment_node, double d)
 {
  
 
@@ -1107,7 +1107,7 @@ bool Mesher::trySeed(Vertex& v, OctreeNode *containment_node, double d)
 
 
 
-void Mesher::reconstructAroundNode(OctreeNode *containment_node, double d)
+void Mesher::reconstructAroundNode(OctreeNodeV *containment_node, double d)
 {
     if(!m_edge_front.empty())
         expandTriangulationAroundNode(containment_node, d);
@@ -1116,7 +1116,7 @@ void Mesher::reconstructAroundNode(OctreeNode *containment_node, double d)
     findSeedTriangle(containment_node, containment_node, d, found);
 }
 
-void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
+void Mesher::expandTriangulationAroundNode(OctreeNodeV* containment_node,
                                            double d)
 {
     while(! m_edge_front.empty() )
@@ -1173,7 +1173,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNode* containment_node,
 }
 
 
-void Mesher::collectActiveEdges(OctreeNode* containment_node,
+void Mesher::collectActiveEdges(OctreeNodeV* containment_node,
                                 Edge_set &active_edges)
 {
     if(containment_node->getDepth() != 0)
@@ -1208,7 +1208,7 @@ void Mesher::collectActiveEdges(OctreeNode* containment_node,
 }
 
 
-void Mesher::collectBorderEdges(OctreeNode *containment_node)
+void Mesher::collectBorderEdges(OctreeNodeV *containment_node)
 {
     Edge_set border_edges;
     collectBorderEdges(containment_node, border_edges);
@@ -1216,7 +1216,7 @@ void Mesher::collectBorderEdges(OctreeNode *containment_node)
                           border_edges.end());
 }
 
-void Mesher::collectBorderEdges(OctreeNode* containment_node,
+void Mesher::collectBorderEdges(OctreeNodeV* containment_node,
                                 Edge_set& border_edges)
 {
     if(containment_node->getDepth() != 0)
@@ -1400,7 +1400,7 @@ void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
         facet = NULL;
     }
 
-    // Update Octree to remove the points that are no longer in use, which it is orphan.
+    // Update OctreeVertices to remove the points that are no longer in use, which it is orphan.
     //m_iterator_vertices->loopOverAllNodes(&Mesher::removeOrphanVertices);
     m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
         this->removeOrphanVertices(node); // m_vertices also gets updated.
