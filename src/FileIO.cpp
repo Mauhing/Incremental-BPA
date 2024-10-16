@@ -467,3 +467,28 @@ bool FileIO::saveMeshDebug(const char* filename, const std::list<Facet*> &facets
     out.close(); // close the file
     return true;
 }
+
+std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
+{
+    // batch data has format:
+    // x y z nx ny nz
+    // x y z nx ny nz
+    // ...
+
+    double x, y, z, nx, ny, nz;
+    istringstream batch_data_in(batch_data);
+    batch_data_in >> x >> y >> z >> nx >> ny >> nz;
+
+    list<Vertex> input_vertices;
+    input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
+
+    // >>> read the rest of the file and find the bounding box
+    while (batch_data_in >> x >> y >> z >> nx >> ny >> nz)
+    {
+        input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
+    }
+    // <<<
+    std::cout << input_vertices.size() << " points read" << std::endl;
+
+    return input_vertices;
+}

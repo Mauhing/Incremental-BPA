@@ -58,6 +58,7 @@ typedef Neighbor_star_map::iterator Neighbor_iterator;
 
 #include "unordered_set"
 typedef std::unordered_set<Vertex*> Vertex_UnOrdSet;
+typedef std::unordered_set<Point*> Point_UnOrdSet;
 
 #include "Octree.h"
 typedef TOctree<Vertex> OctreeVertices;

@@ -128,7 +128,7 @@ class TOctree
          * @brief Adding a point to the octree
          * @param pt point to add
          */
-        void addPoint(T &pt);
+        T* addPoint(T &pt);
         
         /**
          * 
@@ -168,7 +168,7 @@ class TOctree
         void getNodes(unsigned int depth, TOctreeNode<T>* starting_node,
                 std::vector< std::vector<TOctreeNode<T>* > > &node_collection);
 
-        void checkSizeAndaddPoint(T& pt);
+        T* checkSizeAndaddPoint(T& pt);
 
         void debugPrint()
         {
@@ -230,6 +230,11 @@ class TOctree
          * Add by Yip
          */
         std::set<TOctreeNode<T>*> m_non_empty_nodes;
+
+    public:
+        template<typename U>
+        TOctree<U> copy_skeleton() const;
+        
 };
 
 template<class T>
@@ -381,7 +386,7 @@ unsigned int TOctree<T>::addPoints(Iterator begin, Iterator end)
 enum PointInBox {RIGHT=0, LEFT=1, INSIDE=2};
 
 template<class T>
-void TOctree<T>::checkSizeAndaddPoint(T& pt)
+T* TOctree<T>::checkSizeAndaddPoint(T& pt)
 {
     // 0 means the x coordinate is larger than the right border of the octree
     // 1 means the x coordinate is smaller than the left border of the octree
@@ -492,12 +497,12 @@ void TOctree<T>::checkSizeAndaddPoint(T& pt)
             m_non_empty_nodes.insert(new_root_node);
         }
     }     
-    addPoint(pt);
-    return;
+    T* new_pt = addPoint(pt);
+    return new_pt;
 }
 
 template<class T>
-void TOctree<T>::addPoint(T& pt)
+T* TOctree<T>::addPoint(T& pt)
 {
     // unsigned int is important here, as we will use bitwise operations. The size of unsigned int is 4 bytes.
     // This means the depth of the octree should be less than 32.
@@ -546,15 +551,16 @@ void TOctree<T>::addPoint(T& pt)
     }
     
     //add the point to the leaf.
-    node->addPoint(pt);
+    T* new_pt = node->addPoint(pt);
     m_npoints++;
-    pt.setOctreeNodeLeaf(node);
+    new_pt->setOctreeNodeLeaf(node);
     //if pt is class of vertex, then set the leaf node of the vertex
     //if (typeid(T) == typeid(Vertex))
     //{
     //    Vertex* v = dynamic_cast<Vertex*>(&pt);
     //    v->setOctreeNodeLeaf(node);
     //}
+    return new_pt;
 }
 
 
@@ -607,6 +613,17 @@ void TOctree<T>::printOctreeStat()
         <<std::endl;
         size = size / 2.0;
     }
+}
+
+template<class T>
+template<typename U>
+TOctree<U> TOctree<T>::copy_skeleton() const
+{
+    TOctree<U> new_octree;
+    new_octree.setDepth(m_depth); 
+    Point origin = m_origin;
+    new_octree.initialize(origin, m_size);
+    return new_octree;
 }
 
 #endif

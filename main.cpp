@@ -175,13 +175,17 @@ int main(int argc, char **argv)
     if(radius>0)
         iterator.setR(radius);
 
-    std::time(&start);
+    // Copy the octree skeleton to a new octree
+    OctreePoints octree_ball_centers = octree.copy_skeleton<Point>();
 
-    Mesher mesher(&octree, &iterator);
-    if(parallel_flag == 1)
-        mesher.parallelReconstruct(radii);
-    else
-        mesher.reconstruct(radii);
+    // Copy the octree iterator
+    OctreeIteratorPoints octree_ball_centers_iterator(&octree_ball_centers);
+    if (radius > 0)
+        octree_ball_centers_iterator.setR(radius);
+
+    std::time(&start);
+    Mesher mesher(&octree, &iterator, &octree_ball_centers, &octree_ball_centers_iterator);
+    mesher.reconstruct(radii);
     std::time(&end);
 
     std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
@@ -212,7 +216,10 @@ int main(int argc, char **argv)
     mesher.setAllFacetsToOld();
     
     std::cout << "Set empty ball " << std::endl;
-    // TODO: Set empty ball centers
+    mesher.putBallCentersInOctree();
+
+    std::cout << "Remove overlape vertices in next batch" << std::endl;
+    
 
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     
@@ -227,9 +234,9 @@ int main(int argc, char **argv)
         outFile << "x y z" << std::endl;  // Header
         
         //const auto& ballCenters = mesher.getBallCenters();
-        const Point_list& ballCenters = mesher.getBallCenters();
+        const Point_UnOrdSet& ballCenters = mesher.getBallCenters();
         for (const auto& center : ballCenters) {
-            outFile << center.x() << " " << center.y() << " " << center.z() << std::endl;
+            outFile << center->x() << " " << center->y() << " " << center->z() << std::endl;
         }
         
         outFile.close();

@@ -88,6 +88,8 @@ class FileIO
          */
         static void saveContent(OctreeNodeV *node, std::ofstream &f);
 
+    public:
+        static std::list<Vertex> readFromBatchToList(const string &batch_data);
 };
 
 

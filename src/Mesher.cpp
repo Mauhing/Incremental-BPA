@@ -53,9 +53,12 @@ Mesher::Mesher()
     m_nvertices = 0;
     m_num_ball_centers = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
+    m_octree_ball_centers = NULL;
+    m_octree_ball_centers_iterator = NULL;
 }
 
-Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator)
+Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
+               OctreePoints* octree_ball_centers, OctreeIteratorPoints* octree_ball_centers_iterator)
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
@@ -65,6 +68,8 @@ Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator)
     m_nvertices = 0;
     m_num_ball_centers = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
+    m_octree_ball_centers = octree_ball_centers;
+    m_octree_ball_centers_iterator = octree_ball_centers_iterator;
 }
 
 Mesher::~Mesher()
@@ -131,7 +136,7 @@ unsigned int Mesher::getNumBallCenters() const
     return m_num_ball_centers;
 }
 
-const Point_list& Mesher::getBallCenters() const
+const Point_UnOrdSet& Mesher::getBallCenters() const
 {
     return m_ball_centers;
 }
@@ -904,79 +909,6 @@ void Mesher::fillHoles()
 
 
 
-void Mesher::parallelReconstruct(std::list< double >& radii)
-{
-    OctreeNodeV *root = m_octree_vertices->getRoot();
-    unsigned int depth = m_iterator_vertices->getDepth();
-
-    const double d = 2.1 * radii.back();//largest chosen radius
-    depth = (unsigned int)(m_octree_vertices->getDepth()
-    - floor( log2( m_octree_vertices->getSize() / (1.5 * d) )));
-
-    if(depth < m_octree_vertices->getDepth() - 3)
-        depth = m_octree_vertices->getDepth() - 3 ;
-    else if(depth > m_octree_vertices->getDepth() )
-        depth = m_octree_vertices->getDepth();
-
-    std::cout<<"Processing depth "<<depth<<" ; size "
-             <<m_octree_vertices->getSize()/(double)pow2(m_octree_vertices->getDepth()-depth)
-             <<" ; dilatation radius "<<d<<std::endl;
-
-    OctreeNodeV_collection nodeV_collection;
-    m_octree_vertices->getNodes(depth, root, nodeV_collection);
-
-    std::list<double>::iterator ri = radii.begin();
-    int init = 0;
-    while(ri != radii.end())
-    {
-        for(unsigned int i = 0; i < 8; ++i)
-        {
-#ifndef USE_CLANG
-           #pragma omp parallel for default(shared)
-#endif
-            for(int j = 0; j < (int)nodeV_collection[i].size(); ++j)
-            {
-                OctreeNodeV *node = nodeV_collection[i][j];
-                OctreeIteratorVertices iter(m_octree_vertices);
-                Mesher mesher(m_octree_vertices, &iter);
-
-                if(init>0)
-                    mesher.collectBorderEdges(node);
-
-                mesher.changeRadius(*ri);
-                if(init == 0)
-                    mesher.reconstructAroundNode(node, d);
-                else
-                    mesher.expandTriangulationAroundNode(node,d);
-
-#ifndef USE_CLANG
-                #pragma omp critical
-                {
-#endif //USE_CLANG
-                    merge(mesher);
-#ifndef USE_CLANG
-                }
-#endif //USE_CLANG
-            }
-            std::cout<<"Nodes "<<i<<"/7 ; Nvertices: "<<nVertices()
-                     <<" ; Nfacets "<<nFacets()
-                     <<" ; Front "<<nFrontEdges()<<"."<<std::endl;
-        }
-        ++ri;
-        ++init;
-    }
-
-    if(radii.size()>1)
-    {
-        std::cout<<"Remaining front edges "<<m_edge_front.size()<<std::endl;
-        setBallRadius(radii.back());
-        expandTriangulation();
-    }
-}
-
-
-
-
 void Mesher::findSeedTriangle(OctreeNodeV* containment_node, OctreeNodeV* node,
                                 double d, bool& found)
 {
@@ -1421,3 +1353,15 @@ void Mesher::setAllFacetsToOld()
         facet->setNewlyArrived(false);
     }
 }
+
+void Mesher::putBallCentersInOctree()
+{
+    for (auto facet : m_facets)
+    {
+        Point ball_center = facet->getBallCenter();
+        Point* new_pt = m_octree_ball_centers->checkSizeAndaddPoint(ball_center);
+        m_num_ball_centers++;
+        m_ball_centers.insert(new_pt);
+    }
+}
+

@@ -94,9 +94,11 @@ class Mesher
         
         std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
-        Point_list m_ball_centers;
+        Point_UnOrdSet m_ball_centers;
 
-        TOctree<Point> m_octree_ball_centers;
+        OctreePoints *m_octree_ball_centers;
+
+        OctreeIteratorPoints *m_octree_ball_centers_iterator;
 
         unsigned int m_num_ball_centers;        
 
@@ -109,7 +111,8 @@ class Mesher
          * @param octree octree containing the points to mesh
          * @param iterator iterator over the octree
          */
-        Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator);
+        Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator,
+               OctreePoints *octree_ball_centers, OctreeIteratorPoints *octree_ball_centers_iterator);
         
         /** @brief destructor*/
         ~Mesher();
@@ -192,7 +195,7 @@ class Mesher
 
         unsigned int getNumBallCenters() const;
 
-        const Point_list& getBallCenters() const;
+        const Point_UnOrdSet& getBallCenters() const;
 
         /** @brief get access to the mesh vertices
          * @return begin iterator of the vertices
@@ -422,6 +425,8 @@ class Mesher
         const std::list<Facet*>& getFacets() const;
 
         void setAllFacetsToOld();
+        
+        void putBallCentersInOctree();
 
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
