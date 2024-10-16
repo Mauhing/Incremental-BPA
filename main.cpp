@@ -172,7 +172,6 @@ int main(int argc, char **argv)
 
     OctreeIterator iterator(&octree);
 
-
     if(radius>0)
         iterator.setR(radius);
 

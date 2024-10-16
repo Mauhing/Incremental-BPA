@@ -60,10 +60,10 @@ class Mesher
         /**
          * @brief Octree containing the points to mesh
          * */
-        Octree *m_vertices_octree;
+        Octree *m_octree_vertices;
 
         /** @brief iterator over the octree*/
-        OctreeIterator *m_vertices_iterator;
+        OctreeIterator *m_iterator_vertices;
 
         /** @brief list of active edges (edge front)*/
         Edge_star_list m_edge_front;

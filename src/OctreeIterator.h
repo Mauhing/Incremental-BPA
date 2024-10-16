@@ -54,7 +54,7 @@ class TOctreeIterator
         double m_sqradius;
         
         /** @brief TOctree the iterator refers to*/
-        TOctree<T> *m_vertices_octree;
+        TOctree<T> *m_octree_vertices;
     
     public ://constructor+destructor
         /** @brief constructor*/
@@ -320,7 +320,7 @@ template<class T>
 template<typename Func>
 void TOctreeIterator<T>::loopOverAllNodes(Func f)
 {
-    loopOverAllNodes(m_vertices_octree->getRoot(), f);
+    loopOverAllNodes(m_octree_vertices->getRoot(), f);
 }
 
 template<class T>
@@ -338,16 +338,16 @@ void TOctreeIterator<T>::loopOverAllNodes(TOctreeNode<T>* node, Func f)
 template<class T>
 TOctreeIterator<T>::TOctreeIterator()
 {
-    m_vertices_octree = NULL;
+    m_octree_vertices = NULL;
 }
 
 
 template<class T>
 TOctreeIterator<T>::TOctreeIterator(TOctree<T>* octree)
 {
-    m_vertices_octree = octree;
-    m_activeDepth = m_vertices_octree->getDepth();
-    m_radius = m_vertices_octree->getSize()/((double)pow2(m_activeDepth));
+    m_octree_vertices = octree;
+    m_activeDepth = m_octree_vertices->getDepth();
+    m_radius = m_octree_vertices->getSize()/((double)pow2(m_activeDepth));
     m_sqradius = m_radius * m_radius;
 }
 
@@ -355,16 +355,16 @@ TOctreeIterator<T>::TOctreeIterator(TOctree<T>* octree)
 template<class T>
 TOctreeIterator<T>::~TOctreeIterator()
 {
-    m_vertices_octree = NULL;
+    m_octree_vertices = NULL;
 }
 
 template<class T>
 bool TOctreeIterator<T>::setDepth(unsigned int depth)
 {
-    if(depth<= m_vertices_octree->getDepth())
+    if(depth<= m_octree_vertices->getDepth())
     {
         m_activeDepth = depth;
-        m_radius = m_vertices_octree->getSize()/((double)pow2(depth));
+        m_radius = m_octree_vertices->getSize()/((double)pow2(depth));
         m_sqradius = m_radius * m_radius;
         return true;
     }
@@ -387,12 +387,12 @@ double TOctreeIterator<T>::getR() const
 template<class T>
 bool TOctreeIterator<T>::setR(double radius)
 {
-    if(radius < m_vertices_octree->getSize())
+    if(radius < m_octree_vertices->getSize())
     {
         m_radius = radius;
         m_sqradius = m_radius * m_radius;
-        m_activeDepth = (unsigned int)(m_vertices_octree->getDepth()
-        - floor( log2( m_vertices_octree->getSize() / (2.0*m_radius) )));
+        m_activeDepth = (unsigned int)(m_octree_vertices->getDepth()
+        - floor( log2( m_octree_vertices->getSize() / (2.0*m_radius) )));
         return true;
     }
     return false;
@@ -431,10 +431,10 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
                                         TOctreeNode<T>* query_node, 
                                         Neighbor_star_list& neighbors) const
 {	
-    Point octree_origin = m_vertices_octree->getOrigin();
+    Point octree_origin = m_octree_vertices->getOrigin();
     Point node_origin = query_node->getOrigin();
     double node_size = query_node->getSize();
-    double octree_size = m_vertices_octree->getSize();
+    double octree_size = m_octree_vertices->getSize();
     
     if(query_node->getDepth() ==  m_activeDepth)
     {
@@ -476,7 +476,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
 	            zi = zloc.begin();
 	            while(zi != zloc.end())
 	            {
-	                TOctreeNode<T> *node=m_vertices_octree->getRoot();
+	                TOctreeNode<T> *node=m_octree_vertices->getRoot();
 	                traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
 	                if((node!=NULL)&&(node->getDepth() == m_activeDepth))
 	                    explore(node, query, neighbors);
@@ -527,7 +527,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
 	            zi = zloc.begin();
 	            while(zi != zloc.end())
 	            {
-	                TOctreeNode<T> *node=m_vertices_octree->getRoot();
+	                TOctreeNode<T> *node=m_octree_vertices->getRoot();
 	                traverseToLevel(&node,*xi,*yi,*zi,s);
 	                if( (node != NULL )&&( node->getDepth() == s))
 	                    explore(node,query,neighbors);
@@ -548,10 +548,10 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
                                               Neighbor_star_list& neighbors,
                                               Distance_list &distances) const
 {	
-    Point octree_origin = m_vertices_octree->getOrigin();
+    Point octree_origin = m_octree_vertices->getOrigin();
     Point node_origin = query_node->getOrigin();
     double node_size = query_node->getSize();
-    double octree_size = m_vertices_octree->getSize();
+    double octree_size = m_octree_vertices->getSize();
     
     if(query_node->getDepth() ==  m_activeDepth)
     {
@@ -593,7 +593,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
                 zi = zloc.begin();
                 while(zi != zloc.end())
                 {
-                    TOctreeNode<T> *node=m_vertices_octree->getRoot();
+                    TOctreeNode<T> *node=m_octree_vertices->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
                     if((node!=NULL)&&(node->getDepth() == m_activeDepth))
                         explore(node, query, neighbors, distances);
@@ -644,7 +644,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
 	            zi = zloc.begin();
 	            while(zi != zloc.end())
 	            {
-	                TOctreeNode<T> *node=m_vertices_octree->getRoot();
+	                TOctreeNode<T> *node=m_octree_vertices->getRoot();
 	                traverseToLevel(&node,*xi,*yi,*zi,s);
 	                if( (node != NULL )&&( node->getDepth() == s))
 	                    explore(node,query,neighbors, distances);
@@ -762,10 +762,10 @@ unsigned int TOctreeIterator<T>::getSortedNeighbors(const Point& query,
                                              TOctreeNode<T>* query_node,
                                              Neighbor_star_map &neighbors) const
 {	
-    Point octree_origin = m_vertices_octree->getOrigin();
+    Point octree_origin = m_octree_vertices->getOrigin();
     Point node_origin = query_node->getOrigin();
     double node_size = query_node->getSize();
-    double octree_size = m_vertices_octree->getSize();
+    double octree_size = m_octree_vertices->getSize();
     
     if(query_node->getDepth() ==  m_activeDepth)
     {
@@ -807,7 +807,7 @@ unsigned int TOctreeIterator<T>::getSortedNeighbors(const Point& query,
                 zi = zloc.begin();
                 while(zi != zloc.end())
                 {
-                    TOctreeNode<T> *node=m_vertices_octree->getRoot();
+                    TOctreeNode<T> *node=m_octree_vertices->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
                     if((node!=NULL)&&(node->getDepth() == m_activeDepth))
                         exploreSort(node, query, neighbors);
@@ -858,7 +858,7 @@ unsigned int TOctreeIterator<T>::getSortedNeighbors(const Point& query,
                 zi = zloc.begin();
                 while(zi != zloc.end())
                 {
-                    TOctreeNode<T> *node=m_vertices_octree->getRoot();
+                    TOctreeNode<T> *node=m_octree_vertices->getRoot();
                     traverseToLevel(&node,*xi,*yi,*zi,s);
                     if( (node != NULL )&&( node->getDepth() == s))
                         exploreSort(node, query, neighbors);
@@ -954,8 +954,8 @@ void TOctreeIterator<T>::computeCode(const Point& point,
                                      unsigned int& cody,
                                      unsigned int& codz) const
 {
-    double multiplier = 1.0 / (m_vertices_octree->getSize()) * m_vertices_octree->getBinSize();
-    const Point &octree_origin = m_vertices_octree->getOrigin();
+    double multiplier = 1.0 / (m_octree_vertices->getSize()) * m_octree_vertices->getBinSize();
+    const Point &octree_origin = m_octree_vertices->getOrigin();
     codx=(unsigned int)((point.x() - octree_origin.x()) * multiplier);
     cody=(unsigned int)((point.y() - octree_origin.y()) * multiplier);
     codz=(unsigned int)((point.z() - octree_origin.z()) * multiplier);
@@ -967,7 +967,7 @@ TOctreeNode<T>* TOctreeIterator<T>::locatePointNode(const Point& point) const
     unsigned int codx,cody,codz;
     computeCode(point, codx, cody, codz);
     
-    TOctreeNode<T> *node = m_vertices_octree->getRoot();
+    TOctreeNode<T> *node = m_octree_vertices->getRoot();
     traverseToLevel(&node, codx, cody, codz, m_activeDepth);
     
     return node;
@@ -986,10 +986,10 @@ bool TOctreeIterator<T>::containsOnly(const Point& query,
                                       TOctreeNode< T >* query_node,
                                       const Exception_set& exceptions) const
 {
-    Point octree_origin = m_vertices_octree->getOrigin();
+    Point octree_origin = m_octree_vertices->getOrigin();
     Point node_origin = query_node->getOrigin();
     double node_size = query_node->getSize();
-    double octree_size = m_vertices_octree->getSize();
+    double octree_size = m_octree_vertices->getSize();
     
     if(query_node->getDepth() ==  m_activeDepth)
     {
@@ -1031,7 +1031,7 @@ bool TOctreeIterator<T>::containsOnly(const Point& query,
                 zi = zloc.begin();
                 while (zi != zloc.end())
                 {
-                    TOctreeNode<T> *node=m_vertices_octree->getRoot();
+                    TOctreeNode<T> *node=m_octree_vertices->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
                     bool ok = true;
                     if((node!=NULL)&&( node->getDepth() == m_activeDepth))
@@ -1086,7 +1086,7 @@ bool TOctreeIterator<T>::containsOnly(const Point& query,
                 zi = zloc.begin();
                 while(zi != zloc.end())
                 {
-                    TOctreeNode<T> *node=m_vertices_octree->getRoot();
+                    TOctreeNode<T> *node=m_octree_vertices->getRoot();
                     traverseToLevel(&node,*xi,*yi,*zi,s);
                     bool ok = true;
                     if( (node != NULL )&&( node->getDepth() == s))
@@ -1155,7 +1155,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
 //template<class T>
 //void TOctreeIterator<T>::loopOverAllNodes(void (*func)(TOctreeNode<T>*)) const
 //{
-//    TOctreeNode<T>* node = m_vertices_octree->getRoot();
+//    TOctreeNode<T>* node = m_octree_vertices->getRoot();
 //    loopOverRestNodes(node, func);
 //}
 //
