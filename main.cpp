@@ -211,6 +211,9 @@ int main(int argc, char **argv)
 
     std::cout << "Setting all facets to old" << std::endl;
     mesher.setAllFacetsToOld();
+    
+    std::cout << "Set empty ball " << std::endl;
+    // TODO: Set empty ball centers
 
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     

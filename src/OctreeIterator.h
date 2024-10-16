@@ -309,23 +309,6 @@ class TOctreeIterator
         TOctreeNode<T>* locatePointNode(const Point &point) const; 
 
     public:
-        //template<typename Func>
-        //void loopOverAllNodes(Func f)
-        //{
-        //    loopOverAllNodes(m_octree->getRoot(), f);
-        //}
-
-        //template<typename Func>
-        //void loopOverAllNodes(TOctreeNode<T>* node, Func f)
-        //{
-        //    f(node);
-        //    for (int i = 0; i < 8; ++i)
-        //    {
-        //        if (node->getChild(i) != NULL)
-        //            loopOverAllNodes(node->getChild(i), f);
-        //    }
-        //}
-        //void loopOverRestNodes(TOctreeNode<T>* node, void (*func)(TOctreeNode<T>*)) const;
         template<typename Func>
         void loopOverAllNodes(Func f); 
     private:
