@@ -34,7 +34,7 @@
  * Templated class that contains all methods for neighborhoods
  * queries on an octree
  */
-template<class T>
+template<typename T>
 class TOctreeIterator
 {
     public : //some typedefs
@@ -307,7 +307,50 @@ class TOctreeIterator
          * @return the node containing the point at active depth
          */
         TOctreeNode<T>* locatePointNode(const Point &point) const; 
+
+    public:
+        //template<typename Func>
+        //void loopOverAllNodes(Func f)
+        //{
+        //    loopOverAllNodes(m_octree->getRoot(), f);
+        //}
+
+        //template<typename Func>
+        //void loopOverAllNodes(TOctreeNode<T>* node, Func f)
+        //{
+        //    f(node);
+        //    for (int i = 0; i < 8; ++i)
+        //    {
+        //        if (node->getChild(i) != NULL)
+        //            loopOverAllNodes(node->getChild(i), f);
+        //    }
+        //}
+        //void loopOverRestNodes(TOctreeNode<T>* node, void (*func)(TOctreeNode<T>*)) const;
+        template<typename Func>
+        void loopOverAllNodes(Func f); 
+    private:
+        template<typename Func>
+        void loopOverAllNodes(TOctreeNode<T>* node, Func f);
 };
+
+template<class T>
+template<typename Func>
+void TOctreeIterator<T>::loopOverAllNodes(Func f)
+{
+    loopOverAllNodes(m_octree->getRoot(), f);
+}
+
+template<class T>
+template<typename Func>
+void TOctreeIterator<T>::loopOverAllNodes(TOctreeNode<T>* node, Func f)
+{
+    f(node);
+    for (int i = 0; i < 8; ++i)
+    {
+        if (node->getChild(i) != NULL)
+            loopOverAllNodes(node->getChild(i), f);
+    }
+}
 
 template<class T>
 TOctreeIterator<T>::TOctreeIterator()
@@ -612,21 +655,21 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
         xi = xloc.begin();
         while(xi != xloc.end())
         {
-            yi = yloc.begin();
-            while(yi != yloc.end())
-            {
-                zi = zloc.begin();
-                while(zi != zloc.end())
-                {
-                    TOctreeNode<T> *node=m_octree->getRoot();
-                    traverseToLevel(&node,*xi,*yi,*zi,s);
-                    if( (node != NULL )&&( node->getDepth() == s))
-                        explore(node,query,neighbors, distances);
-                    ++zi;
-                }
-                ++yi;
-            }
-            ++xi;
+	        yi = yloc.begin();
+	        while(yi != yloc.end())
+	        {
+	            zi = zloc.begin();
+	            while(zi != zloc.end())
+	            {
+	                TOctreeNode<T> *node=m_octree->getRoot();
+	                traverseToLevel(&node,*xi,*yi,*zi,s);
+	                if( (node != NULL )&&( node->getDepth() == s))
+	                    explore(node,query,neighbors, distances);
+	                ++zi;
+	            }
+	            ++yi;
+	        }
+	        ++xi;
         }
     }
     return (int)neighbors.size();
@@ -1126,5 +1169,27 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
     }
 }
 
-
+//template<class T>
+//void TOctreeIterator<T>::loopOverAllNodes(void (*func)(TOctreeNode<T>*)) const
+//{
+//    TOctreeNode<T>* node = m_octree->getRoot();
+//    loopOverRestNodes(node, func);
+//}
+//
+//template<class T>
+//void TOctreeIterator<T>::loopOverRestNodes(TOctreeNode<T>* node, void (*func)(TOctreeNode<T>*)) const
+//{
+//    if(node->getDepth() != 0)
+//    {
+//        for(unsigned int i = 0; i < 8; i++)
+//        {
+//            if(node->getChild(i) != NULL)
+//                loopOverRestNodes(node->getChild(i), func);
+//        }
+//    }
+//    else if (node->getNpts() != 0)
+//    {
+//        func(node);
+//    }
+//}
 #endif

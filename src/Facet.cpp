@@ -167,35 +167,36 @@ Facet::Facet(Edge* edge, Vertex* vertex, Point &ball_center)
 Facet::~Facet()
 { 
     // Deal with the edges first.
-    for(int i = 0; i < 2; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        Edge *e = m_vertex[i]->getLinkingEdge(m_vertex[i+1]);
+        int source_idx = i;
+        int target_idx = (i+1)%3;
+        Edge *e = m_vertex[source_idx]->getLinkingEdge(m_vertex[target_idx]);
         
-        //std::cout << "This facet address: " << this << std::endl;
-        //if (e->getFacet1() == NULL && e->getFacet2() != NULL)
-        //{
-        //    std::cerr << "Facet address: " << e->getFacet2() << std::endl;
-        //    std::cerr << "Error: Facet1 is NULL and Facet2 is not NULL" << std::endl;
-        //    std::exit(EXIT_FAILURE);
-        //}
-
         bool doesFacet1Exist = (e->getFacet1() != NULL);
         bool doesFacet2Exist = (e->getFacet2() != NULL);
-
-        if(doesFacet1Exist != doesFacet2Exist) 
-        {
-            m_vertex[i]->removeAdjacentEdge(e);
-            m_vertex[i+1]->removeAdjacentEdge(e);
-            removeNewBoundaryEdge(e);
-            delete e;
-            e=NULL;
-        }
-        else
+        
+        if(doesFacet1Exist == true && doesFacet2Exist == true   )
         {
             // In this case, the edge is shared by two facets.
             e->removeAdjacentFacet(this);
             e->setType(Edge::EdgeType::BORDER);
             insertNewBoundaryEdge(e);
+            continue;
+        }
+        if(doesFacet1Exist != doesFacet2Exist) 
+        {
+            m_vertex[source_idx]->removeAdjacentEdge(e);
+            m_vertex[target_idx]->removeAdjacentEdge(e);
+            removeNewBoundaryEdge(e);
+            delete e;
+            e=NULL;
+            continue;
+        }
+        if (doesFacet1Exist == false && doesFacet2Exist == false)
+        {
+            std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
+            std::exit(EXIT_FAILURE);
         }
     }
 
@@ -261,4 +262,3 @@ bool Facet::hasVertex(Vertex* v)
     else
         return false;
 }
-

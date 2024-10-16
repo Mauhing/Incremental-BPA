@@ -91,6 +91,8 @@ class Mesher
 
         /** @brief number of facets*/
         unsigned int m_nfacets;
+        
+        std::list<unsigned int> m_recycle_vertices_idx;
 
         Point_list m_ball_centers;
 
@@ -415,6 +417,12 @@ class Mesher
     public:
         void trimBoundaryFacets(std::set<Facet*> &boundary_facets);
 
+        void removeOrphanVertices(TOctreeNode<Vertex>* node);
+
+        const std::list<Facet*>& getFacets() const;
+
+    private: // 
+        std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
 };
 
 #endif

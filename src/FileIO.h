@@ -78,6 +78,8 @@ class FileIO
 
         static bool saveMeshDebug(const char* filename, Mesher &mesher);
 
+        static bool saveMeshDebug(const char* filename, const std::list<Facet*> &facets);
+
     private :
 
         /** @brief save all vertices contained in a node

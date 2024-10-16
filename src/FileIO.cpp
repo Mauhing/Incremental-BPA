@@ -385,6 +385,11 @@ bool FileIO::readFromBatchAndSortPoints(const string &batch_data, Octree &octree
 
 bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
 {
+    return saveMeshDebug(filename, mesher.getFacets());
+}
+
+bool FileIO::saveMeshDebug(const char* filename, const std::list<Facet*> &facets)
+{
     ofstream out;
     out.open(filename);
     out.precision( numeric_limits<double>::digits10 + 1);
@@ -397,10 +402,10 @@ bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
 
     out << "The first section will be idx, x, y, z, nx, ny, nz" << endl;
     out << "The second section will be 3, idx0, idx1, idx2" << endl;
-    
+
     std::unordered_map<int, Vertex*> vertices;
-    for( Facet_star_list::const_iterator fi = mesher.facets_begin();
-        fi != mesher.facets_end(); ++fi)
+    for( std::list<Facet*>::const_iterator fi = facets.begin();
+        fi != facets.end(); ++fi)
     {
        for(int i = 0; i < 3; ++i)
        {
@@ -417,9 +422,9 @@ bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
 
     // add a blank line
     out << endl;
-    
-    for( Facet_star_list::const_iterator fi = mesher.facets_begin();
-        fi != mesher.facets_end(); ++fi)
+
+    for( std::list<Facet*>::const_iterator fi = facets.begin();
+        fi != facets.end(); ++fi)
     {
         out << 3 << "\t";
         const Facet* f = *fi;
@@ -459,5 +464,6 @@ bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
         }
         // >>
     }
+    out.close(); // close the file
     return true;
 }

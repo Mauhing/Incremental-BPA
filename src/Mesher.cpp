@@ -52,6 +52,7 @@ Mesher::Mesher()
     m_nfacets = 0;
     m_nvertices = 0;
     m_num_ball_centers = 0;
+    m_recycle_vertices_idx = std::list<unsigned int>();
 }
 
 Mesher::Mesher(Octree* octree, OctreeIterator* iterator)
@@ -63,6 +64,7 @@ Mesher::Mesher(Octree* octree, OctreeIterator* iterator)
     m_nfacets = 0;
     m_nvertices = 0;
     m_num_ball_centers = 0;
+    m_recycle_vertices_idx = std::list<unsigned int>();
 }
 
 Mesher::~Mesher()
@@ -1322,6 +1324,48 @@ std::set<Facet*>& Mesher::getBoundaryFacets() const
     return *boundary_facets;
 }
 
+void Mesher::removeOrphanVertices(TOctreeNode<Vertex>* node)
+{
+    Vertex_UnOrdSet& points = node->GetPoints();    
+
+    std::list<Vertex*> temporary_orphan_vertices;
+    for ( auto iter = points.begin(); iter != points.end(); ++iter)
+    {
+        Vertex* v = *iter;
+        if (v->getType() == Vertex::ORPHAN)
+        {
+            temporary_orphan_vertices.push_back(v);
+        }
+    } 
+    
+    for (auto v : temporary_orphan_vertices)
+    {
+        // Update node
+        node->decreaseNptsByOne();
+        // Update the vertices set of the node.
+        points.erase(v);
+        // Remove the vertex from the mesh.
+        m_vertices.remove(v); // m_vertices is a std::list<Vertex*>.
+        // Retrieve the index of the vertex.
+        m_trimmed_vertices_idx.insert(v->index());
+        // Delete the vertex.
+        delete v;
+    } 
+    
+    // Clear the temporary list to free the memory.
+    temporary_orphan_vertices.clear();
+
+    // Update the node that if the vertex is trimmed, change it into ORPHAN.
+    for (auto v : points)
+    {
+        if (v->getType() == Vertex::TRIMMED)
+        {
+            v->setType(Vertex::ORPHAN);
+        }
+    }
+    
+}
+
 void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
 {
     for (auto facet : boundary_facets)
@@ -1330,19 +1374,22 @@ void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
         if (it != m_facets.end())
         {
             m_facets.erase(it);
-        }
-        
-        for (int i = 0; i < 3; ++i) {
-            Vertex *v = facet->vertex(i);
-            if (v->getType() == Vertex::ORPHAN) {
-                m_vertices.erase(std::find(m_vertices.begin(), m_vertices.end(), v));
-            }
-        }
-
+        } 
         delete facet;
         facet = NULL;
     }
-      
 
-    // TODO: Go into octree and remove the points that are no longer in use, which it is orphan.
+    // Update Octree to remove the points that are no longer in use, which it is orphan.
+    //m_iterator->loopOverAllNodes(&Mesher::removeOrphanVertices);
+    m_iterator->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
+        this->removeOrphanVertices(node); // m_vertices also gets updated.
+        // TODO: If the node is empty, remove it from it's parent.
+    });
+      
 }
+
+const std::list<Facet*>& Mesher::getFacets() const
+{
+    return m_facets;
+}
+

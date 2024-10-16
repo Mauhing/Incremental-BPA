@@ -192,9 +192,20 @@ int main(int argc, char **argv)
              <<"s."<<std::endl;
 
     std::cout << "Filling holes..." << std::endl;
+    std::time(&start);
     mesher.fillHoles();
+    std::time(&end);
+    std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
 
     std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
+
+    // Save the boundary facets to a file
+    std::cout << "Saving boundary facets to a file" << std::endl;
+    std::string debug_boundary_outfile = outfile;
+    debug_boundary_outfile.erase(debug_boundary_outfile.find(".ply"), 4);
+    debug_boundary_outfile += "_redundant.txt";
+    FileIO::saveMeshDebug(debug_boundary_outfile.c_str(), std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
+        
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
     mesher.trimBoundaryFacets(boundary_facets);
 
@@ -219,13 +230,9 @@ int main(int argc, char **argv)
         outFile.close();
         std::cout << "Ball centers written to " << filename << std::endl;
     };
-    
     // Call the function to write ball centers
     writeBallCentersToFile("ball_centers.txt");
 
-    //std::time(&start);
-    //mesher.fillHoles();
-    //std::time(&end);
 
     //std::cout<<difftime(end,start)<<" s."<<std::endl;
     //std::cout<<"Final mesh: "<<mesher.nVertices()
@@ -241,11 +248,9 @@ int main(int argc, char **argv)
     std::cout<<"Mesh saved in "<<outfile<<std::endl;
 
     std::cout << "Saving the debug mesh to " << outfile << std::endl;
-
     std::string debug_outfile = outfile;
     debug_outfile.erase(debug_outfile.find(".ply"), 4);
     debug_outfile += "_debug.txt";
-
     if(! FileIO::saveMeshDebug(debug_outfile.c_str(), mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;

@@ -14,6 +14,8 @@ if(BUILD_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
     # Disable optimizations in Debug mode
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    # Add _DEBUG definition for Debug mode
+    add_definitions(-D_DEBUG)
     message(STATUS "Building in Debug mode")
 else()
     set(CMAKE_BUILD_TYPE Release)
@@ -58,6 +60,9 @@ add_executable(ballpivoting
     src/Point.cpp
     src/Vertex.cpp
 )
+
+# Add compile definitions for debug mode
+target_compile_definitions(ballpivoting PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 
 # Add Open3D include directories
 target_include_directories(ballpivoting PRIVATE ${Open3D_INCLUDE_DIRS})
