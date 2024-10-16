@@ -1313,11 +1313,17 @@ std::set<Facet*>& Mesher::getBoundaryFacets() const
         Facet_set facets_set2 = v2->adjacentFacets();
         for (const auto& facet : facets_set1)
         {
-            boundary_facets->insert(facet);
+            if (facet->isNewlyArrived())
+            {
+                boundary_facets->insert(facet);
+            }
         }
         for (const auto& facet : facets_set2)
         {
-            boundary_facets->insert(facet);
+            if (facet->isNewlyArrived())
+            {
+                boundary_facets->insert(facet);
+            }
         }
     }
     std::cout << "Address of boundary_facets in getBoundaryFacets: " << boundary_facets << std::endl;
@@ -1393,3 +1399,10 @@ const std::list<Facet*>& Mesher::getFacets() const
     return m_facets;
 }
 
+void Mesher::setAllFacetsToOld()
+{
+    for (auto facet : m_facets)
+    {
+        facet->setNewlyArrived(false);
+    }
+}

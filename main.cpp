@@ -209,6 +209,9 @@ int main(int argc, char **argv)
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
     mesher.trimBoundaryFacets(boundary_facets);
 
+    std::cout << "Setting all facets to old" << std::endl;
+    mesher.setAllFacetsToOld();
+
     std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
     
     // Function to write ball centers to a file

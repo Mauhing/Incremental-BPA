@@ -262,3 +262,13 @@ bool Facet::hasVertex(Vertex* v)
     else
         return false;
 }
+
+bool Facet::isNewlyArrived()
+{
+    return m_newly_arrived;
+}
+
+void Facet::setNewlyArrived(bool newly_arrived)
+{
+    m_newly_arrived = newly_arrived;
+}

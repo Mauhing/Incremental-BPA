@@ -421,6 +421,8 @@ class Mesher
 
         const std::list<Facet*>& getFacets() const;
 
+        void setAllFacetsToOld();
+
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
 };
