@@ -428,6 +428,8 @@ class Mesher
         
         void putBallCentersInOctree();
 
+        void furtherReconstruct();
+
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
 };

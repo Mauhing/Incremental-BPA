@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     int infile_flag = -1;
     int outfile_flag = -1;
     std::list<double> radii;
-    int parallel_flag = -1;
+    //int parallel_flag = -1;
 
     while( (c = getopt(argc,argv, "i:o:d:r:p")) != -1)
     {
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
             }
             case 'p':
             {
-                parallel_flag = 1;
+                //parallel_flag = 1;
                 break;
             }
             case 'r': 
@@ -212,6 +212,12 @@ int main(int argc, char **argv)
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
     mesher.trimBoundaryFacets(boundary_facets);
 
+    std::cout<<"Reconstructed mesh after trimming boundary facets: "<<mesher.nVertices()
+             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
+    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
+    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
+             <<"s."<<std::endl;
+
     // Sanity check 
     #ifdef _DEBUG
     std::cout << "Sanity check" << std::endl;
@@ -239,41 +245,72 @@ int main(int argc, char **argv)
 
     std::cout << "Remove overlape vertices in next batch" << std::endl;
     std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
-    std::cout << "Vertices size: " << vertices.size() << std::endl;
     
+
+    std::cout << "Vertices size: " << vertices.size() << std::endl;
     std::unordered_set<Vertex*> vertices_set;
     for (auto& vertex : vertices) {
-        // Check if the vertex is in side the any ball
+        //Check if the vertex is in side the any ball
         //Point point = Point(vertex.x(), vertex.y(), vertex.z());
         std::map<double, Point*> neighbors;
-        octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+        unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+        if (num_neighbors == 0) {
+            //Vertex* vertex_ptr = new Vertex(vertex);
+            Vertex* vertex_prt = octree.checkSizeAndaddPoint(vertex);
+            vertices_set.insert(vertex_prt);
+        }
+        else {
+            //std::cout << "Vertex " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " is inside a ball" << std::endl;
+            // How many neighbors are there?
+            //std::cout << "Number of neighbors: " << num_neighbors << std::endl;
+        }        
     }
 
+    // Sanity check
+    //#ifdef _DEBUG
+    //std::cout << "Sanity check" << std::endl;
+    //for (auto& vertex : vertices_set) {
+    //    std::cout << "Vertex " << vertex->x() << " " << vertex->y() << " " << vertex->z() << std::endl; 
+    //}
+    //#endif
 
-
-    std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
+    std::cout << "Further reconstructing" << std::endl;
+    mesher.furtherReconstruct();
     
-    // Function to write ball centers to a file
-    auto writeBallCentersToFile = [&mesher](const std::string& filename) {
-        std::ofstream outFile(filename);
-        if (!outFile.is_open()) {
-            std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
-            return;
-        }
-        
-        outFile << "x y z" << std::endl;  // Header
-        
-        //const auto& ballCenters = mesher.getBallCenters();
-        const Point_UnOrdSet& ballCenters = mesher.getBallCenters();
-        for (const auto& center : ballCenters) {
-            outFile << center->x() << " " << center->y() << " " << center->z() << std::endl;
-        }
-        
-        outFile.close();
-        std::cout << "Ball centers written to " << filename << std::endl;
-    };
-    // Call the function to write ball centers
-    writeBallCentersToFile("ball_centers.txt");
+    mesher.fillHoles();
+    
+    std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
+             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
+    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
+    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
+             <<"s."<<std::endl;
+    
+
+
+
+    //std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
+    
+    //// Function to write ball centers to a file
+    //auto writeBallCentersToFile = [&mesher](const std::string& filename) {
+    //    std::ofstream outFile(filename);
+    //    if (!outFile.is_open()) {
+    //        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+    //        return;
+    //    }
+    //    
+    //    outFile << "x y z" << std::endl;  // Header
+    //    
+    //    //const auto& ballCenters = mesher.getBallCenters();
+    //    const Point_UnOrdSet& ballCenters = mesher.getBallCenters();
+    //    for (const auto& center : ballCenters) {
+    //        outFile << center->x() << " " << center->y() << " " << center->z() << std::endl;
+    //    }
+    //    
+    //    outFile.close();
+    //    std::cout << "Ball centers written to " << filename << std::endl;
+    //};
+    //// Call the function to write ball centers
+    //writeBallCentersToFile("ball_centers.txt");
 
 
     //std::cout<<difftime(end,start)<<" s."<<std::endl;

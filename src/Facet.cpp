@@ -272,3 +272,8 @@ void Facet::setNewlyArrived(bool newly_arrived)
 {
     m_newly_arrived = newly_arrived;
 }
+
+std::set<Edge*> Facet::getRecordedNewBoundaryEdges()
+{
+    return sb_recordedNewBoundaryEdges;
+}

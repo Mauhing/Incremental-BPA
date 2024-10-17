@@ -173,6 +173,24 @@ void Mesher::reconstruct(const std::list<double>& radii)
     }
 }
 
+void Mesher::furtherReconstruct()
+{
+    Edge_star_list::iterator ei = m_border_edges.begin();
+    while(ei != m_border_edges.end())
+    {
+        Edge *e = *ei;
+        e->setType(Edge::FRONT);
+        m_edge_front.push_back(e);
+        ei = m_border_edges.erase(ei);
+    } 
+
+
+    unsigned int depth = m_octree_vertices->getDepth();
+    m_iterator_vertices->setDepth(depth);
+    
+    reconstruct();
+}
+
 
 void Mesher::changeRadius(double radius)
 {
@@ -199,50 +217,6 @@ void Mesher::changeRadius(double radius)
              <<" border edges."<<std::endl;
 }
 
-/** 
-void Mesher::cont_reconstruct()
-{
-    std::cout<<"***********Ball radius "<<m_ball_radius
-             <<" ***********"<<std::endl;
-
-    if(m_edge_front.empty())
-    {
-        std::cerr << "Edge front is empty. Aborting program." << std::endl;
-        std::abort(); // Aborts the program 
-    }
-    else
-    {
-        expandTriangulation();
-    }
-}
-
-void Mesher::cont_reconstruct(const std::list<double>& radii)
-{
-    std::cout << "single threaded reconstruction" << std::endl;
-    allBoundaryEdgesToFrontEdges();
-    for (double radius : radii)
-    {
-        setBallRadius(radius);
-        //changeRadius(radius);
-        cont_reconstruct();
-    }
-}
-
-
-void Mesher::allBoundaryEdgesToFrontEdges()
-{
-    Edge_star_list::iterator ei = m_border_edges.begin();
-    while(ei != m_border_edges.end())
-    {
-        Edge *e = *ei;
-        Facet *f = e->getFacet1();
-
-        e->setType(1);
-        m_edge_front.push_back(e);
-        ei = m_border_edges.erase(ei);
-        ++ei;
-    }
-}*/
 
 void Mesher::resetOctree(OctreeVertices *octree, OctreeIteratorVertices *iterator)
 {
@@ -1331,6 +1305,11 @@ void Mesher::trimBoundaryFacets(std::set<Facet*> &boundary_facets)
         delete facet;
         facet = NULL;
     }
+    
+    // Important. ToDo get new boundary edges.
+    m_border_edges.clear();
+    std::set<Edge*> new_boundary_edges = Facet::getRecordedNewBoundaryEdges();
+    m_border_edges = std::list<Edge*>(new_boundary_edges.begin(), new_boundary_edges.end());
 
     // Update OctreeVertices to remove the points that are no longer in use, which it is orphan.
     //m_iterator_vertices->loopOverAllNodes(&Mesher::removeOrphanVertices);
