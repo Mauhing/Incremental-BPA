@@ -874,8 +874,9 @@ void Mesher::fillHoles()
 	        ++ei;
 	        continue;
         }
-
-        Facet *f = new Facet(src,tgt,v);
+        
+        // The new facet should be from target to source to mimic the half-edge data structure.
+        Facet *f = new Facet(tgt, src,v);
         addFacet(f);
         ei = m_border_edges.erase(ei);
     }
@@ -1341,6 +1342,90 @@ void Mesher::putBallCentersInOctree()
         Point* new_pt = m_octree_ball_centers->checkSizeAndaddPoint(ball_center);
         m_num_ball_centers++;
         m_ball_centers.insert(new_pt);
+
+        #ifdef _DEBUG
+        // if all zero, print the index, print all vertices
+        //if (ball_center.x() == 0 && ball_center.y() == 0 && ball_center.z() == 0)
+        //{
+        //    Vertex* v0 = facet->getVertex(0);
+        //    Vertex* v1 = facet->getVertex(1);
+        //    Vertex* v2 = facet->getVertex(2);
+        //    std::cout << "Vertex 0: " << v0->index() << std::endl;
+        //    std::cout << "Vertex 1: " << v1->index() << std::endl;
+        //    std::cout << "Vertex 2: " << v2->index() << std::endl;
+        //    // Print location of the vertices
+        //    std::cout << "Location of vertex 0: " << v0->x() << " " << v0->y() << " " << v0->z() << std::endl;
+        //    std::cout << "Location of vertex 1: " << v1->x() << " " << v1->y() << " " << v1->z() << std::endl;
+        //    std::cout << "Location of vertex 2: " << v2->x() << " " << v2->y() << " " << v2->z() << std::endl;
+        //}
+        #endif
     }
 }
 
+Edge_star_list Mesher::getBorderEdges() const
+{
+    return m_border_edges;
+}
+
+bool sameOrientation(int i, Facet* query_facet)
+{
+    
+    Vertex* queryV_Source = query_facet->getVertex(i);
+    Vertex* queryV_Target = query_facet->getVertex(i+1);
+    
+    Edge* e0 = queryV_Source->getLinkingEdge(queryV_Target);
+    Facet* facet_1, *facet_2;
+    facet_1 = e0->getFacet1();
+    facet_2 = e0->getFacet2();
+
+    Facet* adjacent_facet = (facet_1 == query_facet) ? facet_2 : facet_1;
+    if (adjacent_facet == NULL)
+    {
+        return true;
+    }
+    else
+    {
+       for (int k = 0; k < 3; k++)
+       {
+            Vertex* adjV_source = adjacent_facet->getVertex(k);
+            Vertex* adjV_target = adjacent_facet->getVertex(k+1);
+            if (adjV_source == queryV_Target && adjV_target == queryV_Source)
+            {
+                std::cout << "Good orientation" << std::endl;
+                return true;
+            }
+       }
+        std::cout <<" Adress of query facet: " << query_facet << std::endl;
+        std::cout <<" Adress of queryV_Source: " << queryV_Source << std::endl;
+        std::cout <<" Adress of queryV_Target: " << queryV_Target << std::endl;
+        std::cout <<" Adress of adjacent_facet: " << adjacent_facet << std::endl;
+        std::cout <<" Adress of adjV_1: " << adjacent_facet->getVertex(0) << std::endl;
+        std::cout <<" Adress of adjV_2: " << adjacent_facet->getVertex(1) << std::endl;
+        std::cout <<" Adress of adjV_3: " << adjacent_facet->getVertex(2) << std::endl;
+
+        std::cerr << "Error: The orientation of the facet is incorrect." << std::endl;
+        std::exit(EXIT_FAILURE);
+
+       return false;
+    } 
+}
+
+void Mesher::SanityCheckOrientation() const
+{
+    for (auto facet : m_facets)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if (sameOrientation(i, facet))
+            {
+                continue;
+            }
+            else
+            {
+                std::cerr << "Error: The orientation of the facet is incorrect." << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+        
+    }
+}

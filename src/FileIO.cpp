@@ -492,3 +492,53 @@ std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
 
     return input_vertices;
 }
+
+bool FileIO::saveLinesetDebug(const char* filename, const Edge_star_list &border_edges)
+{
+    ofstream out;
+    out.open(filename);
+    out.precision( numeric_limits<double>::digits10 + 1);
+    
+    if(!out)
+    { // file couldn't be opened
+    cerr << "Error: file could not be opened" << endl;
+    return false;
+    }
+
+    for (auto& edge : border_edges)
+    {
+        Vertex *v0 = edge->getSource();
+        Vertex *v1 = edge->getTarget();
+        out << v0->x() << "\t" << v0->y() << "\t" << v0->z() << "\t" << v1->x() << "\t" << v1->y() << "\t" << v1->z() << endl;
+    }
+    out.close(); // close the file
+    return true;
+}
+
+bool FileIO::saveBallCenters(const char* filename, const Point_UnOrdSet &ball_centers, const double &radius)
+{
+    ofstream out;
+    out.open(filename);
+    out.precision( numeric_limits<double>::digits10 + 1);
+    
+    if(!out)
+    { // file couldn't be opened
+    cerr << "Error: file could not be opened" << endl;
+    return false;
+    }
+
+    // First line is explaination
+    out << "Line 2: radius. Rest of the lines are x, y, z" << endl;
+    
+    // Save the radius
+    out << radius << endl;
+    
+    // Save the ball centers
+    for (auto& center : ball_centers)
+    {
+        out << center->x() << "\t" << center->y() << "\t" << center->z() << endl;
+    }
+
+    out.close();
+    return true;
+}

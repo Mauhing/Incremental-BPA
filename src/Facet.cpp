@@ -133,6 +133,9 @@ Facet::Facet(Edge* edge, Vertex* vertex)
         m_vertex[i]->updateType();
 
     }
+    #ifdef _DEBUG
+    std::cout << "m_ball_center in Facet constructor: " << m_ball_center << std::endl;
+    #endif
 }
 
 Facet::Facet(Edge* edge, Vertex* vertex, Point &ball_center)

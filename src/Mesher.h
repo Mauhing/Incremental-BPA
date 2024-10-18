@@ -429,9 +429,14 @@ class Mesher
         void putBallCentersInOctree();
 
         void furtherReconstruct();
+        
+        Edge_star_list getBorderEdges() const;
 
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
+
+    public: // Sanity check
+        void SanityCheckOrientation() const;
 };
 
 #endif

@@ -80,6 +80,10 @@ class FileIO
 
         static bool saveMeshDebug(const char* filename, const std::list<Facet*> &facets);
 
+        static bool saveLinesetDebug(const char* filename, const Edge_star_list &border_edges);
+
+        static bool saveBallCenters(const char* filename, const Point_UnOrdSet &ball_centers, const double &radius);
+
     private :
 
         /** @brief save all vertices contained in a node

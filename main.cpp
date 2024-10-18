@@ -200,6 +200,9 @@ int main(int argc, char **argv)
     std::time(&end);
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
 
+    std::cout << "Sanity check: check orientation" << std::endl;
+    mesher.SanityCheckOrientation();
+
     std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
 
     // Save the boundary facets to a file
@@ -220,7 +223,7 @@ int main(int argc, char **argv)
 
     // Sanity check 
     #ifdef _DEBUG
-    std::cout << "Sanity check" << std::endl;
+    std::cout << "Sanity check: check facets" << std::endl;
     std::list<Facet*> facets = mesher.getFacets();
     for (auto& facet : facets) {
         // Get all three edges of the facet and check their facets
@@ -234,8 +237,17 @@ int main(int argc, char **argv)
             }
         }
     }
-    #endif
+    #endif    // Sanity check: save border edges
 
+    #ifdef _DEBUG
+    std::cout << "Sanity check: save border edges after trimming" << std::endl;
+    Edge_star_list border_edges = mesher.getBorderEdges();
+    std::string debug_border_edges_outfile = outfile;
+    debug_border_edges_outfile.erase(debug_border_edges_outfile.find(".ply"), 4);
+    debug_border_edges_outfile += "_border_edges.txt";
+    FileIO::saveLinesetDebug(debug_border_edges_outfile.c_str(), border_edges);
+    // Result: It is correct.
+    #endif
 
     std::cout << "Setting all facets to old" << std::endl;
     mesher.setAllFacetsToOld();
@@ -243,6 +255,16 @@ int main(int argc, char **argv)
     std::cout << "Set empty ball " << std::endl;
     mesher.putBallCentersInOctree();
 
+    // Sanity check: save ball centers
+    #ifdef _DEBUG
+    std::cout << "Sanity check: save ball centers" << std::endl;
+    std::string debug_ball_centers_outfile = outfile;
+    debug_ball_centers_outfile.erase(debug_ball_centers_outfile.find(".ply"), 4);
+    debug_ball_centers_outfile += "_ball_centers.txt";
+    FileIO::saveBallCenters(debug_ball_centers_outfile.c_str(), mesher.getBallCenters(), radius);
+    #endif
+
+    // Next batch
     std::cout << "Remove overlape vertices in next batch" << std::endl;
     std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
     
@@ -266,14 +288,6 @@ int main(int argc, char **argv)
         }        
     }
 
-    // Sanity check
-    //#ifdef _DEBUG
-    //std::cout << "Sanity check" << std::endl;
-    //for (auto& vertex : vertices_set) {
-    //    std::cout << "Vertex " << vertex->x() << " " << vertex->y() << " " << vertex->z() << std::endl; 
-    //}
-    //#endif
-
     std::cout << "Further reconstructing" << std::endl;
     mesher.furtherReconstruct();
     
@@ -285,11 +299,7 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
     
-
-
-
-    //std::cout << "Number of ball centers: " << mesher.getNumBallCenters() << std::endl;
-    
+ 
     //// Function to write ball centers to a file
     //auto writeBallCentersToFile = [&mesher](const std::string& filename) {
     //    std::ofstream outFile(filename);

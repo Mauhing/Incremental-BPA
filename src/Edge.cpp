@@ -158,6 +158,11 @@ void Edge::updateOrientation()
         Vertex *temp = m_src;
         m_src = m_tgt;
         m_tgt = temp;
+        
+        #ifdef _DEBUG
+        std::cerr << "Edge::updateOrientation() - Edge flipped" << std::endl;
+        std::exit(EXIT_FAILURE);
+        #endif
     }
 }
 
