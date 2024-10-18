@@ -327,6 +327,9 @@ class Mesher
         bool computeBallCenter(const Vertex &v1, const Vertex &v2,
                                const Vertex &v3, Point &center) const;
 
+        bool computeBallCenterUsingOrderOfVertices(const Vertex &v1, const Vertex &v2,
+                               const Vertex &v3, Point &center) const;
+
         /** @brief  compute a normal direction coherent with the
          * three points normals
          * @param v1 first triangle vertex
@@ -337,6 +340,9 @@ class Mesher
          * @param[out] nz normal z component
          */
         void computeNormal(const Vertex &v1, const Vertex &v2, const Vertex &v3,
+                           double &nx, double &ny, double &nz) const;
+
+        void computeNormalUsingOrderOfVertices(const Vertex &v1, const Vertex &v2, const Vertex &v3,
                            double &nx, double &ny, double &nz) const;
 
         /** @brief find a candidate vertex for creating a face

@@ -32,6 +32,8 @@ Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2)
     m_vertex[0] = v0;
     m_vertex[1] = v1;
     m_vertex[2] = v2;
+    
+    // TODO: Need to initialize m_ball_center
 
     Edge *e0 = v0->getLinkingEdge(v1);
     if(e0 == NULL)
