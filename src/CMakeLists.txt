@@ -6,6 +6,7 @@ add_library(incremental_bpa STATIC
     Point.cpp
     Mesher.cpp
     FileIO.cpp
+    BallCenter.cpp
 )
 
 # Add this line to ensure the header files are found. This means any executable that links to this library will also be able to find the header files.

@@ -59,6 +59,7 @@ add_executable(ballpivoting
     src/Mesher.cpp
     src/Point.cpp
     src/Vertex.cpp
+    src/BallCenter.cpp
 )
 
 # Add compile definitions for debug mode

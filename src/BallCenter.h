@@ -1,5 +1,5 @@
-#ifndef VERTEX_H
-#define VERTEX_H
+#ifndef BALLCENTER_H
+#define BALLCENTER_H
 
 #include <cstdlib>
 #include <cstdio>
@@ -7,24 +7,16 @@
 #include <set>
 
 #include "Point.h"
-#include "types.h"
-//#include "OctreeNode.h"
 
-class Edge;
 class Facet;
-//class OctreeNodeV;
-template<typename T> class TOctreeNode; // Forward declaration
 
 using namespace std;
 
 
 /**
- * @class Vertex
- * @brief Input samples to be triangulated
+ * @class BallCenter
+ * @brief Ball center of a facet
  * 
- * Sample point inserted as vertex in the program:
- * to begin with, it is an orphan vertex which will be aggreggated
- * during the triangulation contains topology information
  */
 class BallCenter : public Point
 {

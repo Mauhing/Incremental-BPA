@@ -21,6 +21,7 @@
 #include "Point.h"
 #include "Vertex.h"
 #include "Edge.h"
+#include "BallCenter.h"
 
 /**
  * @class Facet
@@ -45,14 +46,7 @@ class Facet
     public : //constructor+destructor
 
         /** @brief constructor*/
-        Facet();
-
-        /** @brief constructor from a set of vertices
-         * @param v1 first vertex
-         * @param v2 second vertex
-         * @param v3 third vertex
-         */
-        Facet(Vertex* v1, Vertex* v2, Vertex* v3);
+        Facet() = delete;
 
         /** @brief constructor from a set of vertices
          * @param v1 first vertex

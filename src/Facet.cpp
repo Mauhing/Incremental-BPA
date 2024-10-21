@@ -17,54 +17,11 @@
 #include "Facet.h"
 #include "Edge.h"
 #include "Vertex.h"
+#include "BallCenter.h"
 
 // Initialize the static member.
 std::set<Edge*> Facet::sb_recordedNewBoundaryEdges;
 
-Facet::Facet()
-{
-    for(int i=0;i<3;i++)
-        m_vertex[i] = NULL;
-}
-
-Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2)
-{
-    m_vertex[0] = v0;
-    m_vertex[1] = v1;
-    m_vertex[2] = v2;
-    
-    // TODO: Need to initialize m_ball_center
-
-    Edge *e0 = v0->getLinkingEdge(v1);
-    if(e0 == NULL)
-    {
-        e0 = new Edge(v0, v1);
-    }
-    e0->addAdjacentFacet(this);
-
-    Edge *e1 = v1->getLinkingEdge(v2);
-    if(e1 == NULL)
-    {
-        e1 = new Edge(v1, v2);
-    }
-    e1->addAdjacentFacet(this);
-
-    Edge *e2 = v2->getLinkingEdge(v0);
-    if(e2 == NULL)
-    {
-        e2 = new Edge(v2, v0);
-    }
-    e2->addAdjacentFacet(this);
-
-    for(int i= 0; i < 3; i++)
-    {
-        m_vertex[i]->addAdjacentFacet(this);
-        m_vertex[i]->updateType();
-    }
-}
-
-//added by mauhing
-//bool Facet::
 
 Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
 {
@@ -73,9 +30,6 @@ Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
     m_vertex[2] = v2;
     m_ball_center = ball_center;
 
-    // Pirnt: does m_ball_center have the same address as ball_center?
-    //std::cout << "m_ball_center address: " << &m_ball_center << std::endl;
-    //std::cout << "ball_center address: " << &ball_center << std::endl;
 
     Edge *e0 = v0->getLinkingEdge(v1);
     if(e0 == NULL)
