@@ -1458,7 +1458,6 @@ bool sameOrientation(int i, Facet* query_facet)
             Vertex* adjV_target = adjacent_facet->getVertex(k+1);
             if (adjV_source == queryV_Target && adjV_target == queryV_Source)
             {
-                std::cout << "Good orientation" << std::endl;
                 return true;
             }
        }

@@ -203,17 +203,33 @@ int main(int argc, char **argv)
     std::cout << "Sanity check: check orientation" << std::endl;
     mesher.SanityCheckOrientation();
 
+    std::cout << "Saving the debug mesh to " << outfile << std::endl;
+    std::string debug_outfile = outfile;
+    debug_outfile.erase(debug_outfile.find(".ply"), 4);
+    debug_outfile += "_cumulative1.txt";
+    if(! FileIO::saveMeshDebug(debug_outfile.c_str(), mesher))
+    {
+        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+        return EXIT_FAILURE;
+    }
+
     std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
 
     // Save the boundary facets to a file
-    std::cout << "Saving boundary facets to a file" << std::endl;
+    std::cout << "Saving trimmed facets to a file" << std::endl;
     std::string debug_boundary_outfile = outfile;
     debug_boundary_outfile.erase(debug_boundary_outfile.find(".ply"), 4);
-    debug_boundary_outfile += "_redundant.txt";
+    debug_boundary_outfile += "_trimmed.txt";
     FileIO::saveMeshDebug(debug_boundary_outfile.c_str(), std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
         
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
     mesher.trimBoundaryFacets(boundary_facets);
+
+    std::cout << "Saving trimmed facets to a file" << std::endl;
+    debug_boundary_outfile = outfile;
+    debug_boundary_outfile.erase(debug_boundary_outfile.find(".ply"), 4);
+    debug_boundary_outfile += "_after_trimmed.txt";
+    FileIO::saveMeshDebug(debug_boundary_outfile.c_str(), mesher);
 
     std::cout<<"Reconstructed mesh after trimming boundary facets: "<<mesher.nVertices()
              <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
@@ -237,8 +253,9 @@ int main(int argc, char **argv)
             }
         }
     }
-    #endif    // Sanity check: save border edges
-
+    #endif    
+    
+    // Sanity check: save border edges
     #ifdef _DEBUG
     std::cout << "Sanity check: save border edges after trimming" << std::endl;
     Edge_star_list border_edges = mesher.getBorderEdges();
@@ -299,34 +316,6 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
     
- 
-    //// Function to write ball centers to a file
-    //auto writeBallCentersToFile = [&mesher](const std::string& filename) {
-    //    std::ofstream outFile(filename);
-    //    if (!outFile.is_open()) {
-    //        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
-    //        return;
-    //    }
-    //    
-    //    outFile << "x y z" << std::endl;  // Header
-    //    
-    //    //const auto& ballCenters = mesher.getBallCenters();
-    //    const Point_UnOrdSet& ballCenters = mesher.getBallCenters();
-    //    for (const auto& center : ballCenters) {
-    //        outFile << center->x() << " " << center->y() << " " << center->z() << std::endl;
-    //    }
-    //    
-    //    outFile.close();
-    //    std::cout << "Ball centers written to " << filename << std::endl;
-    //};
-    //// Call the function to write ball centers
-    //writeBallCentersToFile("ball_centers.txt");
-
-
-    //std::cout<<difftime(end,start)<<" s."<<std::endl;
-    //std::cout<<"Final mesh: "<<mesher.nVertices()
-    //         <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
-    //std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
 
     std::cout << "Saving mesh to " << outfile << std::endl;
     if(! FileIO::saveMesh(outfile.c_str(), mesher))
@@ -337,9 +326,9 @@ int main(int argc, char **argv)
     std::cout<<"Mesh saved in "<<outfile<<std::endl;
 
     std::cout << "Saving the debug mesh to " << outfile << std::endl;
-    std::string debug_outfile = outfile;
+    debug_outfile = outfile;
     debug_outfile.erase(debug_outfile.find(".ply"), 4);
-    debug_outfile += "_debug.txt";
+    debug_outfile += "_cumulative2.txt";
     if(! FileIO::saveMeshDebug(debug_outfile.c_str(), mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
