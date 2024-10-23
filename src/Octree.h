@@ -187,6 +187,8 @@ class TOctree
             }
         }
 
+        void checkSizeAndexpand(T& pt);
+
     protected :
         /**
          *@brief Maximum depth of the octree
@@ -386,7 +388,7 @@ unsigned int TOctree<T>::addPoints(Iterator begin, Iterator end)
 enum PointInBox {RIGHT=0, LEFT=1, INSIDE=2};
 
 template<class T>
-T* TOctree<T>::checkSizeAndaddPoint(T& pt)
+void TOctree<T>::checkSizeAndexpand(T& pt)
 {
     // 0 means the x coordinate is larger than the right border of the octree
     // 1 means the x coordinate is smaller than the left border of the octree
@@ -437,20 +439,6 @@ T* TOctree<T>::checkSizeAndaddPoint(T& pt)
         unsigned int x_insert_index = (x_in_box == PointInBox::LEFT) ? 1 : 0;
         unsigned int y_insert_index = (y_in_box == PointInBox::LEFT) ? 1 : 0;
         unsigned int z_insert_index = (z_in_box == PointInBox::LEFT) ? 1 : 0;
-    
-        // at this stage n_max will be at least 1
-        // expand size uniformly
-        //std::cerr<<"Point out of the octree bounding box"<<std::endl;
-        //std::cout << "n_max: " << n_max << std::endl;
-
-        //#ifndef NDEBUG
-        //std::cout << "Debug: n_max: " << n_max << std::endl; 
-        //if (n_max < 1) {
-        //    std::cerr << "Error: n_max must be at least 1." << std::endl;
-        //    std::exit(EXIT_FAILURE);
-        //}
-        //std::cout << "Debug: expanding OctreeVertices" << std::endl;
-        //#endif
 
         // this for loop can not be parallelized
         for (unsigned int i =0; i < n_max; ++i)
@@ -488,7 +476,6 @@ T* TOctree<T>::checkSizeAndaddPoint(T& pt)
             m_root = new_root_node;
 
             // Update the Octree
-            m_depth++;
             m_size *= 2;
             m_binsize *= 2;
             m_origin = new_origin;
@@ -497,6 +484,13 @@ T* TOctree<T>::checkSizeAndaddPoint(T& pt)
             m_non_empty_nodes.insert(new_root_node);
         }
     }     
+
+}
+
+template<class T>
+T* TOctree<T>::checkSizeAndaddPoint(T& pt)
+{
+    checkSizeAndexpand(pt);
     T* new_pt = addPoint(pt);
     return new_pt;
 }

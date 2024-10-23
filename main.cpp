@@ -287,7 +287,12 @@ int main(int argc, char **argv)
     
 
     std::cout << "Vertices size: " << vertices.size() << std::endl;
+    for (auto& vertex : vertices) {
+       octree_ball_centers.checkSizeAndexpand(vertex);
+    }
+
     std::unordered_set<Vertex*> vertices_set;
+    octree_ball_centers_iterator.setDepth(octree.getDepth());
     for (auto& vertex : vertices) {
         //Check if the vertex is in side the any ball
         //Point point = Point(vertex.x(), vertex.y(), vertex.z());
