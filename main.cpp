@@ -296,7 +296,7 @@ int main(int argc, char **argv)
     for (auto& vertex : vertices) {
         //Check if the vertex is in side the any ball
         //Point point = Point(vertex.x(), vertex.y(), vertex.z());
-        std::map<double, Point*> neighbors;
+        std::map<double, Point*> neighbors; // neighbor.first is the squared distance
         unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         if (num_neighbors == 0) {
             //Vertex* vertex_ptr = new Vertex(vertex);
