@@ -122,10 +122,12 @@ int main(int argc, char **argv)
         radius = radii.front();
     }
 
+    // Set the base output filename
+    FileIO::setBaseOutputFilename(outfile.erase(outfile.find(".ply"), 4));
+
     time_t start,end;
 
     OctreeVertices octree;
-    //Mesher mesher;
 
     std::time(&start);
     bool ok;
@@ -203,11 +205,11 @@ int main(int argc, char **argv)
     std::cout << "Sanity check: check orientation" << std::endl;
     mesher.SanityCheckOrientation();
 
-    std::cout << "Saving the debug mesh to " << outfile << std::endl;
-    std::string debug_outfile = outfile;
-    debug_outfile.erase(debug_outfile.find(".ply"), 4);
-    debug_outfile += "_cumulative1.txt";
-    if(! FileIO::saveMeshDebug(debug_outfile.c_str(), mesher))
+    //std::cout << "Saving the debug mesh to " << outfile << std::endl;
+    //std::string debug_outfile = outfile;
+    //debug_outfile.erase(debug_outfile.find(".ply"), 4);
+    //debug_outfile += "_cumulative1.txt";
+    if(! FileIO::saveMeshDebug("_cumulative1.txt", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
@@ -217,19 +219,13 @@ int main(int argc, char **argv)
 
     // Save the boundary facets to a file
     std::cout << "Saving trimmed facets to a file" << std::endl;
-    std::string debug_boundary_outfile = outfile;
-    debug_boundary_outfile.erase(debug_boundary_outfile.find(".ply"), 4);
-    debug_boundary_outfile += "_trimmed.txt";
-    FileIO::saveMeshDebug(debug_boundary_outfile.c_str(), std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
+    FileIO::saveMeshDebug("_trimmed.txt", std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
         
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
     mesher.trimBoundaryFacets(boundary_facets);
 
     std::cout << "Saving trimmed facets to a file" << std::endl;
-    debug_boundary_outfile = outfile;
-    debug_boundary_outfile.erase(debug_boundary_outfile.find(".ply"), 4);
-    debug_boundary_outfile += "_after_trimmed.txt";
-    FileIO::saveMeshDebug(debug_boundary_outfile.c_str(), mesher);
+    FileIO::saveMeshDebug("_after_trimmed.txt", mesher);
 
     std::cout<<"Reconstructed mesh after trimming boundary facets: "<<mesher.nVertices()
              <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
@@ -237,32 +233,11 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
 
-    // Sanity check 
-    #ifdef _DEBUG
-    std::cout << "Sanity check: check facets" << std::endl;
-    std::list<Facet*> facets = mesher.getFacets();
-    for (auto& facet : facets) {
-        // Get all three edges of the facet and check their facets
-        for (int i = 0; i < 3; ++i) {
-            Vertex* vertex1 = facet->getVertex(i);
-            Vertex* vertex2 = facet->getVertex((i+1)%3);
-            Edge* edge = vertex1->getLinkingEdge(vertex2);
-            if (edge->getFacet2() != nullptr && edge->getFacet1() == nullptr) {
-                std::cerr << "Facet " << i+1 << " does not exist" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-    }
-    #endif    
-    
     // Sanity check: save border edges
     #ifdef _DEBUG
-    std::cout << "Sanity check: save border edges after trimming" << std::endl;
-    Edge_star_list border_edges = mesher.getBorderEdges();
-    std::string debug_border_edges_outfile = outfile;
-    debug_border_edges_outfile.erase(debug_border_edges_outfile.find(".ply"), 4);
-    debug_border_edges_outfile += "_border_edges.txt";
-    FileIO::saveLinesetDebug(debug_border_edges_outfile.c_str(), border_edges);
+    //std::cout << "Sanity check: save border edges after trimming" << std::endl;
+    //Edge_star_list border_edges = mesher.getBorderEdges();
+    //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     // Result: It is correct.
     #endif
 
@@ -275,40 +250,50 @@ int main(int argc, char **argv)
     // Sanity check: save ball centers
     #ifdef _DEBUG
     std::cout << "Sanity check: save ball centers" << std::endl;
-    std::string debug_ball_centers_outfile = outfile;
-    debug_ball_centers_outfile.erase(debug_ball_centers_outfile.find(".ply"), 4);
-    debug_ball_centers_outfile += "_ball_centers.txt";
-    FileIO::saveBallCenters(debug_ball_centers_outfile.c_str(), mesher.getBallCenters(), radius);
+    FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
     #endif
 
     // Next batch
     std::cout << "Remove overlape vertices in next batch" << std::endl;
     std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
     
-
     std::cout << "Vertices size: " << vertices.size() << std::endl;
     for (auto& vertex : vertices) {
        octree_ball_centers.checkSizeAndexpand(vertex);
     }
 
     std::unordered_set<Vertex*> vertices_set;
+    std::unordered_set<Vertex*> vertices_inside_ball_set;
     octree_ball_centers_iterator.setDepth(octree.getDepth());
+    double min_squared_distance = radius * radius;
     for (auto& vertex : vertices) {
         //Check if the vertex is in side the any ball
         //Point point = Point(vertex.x(), vertex.y(), vertex.z());
         std::map<double, Point*> neighbors; // neighbor.first is the squared distance
-        unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
-        if (num_neighbors == 0) {
-            //Vertex* vertex_ptr = new Vertex(vertex);
+
+        //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+        octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+
+        // if any squared distance is less than the squared radius, the vertex is inside a ball
+        bool is_inside_ball = false;
+        for (auto& neighbor : neighbors) {
+            if (neighbor.first < min_squared_distance) {
+                is_inside_ball = true;
+                vertices_inside_ball_set.insert(&vertex);
+                break;
+            }
+        }
+        if (is_inside_ball) {
+            continue;
+        }
+        else {  
             Vertex* vertex_prt = octree.checkSizeAndaddPoint(vertex);
             vertices_set.insert(vertex_prt);
         }
-        else {
-            //std::cout << "Vertex " << vertex.x() << " " << vertex.y() << " " << vertex.z() << " is inside a ball" << std::endl;
-            // How many neighbors are there?
-            //std::cout << "Number of neighbors: " << num_neighbors << std::endl;
-        }        
     }
+
+    Point_UnOrdSet vertices_inside_ball_set_ptr(vertices_inside_ball_set.begin(), vertices_inside_ball_set.end());
+    FileIO::savePointsDebug("_vertices_inside_ball.txt", vertices_inside_ball_set_ptr);
 
     std::cout << "Further reconstructing" << std::endl;
     mesher.furtherReconstruct();
@@ -321,25 +306,21 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
     
-
     std::cout << "Saving mesh to " << outfile << std::endl;
-    if(! FileIO::saveMesh(outfile.c_str(), mesher))
+    if(! FileIO::saveMesh("_final.ply", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
     }
-    std::cout<<"Mesh saved in "<<outfile<<std::endl;
+    std::cout<<"Mesh saved in "<<"_final.ply"<<std::endl;
 
     std::cout << "Saving the debug mesh to " << outfile << std::endl;
-    debug_outfile = outfile;
-    debug_outfile.erase(debug_outfile.find(".ply"), 4);
-    debug_outfile += "_cumulative2.txt";
-    if(! FileIO::saveMeshDebug(debug_outfile.c_str(), mesher))
+    if(! FileIO::saveMeshDebug("_cumulative2.txt", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
     }
-    std::cout<<"Mesh saved in "<<debug_outfile<<std::endl;
+    std::cout<<"Mesh saved in "<<"_cumulative2.txt"<<std::endl;
 
     return EXIT_SUCCESS;
 }

@@ -83,6 +83,8 @@ class FileIO
         static bool saveLinesetDebug(const char* filename, const Edge_star_list &border_edges);
 
         static bool saveBallCenters(const char* filename, const Point_UnOrdSet &ball_centers, const double &radius);
+        
+        static bool savePointsDebug(const char* filename, const Point_UnOrdSet &vertices_inside_balls);
 
     private :
 
@@ -91,9 +93,17 @@ class FileIO
          * @param f stream to save to
          */
         static void saveContent(OctreeNodeV *node, std::ofstream &f);
+    
 
     public:
         static std::list<Vertex> readFromBatchToList(const string &batch_data);
+
+    private:
+        static std::string baseOutputFilename;
+
+    public:
+        static void setBaseOutputFilename(const std::string &filename);
+
 };
 
 

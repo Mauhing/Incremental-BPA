@@ -35,7 +35,7 @@ FileIO::~FileIO()
 {
 }
 
-
+std::string FileIO::baseOutputFilename;
 
 bool FileIO::readAndSortPoints(const char* filename, OctreeVertices& octree,
                                double min_radius)
@@ -165,8 +165,10 @@ bool FileIO::savePoints(const char* filename, OctreeVertices& octree)
 
 
 
-bool FileIO::saveMesh(const char* filename, Mesher& mesher)
+bool FileIO::saveMesh(const char* output_filename, Mesher& mesher)
 {
+    std::string filename = baseOutputFilename + output_filename;
+
     ofstream out;
     out.open(filename);
     out.precision( numeric_limits<double>::digits10 + 1);
@@ -388,8 +390,10 @@ bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
     return saveMeshDebug(filename, mesher.getFacets());
 }
 
-bool FileIO::saveMeshDebug(const char* filename, const std::list<Facet*> &facets)
+bool FileIO::saveMeshDebug(const char* output_filename, const std::list<Facet*> &facets)
 {
+    std::string filename = baseOutputFilename + output_filename;
+
     ofstream out;
     out.open(filename);
     out.precision( numeric_limits<double>::digits10 + 1);
@@ -493,8 +497,10 @@ std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
     return input_vertices;
 }
 
-bool FileIO::saveLinesetDebug(const char* filename, const Edge_star_list &border_edges)
+bool FileIO::saveLinesetDebug(const char* output_filename, const Edge_star_list &border_edges)
 {
+    std::string filename = baseOutputFilename + output_filename;
+
     ofstream out;
     out.open(filename);
     out.precision( numeric_limits<double>::digits10 + 1);
@@ -515,8 +521,10 @@ bool FileIO::saveLinesetDebug(const char* filename, const Edge_star_list &border
     return true;
 }
 
-bool FileIO::saveBallCenters(const char* filename, const Point_UnOrdSet &ball_centers, const double &radius)
+bool FileIO::saveBallCenters(const char* output_filename, const Point_UnOrdSet &ball_centers, const double &radius)
 {
+    std::string filename = baseOutputFilename + output_filename;
+
     ofstream out;
     out.open(filename);
     out.precision( numeric_limits<double>::digits10 + 1);
@@ -541,4 +549,34 @@ bool FileIO::saveBallCenters(const char* filename, const Point_UnOrdSet &ball_ce
 
     out.close();
     return true;
+}
+
+bool FileIO::savePointsDebug(const char* output_filename, const Point_UnOrdSet &points)
+{
+    std::string filename = baseOutputFilename + output_filename;
+
+    ofstream out;
+    out.open(filename);
+    out.precision( numeric_limits<double>::digits10 + 1);
+    
+    if(!out)
+    { // file couldn't be opened
+    cerr << "Error: file could not be opened" << endl;
+    return false;
+    }
+ 
+    // Save the points
+    for (auto& point : points)
+    {
+        out << point->x() << "\t" << point->y() << "\t" << point->z() << endl;
+    }
+
+    out.close();
+    return true;
+    
+}
+
+void FileIO::setBaseOutputFilename(const std::string &filename)
+{
+    baseOutputFilename = filename;
 }
