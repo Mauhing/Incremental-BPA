@@ -24,11 +24,10 @@ class BallCenter : public Point
     friend ostream& operator << (ostream& out, const BallCenter& v);
   
     private : //properties
-    
-        /** @brief nx, ny, nz normal coordinates*/
-        double m_nx, m_ny, m_nz;
-        
+     
         Facet* m_facet;
+        
+        TOctreeNode<BallCenter>* m_octree_node;
         
 
     public : //constructor+destructor
@@ -38,6 +37,8 @@ class BallCenter : public Point
         
         /** @brief constructor from coordinates and normal*/
         BallCenter(double x, double y, double z, Facet* facet);
+        
+        BallCenter(const Point& point, Facet* facet);
           
         /** @brief default destrictor*/
         ~BallCenter();
@@ -45,6 +46,6 @@ class BallCenter : public Point
         // copy constructor
         BallCenter(const BallCenter& other);
     public : //accessors + modifiers
-   
+        void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
 };
 #endif

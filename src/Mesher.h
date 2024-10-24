@@ -96,9 +96,9 @@ class Mesher
 
         Point_UnOrdSet m_ball_centers;
 
-        OctreePoints *m_octree_ball_centers;
+        OctreeBallCenters *m_octree_ball_centers;
 
-        OctreeIteratorPoints *m_octree_ball_centers_iterator;
+        OctreeIteratorBallCenters *m_octree_ball_centers_iterator;
 
         unsigned int m_num_ball_centers;        
 
@@ -112,7 +112,7 @@ class Mesher
          * @param iterator iterator over the octree
          */
         Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator,
-               OctreePoints *octree_ball_centers, OctreeIteratorPoints *octree_ball_centers_iterator);
+               OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator);
         
         /** @brief destructor*/
         ~Mesher();

@@ -31,6 +31,7 @@
  */
 #include "Mesher.h"
 #include "OctreeIterator.h"
+#include "BallCenter.h"
 #include <cstdlib>
 #include <cmath>
 #include <cassert>
@@ -58,7 +59,7 @@ Mesher::Mesher()
 }
 
 Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
-               OctreePoints* octree_ball_centers, OctreeIteratorPoints* octree_ball_centers_iterator)
+               OctreeBallCenters* octree_ball_centers, OctreeIteratorBallCenters* octree_ball_centers_iterator)
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
@@ -1406,9 +1407,12 @@ void Mesher::putBallCentersInOctree()
     for (auto facet : m_facets)
     {
         Point ball_center = facet->getBallCenter();
-        Point* new_pt = m_octree_ball_centers->checkSizeAndaddPoint(ball_center);
+        BallCenter* temp_ball_center = new BallCenter(ball_center, facet);
+
+        BallCenter* new_ball_center = m_octree_ball_centers->checkSizeAndaddPoint(*temp_ball_center);
+        
         m_num_ball_centers++;
-        m_ball_centers.insert(new_pt);
+        m_ball_centers.insert(new_ball_center);
 
         #ifdef _DEBUG
         // if all zero, print the index, print all vertices

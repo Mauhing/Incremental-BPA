@@ -24,6 +24,7 @@
 #include<map>
 #include<unordered_map>
 #include "Point.h"
+#include "BallCenter.h"
 
 class Vertex;
 class Edge;
@@ -63,6 +64,7 @@ typedef std::unordered_set<Point*> Point_UnOrdSet;
 #include "Octree.h"
 typedef TOctree<Vertex> OctreeVertices;
 typedef TOctree<Point> OctreePoints;
+typedef TOctree<BallCenter> OctreeBallCenters;
 
 #include "OctreeNode.h"
 typedef TOctreeNode<Vertex> OctreeNodeV;
@@ -73,5 +75,6 @@ typedef std::vector<OctreeNodeV_vector> OctreeNodeV_collection;
 #include "OctreeIterator.h"
 typedef TOctreeIterator<Vertex> OctreeIteratorVertices;
 typedef TOctreeIterator<Point> OctreeIteratorPoints;
+typedef TOctreeIterator<BallCenter> OctreeIteratorBallCenters;
 
 #endif

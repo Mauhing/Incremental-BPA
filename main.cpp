@@ -171,10 +171,11 @@ int main(int argc, char **argv)
         iterator.setR(radius);
 
     // Copy the octree skeleton to a new octree
-    OctreePoints octree_ball_centers = octree.copy_skeleton<Point>();
+    OctreeBallCenters octree_ball_centers = octree.copy_skeleton<BallCenter>();
 
     // Copy the octree iterator
-    OctreeIteratorPoints octree_ball_centers_iterator(&octree_ball_centers);
+    OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
+
     if (radius > 0)
         octree_ball_centers_iterator.setR(radius);
 
@@ -252,7 +253,8 @@ int main(int argc, char **argv)
     
     std::cout << "Vertices size: " << vertices.size() << std::endl;
     for (auto& vertex : vertices) {
-       octree_ball_centers.checkSizeAndexpand(vertex);
+        BallCenter ball_center(vertex, nullptr);
+        octree_ball_centers.checkSizeAndexpand(ball_center);
     }
 
     std::unordered_set<Vertex*> vertices_set;
@@ -262,7 +264,7 @@ int main(int argc, char **argv)
     for (auto& vertex : vertices) {
         //Check if the vertex is in side the any ball
         //Point point = Point(vertex.x(), vertex.y(), vertex.z());
-        std::map<double, Point*> neighbors; // neighbor.first is the squared distance
+        std::map<double, BallCenter*> neighbors; // neighbor.first is the squared distance
 
         //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
