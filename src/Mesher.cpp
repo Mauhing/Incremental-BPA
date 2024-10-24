@@ -1320,7 +1320,7 @@ std::set<Facet*>& Mesher::getBoundaryFacets() const
     return *boundary_facets;
 }
 
-void Mesher::removeOrphanVertices(TOctreeNode<Vertex>* node)
+void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
 {
     Vertex_UnOrdSet& points = node->GetPoints();    
 
@@ -1382,10 +1382,8 @@ void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
     m_border_edges = std::list<Edge*>(new_boundary_edges.begin(), new_boundary_edges.end());
     Facet::clearNewBoundaryEdges();
 
-    // Update OctreeVertices to remove the points that are no longer in use, which it is orphan.
-    //m_iterator_vertices->loopOverAllNodes(&Mesher::removeOrphanVertices);
     m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
-        this->removeOrphanVertices(node); // m_vertices also gets updated.
+        this->removeOrphanAndUpdate(node); // m_vertices also gets updated.
         // TODO: If the node is empty, remove it from it's parent.
     });
       
