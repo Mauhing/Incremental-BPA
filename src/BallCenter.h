@@ -41,7 +41,9 @@ class BallCenter : public Point
           
         /** @brief default destrictor*/
         ~BallCenter();
-    
+
+        // copy constructor
+        BallCenter(const BallCenter& other);
     public : //accessors + modifiers
    
 };
