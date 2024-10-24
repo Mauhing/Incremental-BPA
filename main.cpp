@@ -209,17 +209,17 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
+    //std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
 
     // Save the boundary facets to a file
-    std::cout << "Saving trimmed facets to a file" << std::endl;
-    FileIO::saveMeshDebug("_trimmed.txt", std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
+    //std::cout << "Saving trimmed facets to a file" << std::endl;
+    //FileIO::saveMeshDebug("_trimmed.txt", std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
         
-    std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
-    mesher.removeFacets(boundary_facets);
+    //std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
+    //mesher.removeFacets(boundary_facets);
 
-    std::cout << "Saving trimmed facets to a file" << std::endl;
-    FileIO::saveMeshDebug("_after_trimmed.txt", mesher);
+    //std::cout << "Saving trimmed facets to a file" << std::endl;
+    //FileIO::saveMeshDebug("_after_trimmed.txt", mesher);
 
     std::cout<<"Reconstructed mesh after trimming boundary facets: "<<mesher.nVertices()
              <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
