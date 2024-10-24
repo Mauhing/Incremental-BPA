@@ -42,12 +42,6 @@
 
 int main(int argc, char **argv)
 {
-    //double x = -0.1;
-    //unsigned int result = (unsigned int)std::ceil(x);
-    //std::cout << "ceil(" << x << ") = " << result << std::endl;
-    //return 0;
-
-
     //handling command line options
     int c;
     stringstream f;
@@ -58,8 +52,8 @@ int main(int argc, char **argv)
     int infile_flag = -1;
     int outfile_flag = -1;
     std::list<double> radii;
-    //int parallel_flag = -1;
 
+    // parse command line options
     while( (c = getopt(argc,argv, "i:o:d:r:p")) != -1)
     {
         switch(c)
@@ -126,7 +120,6 @@ int main(int argc, char **argv)
     FileIO::setBaseOutputFilename(outfile.erase(outfile.find(".ply"), 4));
 
     time_t start,end;
-
     OctreeVertices octree;
 
     std::time(&start);
