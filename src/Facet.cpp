@@ -236,3 +236,7 @@ std::set<Edge*> Facet::getRecordedNewBoundaryEdges()
 {
     return sb_recordedNewBoundaryEdges;
 }
+
+void Facet::clearNewBoundaryEdges() {
+    sb_recordedNewBoundaryEdges.clear();
+}

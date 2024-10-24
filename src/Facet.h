@@ -115,6 +115,8 @@ class Facet
         void insertNewBoundaryEdge(Edge* edge);
         void removeNewBoundaryEdge(Edge* edge);
 
+        static void clearNewBoundaryEdges();
+
         static std::set<Edge*> getRecordedNewBoundaryEdges();
 
         bool isNewlyArrived();

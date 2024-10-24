@@ -424,7 +424,7 @@ class Mesher
                                 Edge_set &border_edges);
 
     public:
-        void trimBoundaryFacets(std::set<Facet*> &boundary_facets);
+        void removeFacets(std::set<Facet*> &boundary_facets);
 
         void removeOrphanVertices(TOctreeNode<Vertex>* node);
 
@@ -437,6 +437,8 @@ class Mesher
         void furtherReconstruct();
         
         Edge_star_list getBorderEdges() const;
+
+        void removeFacet(Facet* facet);
 
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 

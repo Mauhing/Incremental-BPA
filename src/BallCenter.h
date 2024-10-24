@@ -47,5 +47,6 @@ class BallCenter : public Point
         BallCenter(const BallCenter& other);
     public : //accessors + modifiers
         void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
+        Facet* getFacet() const;
 };
 #endif

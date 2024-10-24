@@ -308,7 +308,10 @@ class TOctreeNode
         TOctreeNode<T>* initializeChild(unsigned int index, Point origin);
 
         std::unordered_set<T*>& GetPoints();
+
         void decreaseNptsByOne();
+
+        void removeElement(T* element);
 };
 
 
@@ -563,5 +566,10 @@ std::unordered_set<T*>& TOctreeNode<T>::GetPoints() { return m_points; }
 template<class T>
 void TOctreeNode<T>::decreaseNptsByOne() { m_npts--; }
 
+template<class T>
+void TOctreeNode<T>::removeElement(T* element) {
+    m_points.erase(element);
+    m_npts--;
+}
 
 #endif

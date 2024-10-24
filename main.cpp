@@ -216,7 +216,7 @@ int main(int argc, char **argv)
     FileIO::saveMeshDebug("_trimmed.txt", std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
         
     std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
-    mesher.trimBoundaryFacets(boundary_facets);
+    mesher.removeFacets(boundary_facets);
 
     std::cout << "Saving trimmed facets to a file" << std::endl;
     FileIO::saveMeshDebug("_after_trimmed.txt", mesher);
@@ -229,9 +229,9 @@ int main(int argc, char **argv)
 
     // Sanity check: save border edges
     #ifdef _DEBUG
-    //std::cout << "Sanity check: save border edges after trimming" << std::endl;
-    //Edge_star_list border_edges = mesher.getBorderEdges();
-    //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
+    std::cout << "Sanity check: save border edges after trimming" << std::endl;
+    Edge_star_list border_edges = mesher.getBorderEdges();
+    FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     // Result: It is correct.
     #endif
 
@@ -257,7 +257,7 @@ int main(int argc, char **argv)
         octree_ball_centers.checkSizeAndexpand(ball_center);
     }
 
-    std::unordered_set<Vertex*> vertices_set;
+    Facet_set collision_facets;
     std::unordered_set<Vertex*> vertices_inside_ball_set;
     octree_ball_centers_iterator.setDepth(octree.getDepth());
     double min_squared_distance = radius * radius;
@@ -270,25 +270,31 @@ int main(int argc, char **argv)
         octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
 
         // if any squared distance is less than the squared radius, the vertex is inside a ball
-        bool is_inside_ball = false;
         for (auto& neighbor : neighbors) {
-            if (neighbor.first < min_squared_distance) {
-                is_inside_ball = true;
-                vertices_inside_ball_set.insert(&vertex);
-                break;
+            if (neighbor.first < min_squared_distance && neighbor.second != nullptr) {
+                BallCenter* ball_center = neighbor.second;
+                Facet* facet = ball_center->getFacet();
+                if (facet != nullptr) {
+                    collision_facets.insert(facet);
+                }
+                else {
+                    std::cerr << "Error: The facet is nullptr" << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+                delete ball_center; // TODO: need to update the octree node
+                neighbor.second = nullptr;
             }
-        }
-        if (is_inside_ball) {
-            continue;
-        }
-        else {  
-            Vertex* vertex_prt = octree.checkSizeAndaddPoint(vertex);
-            vertices_set.insert(vertex_prt);
         }
     }
 
-    Point_UnOrdSet vertices_inside_ball_set_ptr(vertices_inside_ball_set.begin(), vertices_inside_ball_set.end());
-    FileIO::savePointsDebug("_vertices_inside_ball.txt", vertices_inside_ball_set_ptr);
+    // Remove the collision facets
+    mesher.removeFacets(collision_facets);
+    
+    // Add the new vertices to the octree
+    for (auto& vertex : vertices) {
+        octree.checkSizeAndaddPoint(vertex);
+    }
+
 
     std::cout << "Further reconstructing" << std::endl;
     mesher.furtherReconstruct();
