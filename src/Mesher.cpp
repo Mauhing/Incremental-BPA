@@ -1303,17 +1303,11 @@ std::set<Facet*>& Mesher::getBoundaryFacets() const
         Facet_set facets_set2 = v2->adjacentFacets();
         for (const auto& facet : facets_set1)
         {
-            if (facet->isNewlyArrived())
-            {
-                boundary_facets->insert(facet);
-            }
+            boundary_facets->insert(facet);
         }
         for (const auto& facet : facets_set2)
         {
-            if (facet->isNewlyArrived())
-            {
-                boundary_facets->insert(facet);
-            }
+            boundary_facets->insert(facet);
         }
     }
     std::cout << "Address of boundary_facets in getBoundaryFacets: " << boundary_facets << std::endl;
@@ -1394,14 +1388,6 @@ const std::list<Facet*>& Mesher::getFacets() const
     return m_facets;
 }
 
-void Mesher::setAllFacetsToOld()
-{
-    for (auto facet : m_facets)
-    {
-        facet->setNewlyArrived(false);
-    }
-}
-
 void Mesher::putBallCentersInOctree()
 {
     for (auto facet : m_facets)
@@ -1414,22 +1400,6 @@ void Mesher::putBallCentersInOctree()
         m_num_ball_centers++;
         m_ball_centers.insert(new_ball_center);
 
-        #ifdef _DEBUG
-        // if all zero, print the index, print all vertices
-        //if (ball_center.x() == 0 && ball_center.y() == 0 && ball_center.z() == 0)
-        //{
-        //    Vertex* v0 = facet->getVertex(0);
-        //    Vertex* v1 = facet->getVertex(1);
-        //    Vertex* v2 = facet->getVertex(2);
-        //    std::cout << "Vertex 0: " << v0->index() << std::endl;
-        //    std::cout << "Vertex 1: " << v1->index() << std::endl;
-        //    std::cout << "Vertex 2: " << v2->index() << std::endl;
-        //    // Print location of the vertices
-        //    std::cout << "Location of vertex 0: " << v0->x() << " " << v0->y() << " " << v0->z() << std::endl;
-        //    std::cout << "Location of vertex 1: " << v1->x() << " " << v1->y() << " " << v1->z() << std::endl;
-        //    std::cout << "Location of vertex 2: " << v2->x() << " " << v2->y() << " " << v2->z() << std::endl;
-        //}
-        #endif
     }
 }
 
@@ -1500,3 +1470,9 @@ void Mesher::SanityCheckOrientation() const
     }
 }
 
+void Mesher::print_stats()
+{
+    std::cout<<"Reconstructed mesh: "<<this->nVertices()
+             <<" vertices; "<<this->nFacets()<<" facets. "<<std::endl;
+    std::cout<<this->nBorderEdges()<<" border edges"<<std::endl;
+}

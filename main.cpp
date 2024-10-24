@@ -184,9 +184,7 @@ int main(int argc, char **argv)
     mesher.reconstruct(radii);
     std::time(&end);
 
-    std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
-             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
-    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
+    mesher.print_stats();
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
 
@@ -209,18 +207,6 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    //std::set<Facet*>& boundary_facets = mesher.getBoundaryFacets();
-
-    // Save the boundary facets to a file
-    //std::cout << "Saving trimmed facets to a file" << std::endl;
-    //FileIO::saveMeshDebug("_trimmed.txt", std::list<Facet*>(boundary_facets.begin(), boundary_facets.end()));
-        
-    //std::cout << "Address of boundary_facets: " << &boundary_facets << std::endl;
-    //mesher.removeFacets(boundary_facets);
-
-    //std::cout << "Saving trimmed facets to a file" << std::endl;
-    //FileIO::saveMeshDebug("_after_trimmed.txt", mesher);
-
     std::cout<<"Reconstructed mesh after trimming boundary facets: "<<mesher.nVertices()
              <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
     std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
@@ -235,9 +221,6 @@ int main(int argc, char **argv)
     // Result: It is correct.
     #endif
 
-    std::cout << "Setting all facets to old" << std::endl;
-    mesher.setAllFacetsToOld();
-    
     std::cout << "Set empty ball " << std::endl;
     mesher.putBallCentersInOctree();
 

@@ -41,8 +41,6 @@ class Facet
 
         Point* m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
 
-        bool m_newly_arrived = true;
-
     public : //constructor+destructor
 
         /** @brief constructor*/
@@ -106,6 +104,10 @@ class Facet
          */
         bool hasVertex(Vertex *vertex);
 
+        /** @brief get vertex
+         * @param index index of the vertex that mode 3
+         * @return vertex
+         */
         Vertex* getVertex(unsigned int index);
 
     private :
@@ -119,9 +121,6 @@ class Facet
 
         static std::set<Edge*> getRecordedNewBoundaryEdges();
 
-        bool isNewlyArrived();
-
-        void setNewlyArrived(bool newly_arrived);
 };
 
 #endif

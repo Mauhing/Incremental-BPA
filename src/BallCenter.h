@@ -35,7 +35,7 @@ class BallCenter : public Point
         /** @brief default constructor*/
         BallCenter() = delete;
         
-        /** @brief constructor from coordinates and normal*/
+        /** @brief constructor from coordinates and facet*/
         BallCenter(double x, double y, double z, Facet* facet);
         
         BallCenter(const Point& point, Facet* facet);
@@ -45,6 +45,7 @@ class BallCenter : public Point
 
         // copy constructor
         BallCenter(const BallCenter& other);
+        
     public : //accessors + modifiers
         void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
         Facet* getFacet() const;

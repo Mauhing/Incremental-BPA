@@ -22,7 +22,6 @@
 // Initialize the static member.
 std::set<Edge*> Facet::sb_recordedNewBoundaryEdges;
 
-
 Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
 {
     m_vertex[0] = v0;
@@ -220,16 +219,6 @@ bool Facet::hasVertex(Vertex* v)
         return true;
     else
         return false;
-}
-
-bool Facet::isNewlyArrived()
-{
-    return m_newly_arrived;
-}
-
-void Facet::setNewlyArrived(bool newly_arrived)
-{
-    m_newly_arrived = newly_arrived;
 }
 
 std::set<Edge*> Facet::getRecordedNewBoundaryEdges()
