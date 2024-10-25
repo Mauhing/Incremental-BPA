@@ -182,12 +182,14 @@ int main(int argc, char **argv)
     //FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
     //#endif
 
+
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Get the next batch
     std::cout << "Remove overlape vertices in next batch" << std::endl;
     std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
+
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Expand the ballcenters octree
     std::cout << "Vertices size: " << vertices.size() << std::endl;
@@ -197,6 +199,8 @@ int main(int argc, char **argv)
     }
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Collection of collision facets
     Facet_set collision_facets;
     std::unordered_set<Vertex*> vertices_inside_ball_set;
     octree_ball_centers_iterator.setDepth(octree.getDepth());
@@ -226,20 +230,31 @@ int main(int argc, char **argv)
             }
         }
     }
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Remove the collision facets
     mesher.removeFacets(collision_facets);
-    
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Add the new vertices to the octree
     for (auto& vertex : vertices) {
         octree.checkSizeAndaddPoint(vertex);
     }
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Further reconstruction
     std::cout << "Further reconstructing" << std::endl;
     mesher.furtherReconstruct();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Fill holes
     mesher.fillHoles();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
              <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
