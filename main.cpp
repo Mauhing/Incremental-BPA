@@ -30,8 +30,11 @@
 #include "src/Mesher.h"
 #include "src/FileIO.h"
 #include "src/types.h"
+#include "src/ProgramOptions.hpp"
 
 //#include <open3d/Open3D.h>
+
+
 
 /**
  * @brief main function for the ball pivoting reconstruction
@@ -42,92 +45,38 @@
 
 int main(int argc, char **argv)
 {
-    //handling command line options
-    int c;
-    stringstream f;
-    string input_infiles, outfile, input_radii;
-    std::list<string> infile_list;
+    ProgramOptions options = parseCommandLine(argc, argv);
+
+    // Use the parsed options
+    std::cout << "Input files: " << options.input_infiles << std::endl;
+    std::cout << "Output file: " << options.outfile << std::endl;
+    std::cout << "Radii: ";
+    for (const auto& radius : options.radii) {
+        std::cout << radius << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Parallel flag: " << (options.parallel_flag ? "true" : "false") << std::endl;
+
+
     double radius = -1;
-    int radius_flag = -1;
-    int infile_flag = -1;
-    int outfile_flag = -1;
-    std::list<double> radii;
-
-    // parse command line options
-    while( (c = getopt(argc,argv, "i:o:d:r:p")) != -1)
+    if(options.radii.size() > 0)
     {
-        switch(c)
-        {
-            case 'i':
-            {
-                string infile;
-                input_infiles=optarg;
-                infile_flag = 1;
-                break;
-
-                //f.clear();
-                //f<<optarg;
-                //f>>infile;
-                //infile_flag = 1;
-                //break;
-            }
-            case 'o':
-            {
-                f.clear();
-                f<<optarg;
-                f>>outfile;
-                outfile_flag = 1;
-                break;
-            }
-            case 'p':
-            {
-                //parallel_flag = 1;
-                break;
-            }
-            case 'r': 
-            {
-                input_radii=optarg;
-                istringstream iss(input_radii, istringstream::in);
-                while (iss>>radius)
-                {
-                    radii.push_back(radius);
-                }
-                radius_flag = 1;
-                break;
-            }
-        }    
-    }
-
-    if(infile_flag == -1)
-    {
-        std::cerr<<"No input file given (use the -i option)"<<std::endl;
-        return EXIT_FAILURE;
-    }
-
-    if(outfile_flag == -1)
-    {
-        std::cerr<<"No output file given (use the -o option)"<<std::endl;
-        return EXIT_FAILURE;
-    }
-
-    if(radius_flag == 1)
-    {
-        radii.sort();
-        radius = radii.front();
+        options.radii.sort();
+        radius = options.radii.front();
     }
 
     // Set the base output filename
-    FileIO::setBaseOutputFilename(outfile.erase(outfile.find(".ply"), 4));
+    FileIO::setBaseOutputFilename(options.outfile.erase(options.outfile.find(".ply"), 4));
 
     time_t start,end;
     OctreeVertices octree;
 
     std::time(&start);
     bool ok;
-    std::string infile = input_infiles;
+    std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
-    std::vector<string> batch_data = FileIO::readIntoFileBatch(input_infiles.c_str());
+    std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
     std::cout << "batch_data size: " << batch_data.size() << std::endl;
 
 
@@ -157,8 +106,8 @@ int main(int argc, char **argv)
     //octree.debugPrint();
 
     std::cout<<"****** Reconstructing with radii "<<std::flush;
-    std::list<double>::const_iterator ri = radii.begin();
-    while(ri != radii.end())
+    std::list<double>::const_iterator ri = options.radii.begin();
+    while(ri != options.radii.end())
     {
         std::cout<< *ri <<"; ";
         ++ri;
@@ -180,8 +129,10 @@ int main(int argc, char **argv)
         octree_ball_centers_iterator.setR(radius);
 
     std::time(&start);
-    Mesher mesher(&octree, &iterator, &octree_ball_centers, &octree_ball_centers_iterator);
-    mesher.reconstruct(radii);
+    Mesher mesher(&octree, &iterator, 
+                   &octree_ball_centers, 
+                   &octree_ball_centers_iterator);
+    mesher.reconstruct(options.radii);
     std::time(&end);
 
     mesher.print_stats();
@@ -290,7 +241,6 @@ int main(int argc, char **argv)
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
     
-    std::cout << "Saving mesh to " << outfile << std::endl;
     if(! FileIO::saveMesh("_final.ply", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
@@ -298,7 +248,6 @@ int main(int argc, char **argv)
     }
     std::cout<<"Mesh saved in "<<"_final.ply"<<std::endl;
 
-    std::cout << "Saving the debug mesh to " << outfile << std::endl;
     if(! FileIO::saveMeshDebug("_cumulative2.txt", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
