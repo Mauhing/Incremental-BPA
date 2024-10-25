@@ -184,6 +184,13 @@ void Mesher::furtherReconstruct()
         m_edge_front.push_back(e);
         ei = m_border_edges.erase(ei);
     } 
+    
+    #ifdef _DEBUG
+    if (m_edge_front.size() == 0) {
+        std::cerr << "Error: No front edges found after further reconstruction" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
 
 
     unsigned int depth = m_octree_vertices->getDepth();
@@ -1370,11 +1377,19 @@ void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
         facet = NULL;
     }
     
-    // Important. ToDo get new boundary edges.
     std::set<Edge*> new_boundary_edges = Facet::getRecordedNewBoundaryEdges();
+    #ifdef _DEBUG
+    if (new_boundary_edges.size() == 0) {
+        std::cerr << "Error: No new boundary edges found after removing facets" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
+
     m_border_edges.clear();
     m_border_edges = std::list<Edge*>(new_boundary_edges.begin(), new_boundary_edges.end());
     Facet::clearNewBoundaryEdges();
+
+
 
     m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
         this->removeOrphanAndUpdate(node); // m_vertices also gets updated.
@@ -1390,7 +1405,6 @@ const std::list<Facet*>& Mesher::getFacets() const
 
 void Mesher::updateBallCentersOctree()
 {
-    // TODO: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
     for (auto facet : m_facets)
     {
         Point ball_center = facet->getBallCenter();

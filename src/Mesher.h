@@ -438,6 +438,7 @@ class Mesher
         Edge_star_list getBorderEdges() const;
 
         void print_stats(); 
+        
 
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 

@@ -68,7 +68,6 @@ int main(int argc, char **argv)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the base output filename
     FileIO::setBaseOutputFilename(options.outfile.erase(options.outfile.find(".ply"), 4));
-    time_t start,end;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
@@ -85,6 +84,7 @@ int main(int argc, char **argv)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Octree creation
+    time_t start,end;
     std::time(&start);
     OctreeVertices octree;
     if(radius >0)
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
     //mesher.SanityCheckOrientation();
     //#endif
 
-    if(! FileIO::saveMeshDebug("_cumulative1.txt", mesher))
+    if(! FileIO::saveMeshDebug("_cumulative0.txt", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
@@ -167,114 +167,112 @@ int main(int argc, char **argv)
     //Edge_star_list border_edges = mesher.getBorderEdges();
     //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     //#endif
+    
+    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++) {
+        std::cout << "----------------------------------------" << std::endl;
+        std::cout << "Processing batch " << batch_index << std::endl;
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Update the ballcenters octree
-    std::cout << "Update the ballcenters octree" << std::endl;
-    mesher.updateBallCentersOctree();
-    // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-    // Sanity check: save ball centers
-    //#ifdef _DEBUG
-    //std::cout << "Sanity check: save ball centers" << std::endl;
-    //FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
-    //#endif
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Update the ballcenters octree
+        std::cout << "Update the ballcenters octree" << std::endl;
+        mesher.updateBallCentersOctree();
+        // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Get the next batch
-    std::cout << "Remove overlape vertices in next batch" << std::endl;
-    std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // Sanity check: save ball centers
+        //#ifdef _DEBUG
+        //std::cout << "Sanity check: save ball centers" << std::endl;
+        //FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
+        //#endif
+
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Get the next batch
+        std::cout << "Remove overlape vertices in next batch" << std::endl;
+        std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Expand the ballcenters octree
-    std::cout << "Vertices size: " << vertices.size() << std::endl;
-    for (auto& vertex : vertices) {
-        BallCenter ball_center(vertex, nullptr);
-        octree_ball_centers.checkSizeAndexpand(ball_center);
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Expand the ballcenters octree
+        std::cout << "Vertices size: " << vertices.size() << std::endl;
+        for (auto& vertex : vertices) {
+            BallCenter ball_center(vertex, nullptr);
+            octree_ball_centers.checkSizeAndexpand(ball_center);
+        }
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Collection of collision facets
-    Facet_set collision_facets;
-    std::unordered_set<Vertex*> vertices_inside_ball_set;
-    octree_ball_centers_iterator.setDepth(octree.getDepth());
-    double min_squared_distance = radius * radius;
-    for (auto& vertex : vertices) {
-        //Check if the vertex is in side the any ball
-        //Point point = Point(vertex.x(), vertex.y(), vertex.z());
-        std::map<double, BallCenter*> neighbors; // neighbor.first is the squared distance
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Collection of collision facets
+        Facet_set collision_facets;
+        //std::unordered_set<Vertex*> vertices_inside_ball_set;
+        octree_ball_centers_iterator.setDepth(octree.getDepth());
+        double min_squared_distance = radius * radius;
+        for (auto& vertex : vertices) {
+            //Check if the vertex is in side the any ball
+            //Point point = Point(vertex.x(), vertex.y(), vertex.z());
+            std::map<double, BallCenter*> neighbors; // neighbor.first is the squared distance
 
-        //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
-        octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+            //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+            octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
 
-        // if any squared distance is less than the squared radius, the vertex is inside a ball
-        for (auto& neighbor : neighbors) {
-            if (neighbor.first < min_squared_distance && neighbor.second != nullptr) {
-                BallCenter* ball_center = neighbor.second;
-                Facet* facet = ball_center->getFacet();
-                if (facet != nullptr) {
-                    collision_facets.insert(facet);
+            // if any squared distance is less than the squared radius, the vertex is inside a ball
+            for (auto& neighbor : neighbors) {
+                if (neighbor.first < min_squared_distance && neighbor.second != nullptr) {
+                    BallCenter* ball_center = neighbor.second;
+                    Facet* facet = ball_center->getFacet();
+                    if (facet != nullptr) {
+                        collision_facets.insert(facet);
+                    }
+                    else {
+                        std::cerr << "Error: The facet is nullptr" << std::endl;
+                        std::exit(EXIT_FAILURE);
+                    }
+                    delete ball_center; // TODO: need to update the octree node
+                    neighbor.second = nullptr;
                 }
-                else {
-                    std::cerr << "Error: The facet is nullptr" << std::endl;
-                    std::exit(EXIT_FAILURE);
-                }
-                delete ball_center; // TODO: need to update the octree node
-                neighbor.second = nullptr;
             }
         }
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Remove the collision facets
+        std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
+        mesher.removeFacets(collision_facets);
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Add the new vertices to the octree
+        for (auto& vertex : vertices) {
+            octree.checkSizeAndaddPoint(vertex);
+        }
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Further reconstruction
+        std::cout << "Further reconstructing" << std::endl;
+        mesher.furtherReconstruct();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Fill holes
+        mesher.fillHoles();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        mesher.print_stats();
+        
+        FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
     }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ 
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Remove the collision facets
-    mesher.removeFacets(collision_facets);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Add the new vertices to the octree
-    for (auto& vertex : vertices) {
-        octree.checkSizeAndaddPoint(vertex);
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Further reconstruction
-    std::cout << "Further reconstructing" << std::endl;
-    mesher.furtherReconstruct();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Fill holes
-    mesher.fillHoles();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
-    std::cout<<"Reconstructed mesh: "<<mesher.nVertices()
-             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
-    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
-    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
-             <<"s."<<std::endl;
-    
-    if(! FileIO::saveMesh("_final.ply", mesher))
+    if(! FileIO::saveMeshDebug("_final.txt", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
     }
-    std::cout<<"Mesh saved in "<<"_final.ply"<<std::endl;
-
-    if(! FileIO::saveMeshDebug("_cumulative2.txt", mesher))
-    {
-        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
-        return EXIT_FAILURE;
-    }
-    std::cout<<"Mesh saved in "<<"_cumulative2.txt"<<std::endl;
+    std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
 
     return EXIT_SUCCESS;
 }
