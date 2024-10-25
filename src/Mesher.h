@@ -431,7 +431,7 @@ class Mesher
         const std::list<Facet*>& getFacets() const;
 
         
-        void putBallCentersInOctree();
+        void updateBallCentersOctree();
 
         void furtherReconstruct();
         

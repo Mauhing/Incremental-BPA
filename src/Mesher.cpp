@@ -1388,8 +1388,9 @@ const std::list<Facet*>& Mesher::getFacets() const
     return m_facets;
 }
 
-void Mesher::putBallCentersInOctree()
+void Mesher::updateBallCentersOctree()
 {
+    // TODO: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
     for (auto facet : m_facets)
     {
         Point ball_center = facet->getBallCenter();

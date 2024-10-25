@@ -598,6 +598,15 @@ void TOctree<T>::getNodes(unsigned int depth,
 template<class T>
 void TOctree<T>::printOctreeStat()
 {
+    std::cout<<"OctreeVertices statistics"<<std::endl;
+    std::cout<<"OctreeVertices with depth "<<this->getDepth()<<" created."<<std::endl;
+    std::cout<<"OctreeVertices contains "<<this->getNpoints()
+            <<" points. The bounding box size is "
+            <<this->getSize()<<std::endl;
+    std::cout<<"Reading and sorting points in this octree took "
+            <<difftime(end,start)<<" s."<<std::endl;
+    std::cout<<"OctreeVertices statistics"<<std::endl;
+
     double size = m_size;
     for(int i = m_depth-1; i >= 0; i--)
     {

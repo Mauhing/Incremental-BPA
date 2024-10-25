@@ -65,21 +65,28 @@ int main(int argc, char **argv)
         radius = options.radii.front();
     }
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the base output filename
     FileIO::setBaseOutputFilename(options.outfile.erase(options.outfile.find(".ply"), 4));
-
     time_t start,end;
-    OctreeVertices octree;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    std::time(&start);
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Read the input file
     bool ok;
     std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
     std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
     std::cout << "batch_data size: " << batch_data.size() << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Octree creation
+    std::time(&start);
+    OctreeVertices octree;
     if(radius >0)
     {
         //ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
@@ -92,19 +99,14 @@ int main(int argc, char **argv)
     }
     std::time(&end);
 
-    std::cout<<"OctreeVertices with depth "<<octree.getDepth()<<" created."<<std::endl;
-    std::cout<<"OctreeVertices contains "<<octree.getNpoints()
-            <<" points. The bounding box size is "
-            <<octree.getSize()<<std::endl;
+    octree.printOctreeStat();
     std::cout<<"Reading and sorting points in this octree took "
             <<difftime(end,start)<<" s."<<std::endl;
-    std::cout<<"OctreeVertices statistics"<<std::endl;
-    octree.printOctreeStat();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    std::cout << "OctreeVertices root depth: " << octree.getRoot()->getDepth()<< std::endl;
-    std::cout << "OctreeVertices root size: " << octree.getRoot()->getSize()<< std::endl;
-    //octree.debugPrint();
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Set vertices iterator
     std::cout<<"****** Reconstructing with radii "<<std::flush;
     std::list<double>::const_iterator ri = options.radii.begin();
     while(ri != options.radii.end())
@@ -127,69 +129,73 @@ int main(int argc, char **argv)
 
     if (radius > 0)
         octree_ball_centers_iterator.setR(radius);
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Bootstrapping reconstruction
     std::time(&start);
     Mesher mesher(&octree, &iterator, 
                    &octree_ball_centers, 
                    &octree_ball_centers_iterator);
     mesher.reconstruct(options.radii);
     std::time(&end);
-
     mesher.print_stats();
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
-
     std::cout << "Filling holes..." << std::endl;
     std::time(&start);
     mesher.fillHoles();
     std::time(&end);
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    std::cout << "Sanity check: check orientation" << std::endl;
-    mesher.SanityCheckOrientation();
+    //#ifdef _DEBUG
+    //std::cout << "Sanity check: check orientation" << std::endl;
+    //mesher.SanityCheckOrientation();
+    //#endif
 
-    //std::cout << "Saving the debug mesh to " << outfile << std::endl;
-    //std::string debug_outfile = outfile;
-    //debug_outfile.erase(debug_outfile.find(".ply"), 4);
-    //debug_outfile += "_cumulative1.txt";
     if(! FileIO::saveMeshDebug("_cumulative1.txt", mesher))
     {
         std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
         return EXIT_FAILURE;
     }
 
-    std::cout<<"Reconstructed mesh after trimming boundary facets: "<<mesher.nVertices()
-             <<" vertices; "<<mesher.nFacets()<<" facets. "<<std::endl;
-    std::cout<<mesher.nBorderEdges()<<" border edges"<<std::endl;
-    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
-             <<"s."<<std::endl;
-
     // Sanity check: save border edges
-    #ifdef _DEBUG
-    std::cout << "Sanity check: save border edges after trimming" << std::endl;
-    Edge_star_list border_edges = mesher.getBorderEdges();
-    FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
-    // Result: It is correct.
-    #endif
+    //#ifdef _DEBUG
+    //std::cout << "Sanity check: save border edges after trimming" << std::endl;
+    //Edge_star_list border_edges = mesher.getBorderEdges();
+    //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
+    //#endif
 
-    std::cout << "Set empty ball " << std::endl;
-    mesher.putBallCentersInOctree();
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Update the ballcenters octree
+    std::cout << "Update the ballcenters octree" << std::endl;
+    mesher.updateBallCentersOctree();
+    // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
     // Sanity check: save ball centers
-    #ifdef _DEBUG
-    std::cout << "Sanity check: save ball centers" << std::endl;
-    FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
-    #endif
+    //#ifdef _DEBUG
+    //std::cout << "Sanity check: save ball centers" << std::endl;
+    //FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
+    //#endif
 
-    // Next batch
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Get the next batch
     std::cout << "Remove overlape vertices in next batch" << std::endl;
     std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[1]);
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Expand the ballcenters octree
     std::cout << "Vertices size: " << vertices.size() << std::endl;
     for (auto& vertex : vertices) {
         BallCenter ball_center(vertex, nullptr);
         octree_ball_centers.checkSizeAndexpand(ball_center);
     }
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     Facet_set collision_facets;
     std::unordered_set<Vertex*> vertices_inside_ball_set;
