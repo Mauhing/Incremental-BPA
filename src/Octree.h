@@ -128,7 +128,7 @@ class TOctree
          * @brief Adding a point to the octree
          * @param pt point to add
          */
-        T* addPoint(T &pt);
+        T* addPoint(const T &pt);
         
         /**
          * 
@@ -168,7 +168,7 @@ class TOctree
         void getNodes(unsigned int depth, TOctreeNode<T>* starting_node,
                 std::vector< std::vector<TOctreeNode<T>* > > &node_collection);
 
-        T* checkSizeAndaddPoint(T& pt);
+        T* checkSizeAndaddPoint(const T& pt);
 
         void debugPrint()
         {
@@ -187,7 +187,7 @@ class TOctree
             }
         }
 
-        void checkSizeAndexpand(T& pt);
+        void checkSizeAndexpand(const T& pt);
 
     protected :
         /**
@@ -388,7 +388,7 @@ unsigned int TOctree<T>::addPoints(Iterator begin, Iterator end)
 enum PointInBox {RIGHT=0, LEFT=1, INSIDE=2};
 
 template<class T>
-void TOctree<T>::checkSizeAndexpand(T& pt)
+void TOctree<T>::checkSizeAndexpand(const T& pt)
 {
     // 0 means the x coordinate is larger than the right border of the octree
     // 1 means the x coordinate is smaller than the left border of the octree
@@ -515,7 +515,7 @@ void TOctree<T>::checkSizeAndexpand(T& pt)
 }
 
 template<class T>
-T* TOctree<T>::checkSizeAndaddPoint(T& pt)
+T* TOctree<T>::checkSizeAndaddPoint(const T& pt)
 {
     checkSizeAndexpand(pt);
     T* new_pt = addPoint(pt);
@@ -523,7 +523,7 @@ T* TOctree<T>::checkSizeAndaddPoint(T& pt)
 }
 
 template<class T>
-T* TOctree<T>::addPoint(T& pt)
+T* TOctree<T>::addPoint(const T& pt)
 {
     // unsigned int is important here, as we will use bitwise operations. The size of unsigned int is 4 bytes.
     // This means the depth of the octree should be less than 32.

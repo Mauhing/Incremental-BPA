@@ -52,7 +52,6 @@ Mesher::Mesher()
     m_iterator_vertices = NULL;
     m_nfacets = 0;
     m_nvertices = 0;
-    m_num_ball_centers = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = NULL;
     m_octree_ball_centers_iterator = NULL;
@@ -67,7 +66,6 @@ Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
     m_nfacets = 0;
     m_nvertices = 0;
-    m_num_ball_centers = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = octree_ball_centers;
     m_octree_ball_centers_iterator = octree_ball_centers_iterator;
@@ -132,15 +130,11 @@ unsigned int Mesher::nBorderEdges() const
     return (unsigned int) m_border_edges.size();
 }
 
-unsigned int Mesher::getNumBallCenters() const
-{
-    return m_num_ball_centers;
-}
+//unsigned int Mesher::getNumBallCenters() const
+//{
+//    return m_num_ball_centers;
+//}
 
-const Point_UnOrdSet& Mesher::getBallCenters() const
-{
-    return m_ball_centers;
-}
 
 void Mesher::reconstruct()
 {
@@ -867,13 +861,9 @@ void Mesher::addFacet(Facet* f)
 
     m_facets.push_back(f);
     m_nfacets++;
-    
-    // add ball center to ball center octree
-    //Point ball_center = f->getBallCenter();
-    //Point* ball_center_ptr = new Point(f->getBallCenter());
-    //m_ball_centers.push_back(ball_center); // copy constructor
-    //m_octree_ball_centers.addPoint(m_ball_centers.back());
-    //m_num_ball_centers++;
+
+    // Add the new facet to the set of fresh facets.
+    m_fresh_facets.insert(f);    
 }
 
 
@@ -1363,6 +1353,7 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
     
 }
 
+
 void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
 {
     Facet::clearNewBoundaryEdges();
@@ -1387,15 +1378,11 @@ void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
 
     m_border_edges.clear();
     m_border_edges = std::list<Edge*>(new_boundary_edges.begin(), new_boundary_edges.end());
-    Facet::clearNewBoundaryEdges();
-
-
 
     m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
         this->removeOrphanAndUpdate(node); // m_vertices also gets updated.
         // TODO: If the node is empty, remove it from it's parent.
     });
-      
 }
 
 const std::list<Facet*>& Mesher::getFacets() const
@@ -1405,16 +1392,13 @@ const std::list<Facet*>& Mesher::getFacets() const
 
 void Mesher::updateBallCentersOctree()
 {
-    for (auto facet : m_facets)
+    for (auto facet : m_fresh_facets)
     {
         Point ball_center = facet->getBallCenter();
-        //BallCenter* temp_ball_center = new BallCenter(ball_center, facet);
-        BallCenter ball_center_obj(ball_center, facet);
-        BallCenter* new_ball_center = m_octree_ball_centers->checkSizeAndaddPoint(ball_center_obj);
-        
-        m_num_ball_centers++;
-        m_ball_centers.insert(new_ball_center);
+        BallCenter* new_ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(ball_center, facet));
+        facet->setBallCenterPtr(new_ball_center);
     }
+    m_fresh_facets.clear();
 }
 
 Edge_star_list Mesher::getBorderEdges() const

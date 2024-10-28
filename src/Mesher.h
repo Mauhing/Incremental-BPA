@@ -94,13 +94,20 @@ class Mesher
         
         std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
-        Point_UnOrdSet m_ball_centers;
+        //Point_UnOrdSet m_ball_centers;
+
+        //unsigned int m_num_ball_centers;        
 
         OctreeBallCenters *m_octree_ball_centers;
 
         OctreeIteratorBallCenters *m_octree_ball_centers_iterator;
-
-        unsigned int m_num_ball_centers;        
+        
+        /** @brief set of fresh facets
+         * This set contains the facets that are newly created in the current iteration.
+         * We need to update the ball centers octree for these facets.
+         * Once we have processed all the facets in this set, we can clear this set.
+        */
+        std::unordered_set<Facet*> m_fresh_facets;
 
     public : //constructor-destructor
 
@@ -193,9 +200,9 @@ class Mesher
          */
         unsigned int nBorderEdges() const;
 
-        unsigned int getNumBallCenters() const;
+        //unsigned int getNumBallCenters() const;
 
-        const Point_UnOrdSet& getBallCenters() const;
+        //const Point_UnOrdSet& getBallCenters() const;
 
         /** @brief get access to the mesh vertices
          * @return begin iterator of the vertices

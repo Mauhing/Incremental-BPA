@@ -150,6 +150,15 @@ int main(int argc, char **argv)
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Update the ballcenters octree
+    std::cout << "Update the ballcenters octree" << std::endl;
+    mesher.updateBallCentersOctree();
+    // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
+    //std::cout << "Number of ball centers: " << mesher.getBallCenters().size() << std::endl;
+    std::cout << "Number of facets: " << mesher.getFacets().size() << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     //#ifdef _DEBUG
     //std::cout << "Sanity check: check orientation" << std::endl;
     //mesher.SanityCheckOrientation();
@@ -182,16 +191,7 @@ int main(int argc, char **argv)
         // Get the next batch
         std::cout << "Remove overlape vertices in next batch" << std::endl;
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Update the ballcenters octree
-        std::cout << "Update the ballcenters octree" << std::endl;
-        mesher.updateBallCentersOctree();
-        // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Expand the ballcenters octree
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
                         std::cerr << "Error: The facet is nullptr" << std::endl;
                         std::exit(EXIT_FAILURE);
                     }
-                    delete ball_center; // TODO: need to update the octree node
+                    //delete ball_center; // TODO: need to update the octree node
                     neighbor.second = nullptr;
                 }
             }
@@ -263,7 +263,17 @@ int main(int argc, char **argv)
         mesher.fillHoles();
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Update the ballcenters octree
+        std::cout << "Update the ballcenters octree" << std::endl;
+        mesher.updateBallCentersOctree();
+        // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
+        //std::cout << "Number of ball centers: " << mesher.getBallCenters().size() << std::endl;
+        std::cout << "Number of facets: " << mesher.getFacets().size() << std::endl;
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
         mesher.print_stats();
+        
         
         FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
     }

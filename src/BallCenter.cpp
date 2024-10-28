@@ -1,21 +1,29 @@
 #include "BallCenter.h"
 #include "OctreeNode.h"
 
-BallCenter::BallCenter(double x, double y, double z, Facet *facet) : Point(x, y, z), m_facet(facet), m_octree_node(nullptr)
+BallCenter::BallCenter(double x, double y, double z, Facet *facet) : Point(x, y, z), 
+                                                                     m_facet(facet),
+                                                                     m_octree_node(nullptr)
 {
 }
 
-BallCenter::BallCenter(const Point &point, Facet *facet) : Point(point), m_facet(facet), m_octree_node(nullptr)
+BallCenter::BallCenter(const Point &point, Facet *facet) : Point(point),
+                                                           m_facet(facet),
+                                                           m_octree_node(nullptr)
 {
 }
 
 BallCenter::~BallCenter()
 {
-    // make octree node able to remove an element
-    if (m_octree_node != nullptr)
+    #ifdef _DEBUG
+    if (m_octree_node == nullptr)
     {
-        m_octree_node->removeElement(this);
+        std::cerr << "BallCenter::BallCenter() - m_octree_node is nullptr when deleting a BallCenter" << std::endl;
+        std::exit(EXIT_FAILURE);
     }
+    #endif
+    // make octree node able to remove an element
+    m_octree_node->removeElement(this);
     m_octree_node = nullptr;
     m_facet = nullptr;
 }

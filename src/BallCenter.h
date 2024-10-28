@@ -21,6 +21,7 @@ using namespace std;
 class BallCenter : public Point
 {
     public:
+
     friend ostream& operator << (ostream& out, const BallCenter& v);
   
     private : //properties
@@ -28,7 +29,6 @@ class BallCenter : public Point
         Facet* m_facet;
         
         TOctreeNode<BallCenter>* m_octree_node;
-        
 
     public : //constructor+destructor
     
@@ -49,5 +49,6 @@ class BallCenter : public Point
     public : //accessors + modifiers
         void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
         Facet* getFacet() const;
+
 };
 #endif

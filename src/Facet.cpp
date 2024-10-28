@@ -156,6 +156,7 @@ Facet::~Facet()
             std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
             std::exit(EXIT_FAILURE);
         }
+        
     }
 
     // Deal with the vertices.
@@ -172,6 +173,9 @@ Facet::~Facet()
             m_vertex[i]->setType(Vertex::VertexType::TRIMMED);
         }
     }
+
+    delete m_ball_center_ptr;
+    m_ball_center_ptr = NULL;
 }
 
 void Facet::insertNewBoundaryEdge(Edge* edge)
@@ -228,4 +232,8 @@ std::set<Edge*> Facet::getRecordedNewBoundaryEdges()
 
 void Facet::clearNewBoundaryEdges() {
     sb_recordedNewBoundaryEdges.clear();
+}
+
+void Facet::setBallCenterPtr(BallCenter* ball_center_ptr) {
+    m_ball_center_ptr = ball_center_ptr;
 }

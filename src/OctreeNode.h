@@ -298,7 +298,7 @@ class TOctreeNode
          * PREREQUISITE: the node is a leaf in the octree
          * @param pt point to add
          */
-        T* addPoint(T &pt);
+        T* addPoint(const T &pt);
         
         /** @brief build the i^th child of the node
          * @param index child index
@@ -531,7 +531,7 @@ typename std::unordered_set<T*>::iterator TOctreeNode<T>::points_end()
 //}
 
 template<class T>
-T* TOctreeNode<T>::addPoint(T &t)
+T* TOctreeNode<T>::addPoint(const T &t)
 {
     T* t_ptr = new T(t);
     m_points.insert(t_ptr);
@@ -569,7 +569,7 @@ void TOctreeNode<T>::decreaseNptsByOne() { m_npts--; }
 template<class T>
 void TOctreeNode<T>::removeElement(T* element) {
     m_points.erase(element);
-    m_npts--;
+    decreaseNptsByOne();
 }
 
 #endif
