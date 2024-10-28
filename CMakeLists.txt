@@ -35,7 +35,7 @@ if(USE_CLANG)
     add_definitions(-DUSE_CLANG)
 else()
     set(CMAKE_CXX_COMPILER "/usr/bin/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ansi -fopenmp")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ansi -fopenmp")
 endif()
 
 message(STATUS "Using compiler: ${CMAKE_CXX_COMPILER}")

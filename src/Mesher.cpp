@@ -1408,13 +1408,12 @@ void Mesher::updateBallCentersOctree()
     for (auto facet : m_facets)
     {
         Point ball_center = facet->getBallCenter();
-        BallCenter* temp_ball_center = new BallCenter(ball_center, facet);
-
-        BallCenter* new_ball_center = m_octree_ball_centers->checkSizeAndaddPoint(*temp_ball_center);
+        //BallCenter* temp_ball_center = new BallCenter(ball_center, facet);
+        BallCenter ball_center_obj(ball_center, facet);
+        BallCenter* new_ball_center = m_octree_ball_centers->checkSizeAndaddPoint(ball_center_obj);
         
         m_num_ball_centers++;
         m_ball_centers.insert(new_ball_center);
-
     }
 }
 

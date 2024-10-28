@@ -172,36 +172,37 @@ int main(int argc, char **argv)
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Update the ballcenters octree
-        std::cout << "Update the ballcenters octree" << std::endl;
-        mesher.updateBallCentersOctree();
-        // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
         // Sanity check: save ball centers
         //#ifdef _DEBUG
         //std::cout << "Sanity check: save ball centers" << std::endl;
         //FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
         //#endif
 
-
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Get the next batch
         std::cout << "Remove overlape vertices in next batch" << std::endl;
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Update the ballcenters octree
+        std::cout << "Update the ballcenters octree" << std::endl;
+        mesher.updateBallCentersOctree();
+        // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Expand the ballcenters octree
-        std::cout << "Vertices size: " << vertices.size() << std::endl;
+        // std::cout << "Vertices size: " << vertices.size() << std::endl;
+        std::cout << "Expanding ballcenters octree" << std::endl;
         for (auto& vertex : vertices) {
             BallCenter ball_center(vertex, nullptr);
             octree_ball_centers.checkSizeAndexpand(ball_center);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Collection of collision facets
@@ -244,6 +245,7 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Add the new vertices to the octree
+        std::cout << "Adding new vertices to the octree" << std::endl;
         for (auto& vertex : vertices) {
             octree.checkSizeAndaddPoint(vertex);
         }
