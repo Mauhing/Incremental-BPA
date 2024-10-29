@@ -182,22 +182,26 @@ int main(int argc, char **argv)
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Expand the ballcenters octree
         // std::cout << "Vertices size: " << vertices.size() << std::endl;
-        std::cout << "Expanding ballcenters octree" << std::endl;
+        std::cout << "Expanding octree ball centers" << std::endl;
         for (auto& vertex : vertices) {
             BallCenter ball_center(vertex, nullptr);
             octree_ball_centers.checkSizeAndexpand(ball_center);
+        }
+        std::cout << "Expanding octree vertices" << std::endl;
+        for (auto& vertex : vertices) {
+            octree.checkSizeAndexpand(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Collection of collision facets
         Facet_set collision_facets = mesher.computeCollisionFacets(vertices); 
+        std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove the collision facets
-        std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
-        mesher.removeFacets(collision_facets);
+        mesher.removeFacets(collision_facets); // This function is very wrong
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

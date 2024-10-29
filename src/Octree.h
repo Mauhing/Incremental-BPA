@@ -435,26 +435,26 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
 
     if (x_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE)
     {
-        //#ifdef _DEBUG
-        //if (x_in_box != PointInBox::INSIDE) {
-        //    std::cout << "x outside the box" << std::endl;
-        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        //}
-        //if (y_in_box != PointInBox::INSIDE) {
-        //    std::cout << "y outside the box" << std::endl;
-        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        //}
-        //if (z_in_box != PointInBox::INSIDE) {
-        //    std::cout << "z outside the box" << std::endl;
-        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        //}
-        //#endif
+        #ifdef _DEBUG
+        if (x_in_box != PointInBox::INSIDE) {
+            std::cout << "x outside the box" << std::endl;
+            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        }
+        if (y_in_box != PointInBox::INSIDE) {
+            std::cout << "y outside the box" << std::endl;
+            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        }
+        if (z_in_box != PointInBox::INSIDE) {
+            std::cout << "z outside the box" << std::endl;
+            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        }
+        #endif
 
         unsigned int n_max = (n_x > n_y) ? ((n_x > n_z) ? n_x : n_z) : ((n_y > n_z) ? n_y : n_z);
         unsigned int x_insert_index = (x_in_box == PointInBox::LEFT) ? 1 : 0;

@@ -1371,6 +1371,7 @@ void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
         facet = NULL;
     }
     
+    // This is very wrong now since the facet get remove are not necessary the boundary edges.
     std::set<Edge*> new_boundary_edges = Facet::getRecordedNewBoundaryEdges();
     #ifdef _DEBUG
     if (new_boundary_edges.size() == 0) {
