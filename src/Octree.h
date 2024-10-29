@@ -435,26 +435,26 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
 
     if (x_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE)
     {
-        #ifdef _DEBUG
-        if (x_in_box != PointInBox::INSIDE) {
-            std::cout << "x outside the box" << std::endl;
-            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        }
-        if (y_in_box != PointInBox::INSIDE) {
-            std::cout << "y outside the box" << std::endl;
-            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        }
-        if (z_in_box != PointInBox::INSIDE) {
-            std::cout << "z outside the box" << std::endl;
-            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        }
-        #endif
+        //#ifdef _DEBUG
+        //if (x_in_box != PointInBox::INSIDE) {
+        //    std::cout << "x outside the box" << std::endl;
+        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        //}
+        //if (y_in_box != PointInBox::INSIDE) {
+        //    std::cout << "y outside the box" << std::endl;
+        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        //}
+        //if (z_in_box != PointInBox::INSIDE) {
+        //    std::cout << "z outside the box" << std::endl;
+        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        //}
+        //#endif
 
         unsigned int n_max = (n_x > n_y) ? ((n_x > n_z) ? n_x : n_z) : ((n_y > n_z) ? n_y : n_z);
         unsigned int x_insert_index = (x_in_box == PointInBox::LEFT) ? 1 : 0;
@@ -496,9 +496,6 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             // re-asign new root node
             m_root = new_root_node;
 
-            // previous size
-            std::cout << "Previous size: " << m_size << std::endl;
-
             // Update the Octree
             m_size *= 2;
             m_binsize *= 2;
@@ -506,10 +503,6 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             
             // Insert the new root node
             m_non_empty_nodes.insert(new_root_node);
-            // new size
-            std::cout << "New size: " << m_size << std::endl;
-            // print point location
-            std::cout << "================================================" << std::endl;
         }
     }     
 }
@@ -575,12 +568,6 @@ T* TOctree<T>::addPoint(const T& pt)
     T* new_pt = node->addPoint(pt);
     m_npoints++;
     new_pt->setOctreeNodeLeaf(node);
-    //if pt is class of vertex, then set the leaf node of the vertex
-    //if (typeid(T) == typeid(Vertex))
-    //{
-    //    Vertex* v = dynamic_cast<Vertex*>(&pt);
-    //    v->setOctreeNodeLeaf(node);
-    //}
     return new_pt;
 }
 

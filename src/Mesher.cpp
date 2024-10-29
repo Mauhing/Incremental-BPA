@@ -861,9 +861,11 @@ void Mesher::addFacet(Facet* f)
 
     m_facets.push_back(f);
     m_nfacets++;
-
-    // Add the new facet to the set of fresh facets.
-    m_fresh_facets.insert(f);    
+    
+    // Update the ball centers octree.
+    Point temp_ball_center = f->getBallCenter();
+    BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
+    f->setBallCenterPtr(ball_center);
 }
 
 
@@ -1365,6 +1367,7 @@ void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
             m_facets.erase(it);
         } 
         delete facet;
+        m_nfacets--;
         facet = NULL;
     }
     
@@ -1390,16 +1393,6 @@ const std::list<Facet*>& Mesher::getFacets() const
     return m_facets;
 }
 
-void Mesher::updateBallCentersOctree()
-{
-    for (auto facet : m_fresh_facets)
-    {
-        Point ball_center = facet->getBallCenter();
-        BallCenter* new_ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(ball_center, facet));
-        facet->setBallCenterPtr(new_ball_center);
-    }
-    m_fresh_facets.clear();
-}
 
 Edge_star_list Mesher::getBorderEdges() const
 {
@@ -1470,7 +1463,42 @@ void Mesher::SanityCheckOrientation() const
 
 void Mesher::print_stats()
 {
+    std::cout << ">>>>>>" << std::endl;
     std::cout<<"Reconstructed mesh: "<<this->nVertices()
-             <<" vertices; "<<this->nFacets()<<" facets. "<<std::endl;
+             <<" vertices; "<<this->nFacets()<<" facets. ";
     std::cout<<this->nBorderEdges()<<" border edges"<<std::endl;
+    std::cout << "<<<<<<<<" << std::endl;
+}
+
+Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
+{
+    Facet_set collision_facets;
+    //std::unordered_set<Vertex*> vertices_inside_ball_set;
+    m_octree_ball_centers_iterator->setDepth(m_octree_vertices->getDepth());
+    for (auto& vertex : vertices) {
+        //Check if the vertex is in side the any ball
+        //Point point = Point(vertex.x(), vertex.y(), vertex.z());
+        std::map<double, BallCenter*> neighbors; // neighbor.first is the squared distance
+
+        //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+        m_octree_ball_centers_iterator->getSortedNeighbors(vertex, neighbors);
+
+        // if any squared distance is less than the squared radius, the vertex is inside a ball
+        for (auto& neighbor : neighbors) {
+            if (neighbor.first < m_sq_ball_radius && neighbor.second != nullptr) {
+                BallCenter* ball_center = neighbor.second;
+                Facet* facet = ball_center->getFacet();
+                if (facet != nullptr) {
+                    collision_facets.insert(facet);
+                }
+                else {
+                    std::cerr << "Error: The facet is nullptr" << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+                // We do not delete the ball center here because it is will delete when the facet is deleted.
+                neighbor.second = nullptr;
+            }
+        }
+    }
+    return collision_facets;
 }

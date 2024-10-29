@@ -15,16 +15,19 @@ BallCenter::BallCenter(const Point &point, Facet *facet) : Point(point),
 
 BallCenter::~BallCenter()
 {
-    #ifdef _DEBUG
-    if (m_octree_node == nullptr)
-    {
-        std::cerr << "BallCenter::BallCenter() - m_octree_node is nullptr when deleting a BallCenter" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-    #endif
+    //#ifdef _DEBUG
+    //if (m_octree_node == nullptr)
+    //{
+    //    std::cerr << "BallCenter::BallCenter() - m_octree_node is nullptr when deleting a BallCenter" << std::endl;
+    //    std::exit(EXIT_FAILURE);
+    //}
+    //#endif
     // make octree node able to remove an element
-    m_octree_node->removeElement(this);
-    m_octree_node = nullptr;
+    if (m_octree_node != nullptr)
+    {
+        m_octree_node->removeElement(this);
+        m_octree_node = nullptr;
+    }
     m_facet = nullptr;
 }
 

@@ -150,14 +150,6 @@ int main(int argc, char **argv)
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Update the ballcenters octree
-    std::cout << "Update the ballcenters octree" << std::endl;
-    mesher.updateBallCentersOctree();
-    // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
-    //std::cout << "Number of ball centers: " << mesher.getBallCenters().size() << std::endl;
-    std::cout << "Number of facets: " << mesher.getFacets().size() << std::endl;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     //#ifdef _DEBUG
     //std::cout << "Sanity check: check orientation" << std::endl;
@@ -181,12 +173,6 @@ int main(int argc, char **argv)
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
-        // Sanity check: save ball centers
-        //#ifdef _DEBUG
-        //std::cout << "Sanity check: save ball centers" << std::endl;
-        //FileIO::saveBallCenters("_ball_centers.txt", mesher.getBallCenters(), radius);
-        //#endif
-
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Get the next batch
         std::cout << "Remove overlape vertices in next batch" << std::endl;
@@ -202,7 +188,6 @@ int main(int argc, char **argv)
             octree_ball_centers.checkSizeAndexpand(ball_center);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Collection of collision facets
@@ -263,14 +248,6 @@ int main(int argc, char **argv)
         mesher.fillHoles();
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Update the ballcenters octree
-        std::cout << "Update the ballcenters octree" << std::endl;
-        mesher.updateBallCentersOctree();
-        // Warning: Very inefficient now. It is to check all the facets and duplicate the ball centers for previous batches.
-        //std::cout << "Number of ball centers: " << mesher.getBallCenters().size() << std::endl;
-        std::cout << "Number of facets: " << mesher.getFacets().size() << std::endl;
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         mesher.print_stats();
         

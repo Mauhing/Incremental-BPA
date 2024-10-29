@@ -102,12 +102,6 @@ class Mesher
 
         OctreeIteratorBallCenters *m_octree_ball_centers_iterator;
         
-        /** @brief set of fresh facets
-         * This set contains the facets that are newly created in the current iteration.
-         * We need to update the ball centers octree for these facets.
-         * Once we have processed all the facets in this set, we can clear this set.
-        */
-        std::unordered_set<Facet*> m_fresh_facets;
 
     public : //constructor-destructor
 
@@ -436,16 +430,15 @@ class Mesher
         void removeOrphanAndUpdate(TOctreeNode<Vertex>* node);
 
         const std::list<Facet*>& getFacets() const;
-
         
-        void updateBallCentersOctree();
-
         void furtherReconstruct();
         
         Edge_star_list getBorderEdges() const;
 
         void print_stats(); 
         
+        Facet_set computeCollisionFacets(std::list<Vertex>& vertices);
+
 
     private: // 
         std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
