@@ -191,35 +191,7 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Collection of collision facets
-        Facet_set collision_facets;
-        //std::unordered_set<Vertex*> vertices_inside_ball_set;
-        octree_ball_centers_iterator.setDepth(octree.getDepth());
-        double min_squared_distance = radius * radius;
-        for (auto& vertex : vertices) {
-            //Check if the vertex is in side the any ball
-            //Point point = Point(vertex.x(), vertex.y(), vertex.z());
-            std::map<double, BallCenter*> neighbors; // neighbor.first is the squared distance
-
-            //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
-            octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
-
-            // if any squared distance is less than the squared radius, the vertex is inside a ball
-            for (auto& neighbor : neighbors) {
-                if (neighbor.first < min_squared_distance && neighbor.second != nullptr) {
-                    BallCenter* ball_center = neighbor.second;
-                    Facet* facet = ball_center->getFacet();
-                    if (facet != nullptr) {
-                        collision_facets.insert(facet);
-                    }
-                    else {
-                        std::cerr << "Error: The facet is nullptr" << std::endl;
-                        std::exit(EXIT_FAILURE);
-                    }
-                    //delete ball_center; // TODO: need to update the octree node
-                    neighbor.second = nullptr;
-                }
-            }
-        }
+        Facet_set collision_facets = mesher.computeCollisionFacets(vertices); 
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
