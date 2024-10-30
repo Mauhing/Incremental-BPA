@@ -150,6 +150,10 @@ int main(int argc, char **argv)
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Clear orphan vertices
+    mesher.clearOrphanVertices();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     //#ifdef _DEBUG
     //std::cout << "Sanity check: check orientation" << std::endl;
@@ -169,7 +173,7 @@ int main(int argc, char **argv)
     //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     //#endif
     
-    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++) {
+    for (size_t batch_index = 1; batch_index < 2; batch_index++) {
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -197,12 +201,18 @@ int main(int argc, char **argv)
         // Collection of collision facets
         Facet_set collision_facets = mesher.computeCollisionFacets(vertices); 
         std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
+        // this gives 0, which is wrong. There is a bug.
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove the collision facets
         mesher.removeFacets(collision_facets); // This function is very wrong
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+        mesher.print_stats();
+
+        FileIO::saveMeshDebug("_state1_facets.txt", mesher);
+        FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Add the new vertices to the octree
@@ -224,9 +234,12 @@ int main(int argc, char **argv)
         mesher.fillHoles();
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Clear orphan vertices
+        mesher.clearOrphanVertices();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         mesher.print_stats();
-        
         
         FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
     }

@@ -124,56 +124,6 @@ Facet::Facet(Edge* edge, Vertex* vertex, Point &ball_center)
 
 Facet::~Facet()
 { 
-    // Deal with the edges first.
-    for(int i = 0; i < 3; ++i)
-    {
-        int source_idx = i;
-        int target_idx = (i+1)%3;
-        Edge *e = m_vertex[source_idx]->getLinkingEdge(m_vertex[target_idx]);
-        
-        bool doesFacet1Exist = (e->getFacet1() != NULL);
-        bool doesFacet2Exist = (e->getFacet2() != NULL);
-        
-        if(doesFacet1Exist == true && doesFacet2Exist == true   )
-        {
-            // In this case, the edge is shared by two facets.
-            e->removeAdjacentFacet(this);
-            e->setType(Edge::EdgeType::BORDER);
-            insertNewBoundaryEdge(e);
-            continue;
-        }
-        if(doesFacet1Exist != doesFacet2Exist) 
-        {
-            m_vertex[source_idx]->removeAdjacentEdge(e);
-            m_vertex[target_idx]->removeAdjacentEdge(e);
-            removeNewBoundaryEdge(e);
-            delete e;
-            e=NULL;
-            continue;
-        }
-        if (doesFacet1Exist == false && doesFacet2Exist == false)
-        {
-            std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        
-    }
-
-    // Deal with the vertices.
-    for(unsigned int i=0;i<3;++i)
-    {
-        m_vertex[i]->removeAdjacentFacet(this);
-        bool vertex_still_has_adjacent_facets = (m_vertex[i]->adjacentFacets().size() != 0);
-        if (vertex_still_has_adjacent_facets)
-        {
-            m_vertex[i]->setType(Vertex::VertexType::FRONT);
-        }
-        else // The vertex is not shared by any other facets.
-        {
-            m_vertex[i]->setType(Vertex::VertexType::TRIMMED);
-        }
-    }
-
     delete m_ball_center_ptr;
     m_ball_center_ptr = NULL;
 }

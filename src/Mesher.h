@@ -94,10 +94,6 @@ class Mesher
         
         std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
-        //Point_UnOrdSet m_ball_centers;
-
-        //unsigned int m_num_ball_centers;        
-
         OctreeBallCenters *m_octree_ball_centers;
 
         OctreeIteratorBallCenters *m_octree_ball_centers_iterator;
@@ -439,9 +435,8 @@ class Mesher
         
         Facet_set computeCollisionFacets(std::list<Vertex>& vertices);
 
+        void clearOrphanVertices();
 
-    private: // 
-        std::unordered_set<unsigned int> m_trimmed_vertices_idx; 
 
     public: // Sanity check
         void SanityCheckOrientation() const;

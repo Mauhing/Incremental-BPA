@@ -498,7 +498,7 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
 
             // Update the Octree
             m_size *= 2;
-            m_binsize *= 2;
+            m_binsize = pow2(m_depth + 1);
             m_origin = new_origin;
             
             // Insert the new root node

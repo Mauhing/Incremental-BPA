@@ -153,6 +153,7 @@ void Mesher::reconstruct()
     else
     {
         // If there are only one radius. This scope will never be executed.
+        std::cout << "Expanding triangulation" << std::endl;
         expandTriangulation();
     }
 }
@@ -170,15 +171,12 @@ void Mesher::reconstruct(const std::list<double>& radii)
 
 void Mesher::furtherReconstruct()
 {
-    Edge_star_list::iterator ei = m_border_edges.begin();
-    while(ei != m_border_edges.end())
-    {
-        Edge *e = *ei;
+    for (Edge* e : m_border_edges) {
         e->setType(Edge::FRONT);
         m_edge_front.push_back(e);
-        ei = m_border_edges.erase(ei);
-    } 
-    
+    }
+    m_border_edges.clear();
+     
     #ifdef _DEBUG
     if (m_edge_front.size() == 0) {
         std::cerr << "Error: No front edges found after further reconstruction" << std::endl;
@@ -189,6 +187,8 @@ void Mesher::furtherReconstruct()
 
     unsigned int depth = m_octree_vertices->getDepth();
     m_iterator_vertices->setDepth(depth);
+
+    
     
     reconstruct();
 }
@@ -874,8 +874,8 @@ void Mesher::addVertex(Vertex* v)
     if(v->index() != -1)
         return;
     
-    bool is_empty_recycle_set = m_recycle_vertices_idx.empty();
-    if (is_empty_recycle_set)
+    bool is_empty = m_recycle_vertices_idx.empty();
+    if (is_empty)
     {
         v->setIndex(m_nvertices);
         m_vertices.push_back(v);
@@ -1334,9 +1334,12 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
         // Update the vertices set of the node.
         points.erase(v);
         // Remove the vertex from the mesh.
-        m_vertices.remove(v); // m_vertices is a std::list<Vertex*>.
+        m_vertices.remove(v);
         // Retrieve the index of the vertex.
-        m_trimmed_vertices_idx.insert(v->index());
+        if (v->index() != -1)
+        {
+            m_recycle_vertices_idx.insert(v->index());
+        }
         // Delete the vertex.
         delete v;
     } 
@@ -1347,46 +1350,84 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
     // Update the node that if the vertex is trimmed, change it into ORPHAN.
     for (auto v : points)
     {
-        if (v->getType() == Vertex::TRIMMED)
+        if (v->getType() == Vertex::POTENTIAL)
         {
             v->setType(Vertex::ORPHAN);
+            m_nvertices--; 
         }
     }
     
 }
 
-
-void Mesher::removeFacets(std::set<Facet*> &boundary_facets)
+static void removeFacet(Facet* facet, std::list<Facet*>& m_facets, unsigned int& m_nfacets, Edge_star_list& m_border_edges)
 {
-    Facet::clearNewBoundaryEdges();
-    for (auto facet : boundary_facets)
+    Vertex* vertex[3];
+    for (int i = 0; i < 3; ++i)
     {
-        auto it = std::find(m_facets.begin(), m_facets.end(), facet);
-        if (it != m_facets.end())
-        {
-            m_facets.erase(it);
-        } 
-        delete facet;
-        m_nfacets--;
-        facet = NULL;
+        vertex[i] = facet->getVertex(i);
     }
     
-    // This is very wrong now since the facet get remove are not necessary the boundary edges.
-    std::set<Edge*> new_boundary_edges = Facet::getRecordedNewBoundaryEdges();
-    #ifdef _DEBUG
-    if (new_boundary_edges.size() == 0) {
-        std::cerr << "Error: No new boundary edges found after removing facets" << std::endl;
-        std::exit(EXIT_FAILURE);
+    //Deal with the edges first.
+    for(int i = 0; i < 3; ++i)
+    {
+        int source_idx = i;
+        int target_idx = (i+1)%3;
+        Edge *e = vertex[source_idx]->getLinkingEdge(vertex[target_idx]);
+        
+        bool doesFacet1Exist = (e->getFacet1() != NULL);
+        bool doesFacet2Exist = (e->getFacet2() != NULL);
+        
+        if(doesFacet1Exist == true && doesFacet2Exist == true   )
+        {
+            // In this case, the edge is shared by two facets.
+            e->removeAdjacentFacet(facet);
+            e->setType(Edge::EdgeType::BORDER);
+            continue;
+        }
+        if(doesFacet1Exist != doesFacet2Exist) 
+        {
+            vertex[source_idx]->removeAdjacentEdge(e);
+            vertex[target_idx]->removeAdjacentEdge(e);
+            m_border_edges.remove(e);
+            delete e;
+            e=NULL;
+            continue;
+        }
+        if (doesFacet1Exist == false && doesFacet2Exist == false)
+        {
+            std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        
     }
-    #endif
 
-    m_border_edges.clear();
-    m_border_edges = std::list<Edge*>(new_boundary_edges.begin(), new_boundary_edges.end());
+    // Deal with the vertices.
+    // We do not delete the vertex.
+    for(unsigned int i=0;i<3;++i)
+    {
+        vertex[i]->removeAdjacentFacet(facet);
+        bool vertex_still_has_adjacent_facets = (vertex[i]->adjacentFacets().size() != 0);
+        if (vertex_still_has_adjacent_facets)
+        {
+            vertex[i]->setType(Vertex::VertexType::FRONT);
+        }
+        else // The vertex is not shared by any other facets.
+        {
+            vertex[i]->setType(Vertex::VertexType::POTENTIAL);
+        }
+    } 
+    m_facets.remove(facet);
+    m_nfacets--;
+    delete facet;
+}
 
-    m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
-        this->removeOrphanAndUpdate(node); // m_vertices also gets updated.
-        // TODO: If the node is empty, remove it from it's parent.
-    });
+void Mesher::removeFacets(std::set<Facet*> &collision_facets)
+{
+    for (auto facet : collision_facets)
+    {
+        removeFacet(facet, m_facets, m_nfacets, m_border_edges);
+    }
+
 }
 
 const std::list<Facet*>& Mesher::getFacets() const
@@ -1475,7 +1516,7 @@ Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
 {
     Facet_set collision_facets;
     //std::unordered_set<Vertex*> vertices_inside_ball_set;
-    m_octree_ball_centers_iterator->setDepth(m_octree_vertices->getDepth());
+    m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
     for (auto& vertex : vertices) {
         //Check if the vertex is in side the any ball
         //Point point = Point(vertex.x(), vertex.y(), vertex.z());
@@ -1502,4 +1543,12 @@ Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
         }
     }
     return collision_facets;
+}
+
+void Mesher::clearOrphanVertices()
+{
+    m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
+        this->removeOrphanAndUpdate(node); 
+        // TODO: If the node is empty, remove it from it's parent.
+    });
 }
