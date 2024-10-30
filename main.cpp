@@ -152,7 +152,17 @@ int main(int argc, char **argv)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
-    mesher.clearOrphanVertices();
+    //mesher.clearOrphanVertices();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Sanity check
+    std::cout << "Sanity checking all nodes points" << std::endl;
+    std::cout << "Vertices" << std::endl;
+    iterator.checkAllNodesPoints();
+
+    std::cout << "Ball centers" << std::endl;
+    octree_ball_centers_iterator.checkAllNodesPoints();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     //#ifdef _DEBUG
@@ -201,7 +211,6 @@ int main(int argc, char **argv)
         // Collection of collision facets
         Facet_set collision_facets = mesher.computeCollisionFacets(vertices); 
         std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
-        // this gives 0, which is wrong. There is a bug.
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -221,6 +230,8 @@ int main(int argc, char **argv)
             octree.checkSizeAndaddPoint(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
 
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

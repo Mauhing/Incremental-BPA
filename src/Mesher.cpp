@@ -1427,7 +1427,6 @@ void Mesher::removeFacets(std::set<Facet*> &collision_facets)
     {
         removeFacet(facet, m_facets, m_nfacets, m_border_edges);
     }
-
 }
 
 const std::list<Facet*>& Mesher::getFacets() const
@@ -1515,7 +1514,6 @@ void Mesher::print_stats()
 Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
 {
     Facet_set collision_facets;
-    //std::unordered_set<Vertex*> vertices_inside_ball_set;
     m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
     for (auto& vertex : vertices) {
         //Check if the vertex is in side the any ball
@@ -1525,20 +1523,26 @@ Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
         //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         m_octree_ball_centers_iterator->getSortedNeighbors(vertex, neighbors);
 
+        //print the size of neighbors
+        if (neighbors.size() == 0)
+            continue;
+
         // if any squared distance is less than the squared radius, the vertex is inside a ball
         for (auto& neighbor : neighbors) {
+            // print radius
+            //std::cout << "Squared distance: " << neighbor.first << std::endl;
+            //std::cout << "m_sq_ball_radius: " << m_sq_ball_radius << std::endl;
             if (neighbor.first < m_sq_ball_radius && neighbor.second != nullptr) {
                 BallCenter* ball_center = neighbor.second;
                 Facet* facet = ball_center->getFacet();
                 if (facet != nullptr) {
                     collision_facets.insert(facet);
+                    std::cout << "Address of facet: " << facet << std::endl;
                 }
                 else {
                     std::cerr << "Error: The facet is nullptr" << std::endl;
                     std::exit(EXIT_FAILURE);
                 }
-                // We do not delete the ball center here because it is will delete when the facet is deleted.
-                neighbor.second = nullptr;
             }
         }
     }
@@ -1549,6 +1553,5 @@ void Mesher::clearOrphanVertices()
 {
     m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
         this->removeOrphanAndUpdate(node); 
-        // TODO: If the node is empty, remove it from it's parent.
     });
 }

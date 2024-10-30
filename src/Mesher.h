@@ -65,6 +65,10 @@ class Mesher
         /** @brief iterator over the octree*/
         OctreeIteratorVertices *m_iterator_vertices;
 
+        OctreeBallCenters *m_octree_ball_centers;
+
+        OctreeIteratorBallCenters *m_octree_ball_centers_iterator;
+
         /** @brief list of active edges (edge front)*/
         Edge_star_list m_edge_front;
 
@@ -93,11 +97,6 @@ class Mesher
         unsigned int m_nfacets;
         
         std::unordered_set<unsigned int> m_recycle_vertices_idx;
-
-        OctreeBallCenters *m_octree_ball_centers;
-
-        OctreeIteratorBallCenters *m_octree_ball_centers_iterator;
-        
 
     public : //constructor-destructor
 

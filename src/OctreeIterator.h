@@ -311,9 +311,13 @@ class TOctreeIterator
     public:
         template<typename Func>
         void loopOverAllNodes(Func f); 
+
     private:
         template<typename Func>
         void loopOverAllNodes(TOctreeNode<T>* node, Func f);
+
+    public: // sanity check
+        void checkAllNodesPoints();
 };
 
 template<class T>
@@ -327,13 +331,46 @@ template<class T>
 template<typename Func>
 void TOctreeIterator<T>::loopOverAllNodes(TOctreeNode<T>* node, Func f)
 {
-    f(node);
-    for (int i = 0; i < 8; ++i)
+    if (node->getDepth() == 0)
+        f(node);
+    else
     {
-        if (node->getChild(i) != NULL)
-            loopOverAllNodes(node->getChild(i), f);
+        for (int i = 0; i < 8; ++i)
+        {
+            if (node->getChild(i) != NULL)
+                loopOverAllNodes(node->getChild(i), f);
+        }
     }
 }
+
+template<class T>
+void TOctreeIterator<T>::checkAllNodesPoints() {
+    loopOverAllNodes(m_octree->getRoot(), [this](TOctreeNode<T>* node) {
+        // Get all points in this node
+        auto& points = node->GetPoints();
+        
+        // Get node bounds
+        Point origin = node->getOrigin();
+        double size = node->getSize();
+        
+        // Check each point is within node bounds
+        for (auto* point : points) {
+            if (point->x() < origin.x() || point->x() > (origin.x() + size) ||
+                point->y() < origin.y() || point->y() > (origin.y() + size) ||
+                point->z() < origin.z() || point->z() > (origin.z() + size)) 
+                {
+                std::cerr << "Error: Point outside node bounds!" << std::endl;
+                std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
+                std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
+                std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
+                std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl;
+                std::cout << "Node size: " << size << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+    });
+}
+
 
 template<class T>
 TOctreeIterator<T>::TOctreeIterator()
