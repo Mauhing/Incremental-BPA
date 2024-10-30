@@ -131,6 +131,9 @@ int main(int argc, char **argv)
         octree_ball_centers_iterator.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+    std::cout << "Sanity checking all nodes points" << std::endl;
+    std::cout << "Vertices" << std::endl;
+    iterator.checkAllNodesPoints();
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Bootstrapping reconstruction
@@ -140,12 +143,22 @@ int main(int argc, char **argv)
                    &octree_ball_centers_iterator);
     mesher.reconstruct(options.radii);
     std::time(&end);
+    
+    octree.printOctreeStat();
+
+    std::cout << "Sanity checking all nodes points" << std::endl;
+    std::cout << "Vertices" << std::endl;
+    iterator.setR(radius);
+    iterator.checkAllNodesPoints();
+
+
+
     mesher.print_stats();
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
     std::cout << "Filling holes..." << std::endl;
     std::time(&start);
-    mesher.fillHoles();
+    //mesher.fillHoles();
     std::time(&end);
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -159,6 +172,7 @@ int main(int argc, char **argv)
     // Sanity check
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Vertices" << std::endl;
+    iterator.setR(radius);
     iterator.checkAllNodesPoints();
 
     std::cout << "Ball centers" << std::endl;

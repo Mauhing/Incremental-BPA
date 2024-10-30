@@ -312,6 +312,8 @@ class TOctreeNode
         void decreaseNptsByOne();
 
         void removeElement(T* element);
+
+        bool isLeaf() const;
 };
 
 
@@ -570,6 +572,11 @@ template<class T>
 void TOctreeNode<T>::removeElement(T* element) {
     m_points.erase(element);
     decreaseNptsByOne();
+}
+
+template<class T>
+bool TOctreeNode<T>::isLeaf() const {
+    return m_depth == 0;
 }
 
 #endif

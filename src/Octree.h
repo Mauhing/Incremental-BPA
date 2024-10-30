@@ -21,6 +21,7 @@
 #include "utilities.h"
 #include "Point.h"
 #include "OctreeNode.h"
+#include "BallCenter.h"
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -28,7 +29,6 @@
 #include <cmath> // Use for log2
 
 #include <bitset> // Use for debugging
-
 
 /**
  * @class TOctree
@@ -172,8 +172,8 @@ class TOctree
 
         void debugPrint()
         {
-            //for (typename std::set<TOctreeNode<T>*>::iterator it = m_non_empty_nodes.begin(); it != m_non_empty_nodes.end(); ++it)
-            for (auto* node: m_non_empty_nodes)
+            //for (typename std::set<TOctreeNode<T>*>::iterator it = m_created_nodes.begin(); it != m_created_nodes.end(); ++it)
+            for (auto* node: m_created_nodes)
             {
                 std::cout << " <<<< " << std::endl;
                 std::cout << "Node: depth " << node->getDepth() << " size " << node->getSize() << std::endl;
@@ -231,7 +231,7 @@ class TOctree
          *@brief pointer to all the nodes of the octree
          * Add by Yip
          */
-        std::set<TOctreeNode<T>*> m_non_empty_nodes;
+        std::set<TOctreeNode<T>*> m_created_nodes;
 
     public:
         template<typename U>
@@ -311,7 +311,7 @@ void TOctree<T>::initialize(Point& origin, double size)
     m_root->setParent(NULL);
 
     // Insert root node
-    m_non_empty_nodes.insert(m_root);
+    m_created_nodes.insert(m_root);
 }
 
 
@@ -436,6 +436,10 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
     if (x_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE || y_in_box != PointInBox::INSIDE)
     {
         #ifdef _DEBUG
+        //print the class name of the object
+        std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
+                                 std::is_same<T, BallCenter>::value ? "BallCenter" : 
+                                 "Unknown") << std::endl;
         if (x_in_box != PointInBox::INSIDE) {
             std::cout << "x outside the box" << std::endl;
             std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
@@ -468,7 +472,7 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             unsigned int top_level = m_root->getDepth();
             unsigned int insert_level;
             // this for loop can be parallelized
-            for (auto* node : m_non_empty_nodes)
+            for (auto* node : m_created_nodes)
             {
                 //TOctreeNode<T> *node = *it;
                 insert_level = top_level - node->getDepth();
@@ -502,7 +506,7 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             m_origin = new_origin;
             
             // Insert the new root node
-            m_non_empty_nodes.insert(new_root_node);
+            m_created_nodes.insert(new_root_node);
         }
     }     
 }
@@ -557,14 +561,13 @@ T* TOctree<T>::addPoint(const T& pt)
             child->setYLoc( node->getYLoc() + ( y<<(childDepth) ) );
             child->setZLoc( node->getZLoc() + ( z<<(childDepth) ) );
             m_nb_non_empty_cells[childDepth] += 1;
-            m_non_empty_nodes.insert(child); 
+            m_created_nodes.insert(child); 
             //std::cout << "Adding child node at depth " << childDepth << std::endl;
         }
         node = node->getChild(childIndex);
         l--;
     }
     
-    //add the point to the leaf.
     T* new_pt = node->addPoint(pt);
     m_npoints++;
     new_pt->setOctreeNodeLeaf(node);
@@ -619,7 +622,7 @@ void TOctree<T>::printOctreeStat()
             <<this->getSize()<<std::endl;
     std::cout<<"OctreeVertices statistics"<<std::endl;
 
-    double size = m_size;
+    double size = m_size/2;
     for(int i = m_depth-1; i >= 0; i--)
     {
         std::cout<<"level "<<i<<" ; The size length "<<size
@@ -628,6 +631,25 @@ void TOctree<T>::printOctreeStat()
         <<std::endl;
         size = size / 2.0;
     }
+    TOctreeNode<T>* root = getRoot();
+    // Print the size of the root node
+    std::cout << "Size of the root node: " << root->getSize() << std::endl; 
+    std::cout << "Depth of the root node: " << root->getDepth() << std::endl;
+    // Find and print size of a leaf node by traversing down
+    TOctreeNode<T>* current = root;
+    unsigned int current_depth = root->getDepth();
+    while (!current->isLeaf()) {
+        // Move to first non-null child
+        for (int i = 0; i < 8; i++) {
+            if (current->getChild(i) != nullptr) {
+                current = current->getChild(i);
+                current_depth--;
+                break;
+            }
+        }
+    }
+    std::cout << "Size of a leaf node: " << current->getSize() << std::endl;
+    std::cout << "Depth of a leaf node: " << current_depth << std::endl;
 }
 
 template<class T>

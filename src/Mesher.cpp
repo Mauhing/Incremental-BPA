@@ -862,7 +862,7 @@ void Mesher::addFacet(Facet* f)
     m_facets.push_back(f);
     m_nfacets++;
     
-    // Update the ball centers octree.
+    //Update the ball centers octree.
     Point temp_ball_center = f->getBallCenter();
     BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
     f->setBallCenterPtr(ball_center);
