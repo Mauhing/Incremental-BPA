@@ -402,34 +402,34 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
 
     if (pt.x() > (m_origin.x() + m_size))
     {
-        n_x = ceil(log2((pt.x() - m_origin.x())/m_size)); 
+        n_x = static_cast<unsigned int>(ceil(log2((pt.x() - m_origin.x())/m_size))); 
         x_in_box = PointInBox::RIGHT;
     }
     if (pt.x() < m_origin.x())
     {
-        n_x = ceil(log2((m_origin.x() + m_size - pt.x())/m_size)); 
+        n_x = static_cast<unsigned int>(ceil(log2((m_origin.x() + m_size - pt.x())/m_size))); 
         x_in_box = PointInBox::LEFT;
     }
 
     if (pt.y() > (m_origin.y() + m_size))
     {
-        n_y = ceil(log2((pt.y() - m_origin.y())/m_size)); 
+        n_y = static_cast<unsigned int>(ceil(log2((pt.y() - m_origin.y())/m_size))); 
         y_in_box = PointInBox::RIGHT;
     }
     if (pt.y() < m_origin.y())
     {
-        n_y = ceil(log2((m_origin.y() + m_size - pt.y())/m_size)); 
+        n_y = static_cast<unsigned int>(ceil(log2((m_origin.y() + m_size - pt.y())/m_size))); 
         y_in_box = PointInBox::LEFT;
     }
 
     if (pt.z() > (m_origin.z() + m_size))
     {
-        n_z = ceil(log2((pt.z() - m_origin.z())/m_size)); 
+        n_z = static_cast<unsigned int>(ceil(log2((pt.z() - m_origin.z())/m_size))); 
         z_in_box = PointInBox::RIGHT;
     }
     if (pt.z() < m_origin.z())
     {
-        n_z = ceil(log2((m_origin.z() + m_size - pt.z())/m_size)); 
+        n_z = static_cast<unsigned int>(ceil(log2((m_origin.z() + m_size - pt.z())/m_size))); 
         z_in_box = PointInBox::LEFT;
     }
 

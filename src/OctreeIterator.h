@@ -367,23 +367,24 @@ void TOctreeIterator<T>::checkAllNodesPoints() {
             }
         }
         
-        // Check each point is within node bounds
-        //for (auto* point : points) {
-        //    if (point->x() < origin.x() || point->x() > (origin.x() + size) ||
-        //        point->y() < origin.y() || point->y() > (origin.y() + size) ||
-        //        point->z() < origin.z() || point->z() > (origin.z() + size)) 
-        //        {
-        //        std::cerr << "Error: Point outside node bounds!" << std::endl;
-        //        std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
-        //        std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
-        //        std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
-        //        std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl;
-        //        std::cout << "Node size: " << size << std::endl;
-        //        std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
-        //        std::cout << "Point address: " << point << std::endl;
-        //        std::exit(EXIT_FAILURE);
-        //    }
-        //}
+        //Check each point is within node bounds
+        for (auto* point : points) {
+            if (!node->isInside(*point))
+            //if (point->x() < origin.x() || point->x() > (origin.x() + size) ||
+            //    point->y() < origin.y() || point->y() > (origin.y() + size) ||
+            //    point->z() < origin.z() || point->z() > (origin.z() + size)) 
+            {
+                std::cerr << "Error: Point outside node bounds!" << std::endl;
+                std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
+                std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
+                std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
+                std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl;
+                std::cout << "Node size: " << size << std::endl;
+                std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
+                std::cout << "Point address: " << point << std::endl;
+                //std::exit(EXIT_FAILURE);
+            }
+        }
     });
 }
 
@@ -595,121 +596,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
 }
 
 
-template<class T>
-unsigned int TOctreeIterator<T>::getNeighbors(const Point& query,
-                                              TOctreeNode<T>* query_node,
-                                              Neighbor_star_list& neighbors,
-                                              Distance_list &distances) const
-{	
-    Point octree_origin = m_octree->getOrigin();
-    Point node_origin = query_node->getOrigin();
-    double node_size = query_node->getSize();
-    double octree_size = m_octree->getSize();
-    
-    if(query_node->getDepth() ==  m_activeDepth)
-    {
-        //find neighboring nodes
-        list<unsigned int> xloc, yloc, zloc;
-        xloc.push_back(query_node->getXLoc());
-        yloc.push_back(query_node->getYLoc());
-        zloc.push_back(query_node->getZLoc());
-        
-        if((query.x() - m_radius  < node_origin.x())
-            &&(query.x() - m_radius > octree_origin.x()))
-            xloc.push_back(getXLeftCode(query_node));
-        if((query.x() + m_radius > node_origin.x() + node_size)
-            && (query.x() + m_radius <octree_origin.x() + octree_size))
-            xloc.push_back(getXRightCode(query_node));
-        
-        if((query.y() - m_radius < node_origin.y())
-            &&(query.y() - m_radius >octree_origin.y()))
-            yloc.push_back(getYLeftCode(query_node));
-        if((query.y() + m_radius > node_origin.y() + node_size)
-            && (query.y() + m_radius < octree_origin.y() + octree_size))
-            yloc.push_back(getYRightCode(query_node));
-        
-        if((query.z() - m_radius  < node_origin.z())
-            &&(query.z() - m_radius >octree_origin.z()))
-            zloc.push_back(getZLeftCode(query_node));
-        if((query.z() + m_radius > node_origin.z() +node_size) 
-            && (query.z() + m_radius <octree_origin.z() + octree_size))
-            zloc.push_back(getZRightCode(query_node));
-        
-        //look inside neighboring node
-        list<unsigned int>::iterator xi,yi,zi;
-        xi = xloc.begin();
-        while(xi != xloc.end())
-        {
-            yi = yloc.begin();
-            while(yi != yloc.end())
-            {
-                zi = zloc.begin();
-                while(zi != zloc.end())
-                {
-                    TOctreeNode<T> *node=m_octree->getRoot();
-                    traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
-                    if((node!=NULL)&&(node->getDepth() == m_activeDepth))
-                        explore(node, query, neighbors, distances);
-                    ++zi;
-                }
-                ++yi;
-            }
-            ++xi;
-        }
-    }
-    else
-    {
-        unsigned int s=query_node->getDepth();
-        list<unsigned int> xloc, yloc, zloc;
-        xloc.push_back(query_node->getXLoc());
-        yloc.push_back(query_node->getYLoc());
-        zloc.push_back(query_node->getZLoc());
-        if((query.x() - m_radius  < node_origin.x())
-            &&(query.x() - m_radius > octree_origin.x()))
-            xloc.push_back(getXLeftCode(query_node));
-        if((query.x() + m_radius > node_origin.x() + node_size) 
-            && (query.x() + m_radius < octree_origin.x() + octree_size))
-            xloc.push_back(getXRightCode(query_node));
-        
-        if((query.y() - m_radius  < node_origin.y())
-            &&(query.y() - m_radius >octree_origin.y() ))
-            yloc.push_back(getYLeftCode(query_node));
-        if((query.y() + m_radius > node_origin.y() + node_size) 
-            && (query.y() + m_radius < octree_origin.y() + octree_size))
-            yloc.push_back(getYRightCode(query_node));
-        
-        if((query.z() - m_radius  < node_origin.z() )
-            &&(query.z() - m_radius >octree_origin.z()))
-            zloc.push_back(getZLeftCode(query_node));
-        if((query.z() + m_radius > node_origin.z() +node_size)
-            && (query.z() + m_radius <octree_origin.z() + octree_size))
-            zloc.push_back(getZRightCode(query_node));
-        
-        
-        //look inside neighboring nodes
-        list<unsigned int>::iterator xi,yi,zi;
-        xi = xloc.begin();
-        while(xi != xloc.end())
-        {
-	        yi = yloc.begin();
-	        while(yi != yloc.end())
-	        {
-	            zi = zloc.begin();
-	            while(zi != zloc.end())
-	            {
-	                TOctreeNode<T> *node=m_octree->getRoot();
-	                traverseToLevel(&node,*xi,*yi,*zi,s);
-	                if( (node != NULL )&&( node->getDepth() == s))
-	                    explore(node,query,neighbors, distances);
-	                ++zi;
-	            }
-	            ++yi;
-	        }
-	        ++xi;
-        }
-    }
-    return (int)neighbors.size();
-}
+
 
 
 template<class T>
@@ -773,32 +660,6 @@ void TOctreeIterator<T>::explore(TOctreeNode<T>* node,
 }
 
 
-template<class T>
-void TOctreeIterator<T>::explore(TOctreeNode<T>* node, const Point& query_point, 
-                                 Neighbor_star_list &neighbors,
-                                 Distance_list &distances) const
-{
-    if(node->getDepth() != 0)
-    {
-        for(unsigned int i=0;i<8;i++)
-            if(node->getChild(i) != NULL)
-                explore(node->getChild(i), query_point, neighbors, distances);
-            
-    }
-    else if(node->getNpts() != 0)
-    {
-        typename std::list<T>::iterator iter;
-        for(iter = node->points_begin(); iter != node->points_end(); ++iter)
-        {
-            double dist = dist2( query_point, *iter);
-            if(dist < m_sqradius)
-            {
-                neighbors.push_back(&(*iter));
-                distances.push_back(dist);
-            }
-        }
-    }
-}
 
 template<class T>
 unsigned int TOctreeIterator<T>::getSortedNeighbors(const Point &query,
@@ -1157,7 +1018,6 @@ bool TOctreeIterator<T>::containsOnly(const Point& query,
 }
 
 
-
 template<class T>
 void TOctreeIterator<T>::explore(TOctreeNode<T> *node, 
                                  const Point &query_point,
@@ -1193,7 +1053,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
         typename std::unordered_set<T*>::iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
-            T* v = *iter;
+            T* v = *iter; 
             double sqdist = dist2( query_point, *v);
             if((sqdist < m_sqradius)
                 && (exceptions.find(v) == exceptions.end()))
@@ -1209,7 +1069,7 @@ template<class T>
 static unsigned int checkTotalNumberOfElementsNode(TOctreeNode<T>* node)
 {
     if (node->isLeaf())
-        return node->GetPoints().size();
+        return static_cast<unsigned int>(node->GetPoints().size());
     else
     {
         unsigned int total_points = 0;

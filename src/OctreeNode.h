@@ -104,12 +104,11 @@ class TOctreeNode
         double m_size;
         
         /**
-         * @brief list of points contained in the node
+         * @brief unordered_set of points contained in the node
          * (empty if the node is not a leaf)
          */
-        //list<T> m_points; // It stores vertices, not pointers to vertices.
-        
         std::unordered_set<T*> m_points;
+        //list<T> m_points; // It stores vertices, not pointers to vertices.
 
         
     public :
@@ -346,6 +345,9 @@ TOctreeNode<T>::TOctreeNode(Point& origin, double size, unsigned int depth)
 template<class T>
 TOctreeNode<T>::~TOctreeNode()
 {
+    for (T* element : m_points) {
+        delete element;
+    }
     m_points.clear();
     m_xloc = m_yloc = m_zloc =0;
     m_depth = 0;
@@ -519,18 +521,6 @@ typename std::unordered_set<T*>::iterator TOctreeNode<T>::points_end()
 {
     return m_points.end();
 }
-
-//template<class T>
-//typename std::list<T>::const_iterator TOctreeNode<T>::points_begin() const
-//{
-//    return m_points.begin();
-//}
-//
-//template<class T>
-//typename std::list<T>::const_iterator TOctreeNode<T>::points_end() const
-//{
-//    return m_points.end();
-//}
 
 template<class T>
 T* TOctreeNode<T>::addPoint(const T &t)

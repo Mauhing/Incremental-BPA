@@ -1285,8 +1285,8 @@ void Mesher::merge(Mesher& mesher)
         }
         mesher.m_border_edges.clear();
 
-    m_nfacets = m_facets.size();
-    m_nvertices = m_vertices.size();
+    m_nfacets = static_cast<unsigned int>(m_facets.size());
+    m_nvertices = static_cast<unsigned int>(m_vertices.size());
 }
 
 std::set<Facet*>& Mesher::getBoundaryFacets() const

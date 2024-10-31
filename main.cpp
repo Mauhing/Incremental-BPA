@@ -144,8 +144,10 @@ int main(int argc, char **argv)
     std::cout <<" Number of points: " << iterator.checkTotalNumberOfElements() << std::endl;
     iterator.checkAllNodesPoints();
 
+    std::cout << "Reconstructing the mesh" << std::endl;
     mesher.reconstruct(options.radii);
     std::time(&end);
+    std::cout << "Finish reconstruction" << std::endl;
     
     //octree.printOctreeStat();
     std::cout << "Sanity checking all nodes points" << std::endl;
@@ -153,7 +155,6 @@ int main(int argc, char **argv)
     //iterator.setR(radius);
     std::cout <<" Number of points: " << iterator.checkTotalNumberOfElements() << std::endl;
     iterator.checkAllNodesPoints();
-
     std::exit(EXIT_SUCCESS);
 
     mesher.print_stats();
@@ -247,9 +248,6 @@ int main(int argc, char **argv)
             octree.checkSizeAndaddPoint(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Further reconstruction

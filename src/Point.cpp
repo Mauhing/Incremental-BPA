@@ -20,7 +20,7 @@
 
 unsigned int Point::m_debug_counter_record = 1;
 
-Point::Point() : m_x(0), m_y(0), m_z(0)
+Point::Point() : m_x(0.0), m_y(0.0), m_z(0.0)
 {
     m_debug_counter = m_debug_counter_record++;
 }

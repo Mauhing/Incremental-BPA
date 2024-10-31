@@ -25,7 +25,7 @@ else()
 endif()
 
 # Enable all warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror=conversion")
 
 # Option to use Clang
 option(USE_CLANG "build application with clang" OFF)
