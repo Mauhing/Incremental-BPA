@@ -123,6 +123,7 @@ int main(int argc, char **argv)
 
     // Copy the octree skeleton to a new octree
     OctreeBallCenters octree_ball_centers = octree.copy_skeleton<BallCenter>();
+    //OctreeBallCenters octree_ball_centers;
 
     // Copy the octree iterator
     OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
@@ -131,27 +132,29 @@ int main(int argc, char **argv)
         octree_ball_centers_iterator.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    std::cout << "Sanity checking all nodes points" << std::endl;
-    std::cout << "Vertices" << std::endl;
-    iterator.checkAllNodesPoints();
-
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Bootstrapping reconstruction
     std::time(&start);
     Mesher mesher(&octree, &iterator, 
                    &octree_ball_centers, 
                    &octree_ball_centers_iterator);
-    mesher.reconstruct(options.radii);
-    std::time(&end);
-    
-    octree.printOctreeStat();
 
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Vertices" << std::endl;
-    iterator.setR(radius);
+    std::cout <<" Number of points: " << iterator.checkTotalNumberOfElements() << std::endl;
     iterator.checkAllNodesPoints();
 
+    mesher.reconstruct(options.radii);
+    std::time(&end);
+    
+    //octree.printOctreeStat();
+    std::cout << "Sanity checking all nodes points" << std::endl;
+    std::cout << "Vertices" << std::endl;
+    //iterator.setR(radius);
+    std::cout <<" Number of points: " << iterator.checkTotalNumberOfElements() << std::endl;
+    iterator.checkAllNodesPoints();
 
+    std::exit(EXIT_SUCCESS);
 
     mesher.print_stats();
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)

@@ -22,11 +22,11 @@
 #include <cstdio>
 #include <iostream>
 
+
 Vertex::Vertex() : Point()
 {
     m_nx=m_ny=m_nz=0.0;
     m_index = -1;
-    //m_type = 0;
     setType(Vertex::ORPHAN);
     m_octreeNodeLeaf = NULL;
 }
@@ -38,7 +38,6 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
     m_ny = ny;
     m_nz = nz;
     m_index = -1;
-    //m_type = 0;
     setType(Vertex::ORPHAN);
     m_octreeNodeLeaf = NULL;
 }
@@ -49,7 +48,6 @@ Vertex::~Vertex()
     m_index = -1;
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
-    //m_type = 0;
     m_type = Vertex::ORPHAN; //0
     m_octreeNodeLeaf = NULL;
 }
@@ -310,3 +308,4 @@ const Facet_set& Vertex::adjacentFacets() const
 {
     return m_adjacentFacets;
 }
+

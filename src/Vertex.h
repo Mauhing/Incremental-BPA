@@ -185,7 +185,6 @@ class Vertex : public Point
          */
         void updateType();
         
-        
         /** @brief test if a facet is adjacent to a vertex
          *@param facet test facet
          *@return true if the facet is adjacent
@@ -203,6 +202,7 @@ class Vertex : public Point
 
     public : // added by mauhing
         const Facet_set& adjacentFacets() const;
+
 
 };
 

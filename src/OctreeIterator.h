@@ -318,6 +318,8 @@ class TOctreeIterator
 
     public: // sanity check
         void checkAllNodesPoints();
+
+        unsigned int checkTotalNumberOfElements() const;
 };
 
 template<class T>
@@ -352,22 +354,36 @@ void TOctreeIterator<T>::checkAllNodesPoints() {
         // Get node bounds
         Point origin = node->getOrigin();
         double size = node->getSize();
-        
-        // Check each point is within node bounds
+
+        //std::cout << "Node address: " << node << std::endl;
+        //std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
+        //std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
+        //std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl; 
+
         for (auto* point : points) {
-            if (point->x() < origin.x() || point->x() > (origin.x() + size) ||
-                point->y() < origin.y() || point->y() > (origin.y() + size) ||
-                point->z() < origin.z() || point->z() > (origin.z() + size)) 
-                {
-                std::cerr << "Error: Point outside node bounds!" << std::endl;
+            if (point->getDebugCounter() == 536) {
+                std::cout << "Point address: " << point << std::endl;
                 std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
-                std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
-                std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
-                std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl;
-                std::cout << "Node size: " << size << std::endl;
-                std::exit(EXIT_FAILURE);
             }
         }
+        
+        // Check each point is within node bounds
+        //for (auto* point : points) {
+        //    if (point->x() < origin.x() || point->x() > (origin.x() + size) ||
+        //        point->y() < origin.y() || point->y() > (origin.y() + size) ||
+        //        point->z() < origin.z() || point->z() > (origin.z() + size)) 
+        //        {
+        //        std::cerr << "Error: Point outside node bounds!" << std::endl;
+        //        std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
+        //        std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
+        //        std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
+        //        std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl;
+        //        std::cout << "Node size: " << size << std::endl;
+        //        std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
+        //        std::cout << "Point address: " << point << std::endl;
+        //        std::exit(EXIT_FAILURE);
+        //    }
+        //}
     });
 }
 
@@ -1187,6 +1203,30 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
             }
         }
     }
+}
+
+template<class T>
+static unsigned int checkTotalNumberOfElementsNode(TOctreeNode<T>* node)
+{
+    if (node->isLeaf())
+        return node->GetPoints().size();
+    else
+    {
+        unsigned int total_points = 0;
+        for (unsigned int i = 0; i < 8; i++)
+        {
+            if (node->getChild(i) != NULL)
+                total_points += checkTotalNumberOfElementsNode(node->getChild(i));
+        }
+        return total_points;
+    }
+}
+
+template<class T>
+unsigned int TOctreeIterator<T>::checkTotalNumberOfElements() const
+{
+    TOctreeNode<T>* node = m_octree->getRoot();
+    return checkTotalNumberOfElementsNode(node);
 }
 
 //template<class T>

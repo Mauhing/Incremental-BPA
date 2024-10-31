@@ -18,21 +18,20 @@
 #include "Point.h"
 #include <iostream>
 
-Point::Point()
+unsigned int Point::m_debug_counter_record = 1;
+
+Point::Point() : m_x(0), m_y(0), m_z(0)
 {
-    m_x = m_y = m_z = 0;
+    m_debug_counter = m_debug_counter_record++;
 }
 
-Point::Point(double x, double y, double z)
+Point::Point(double x, double y, double z) : m_x(x), m_y(y), m_z(z)
 {
-    m_x = x;
-    m_y = y;
-    m_z = z;
+    m_debug_counter = m_debug_counter_record++;
 }
 
 Point::~Point()
 {
-    m_x = m_y = m_z = 0;
 }
 
 double Point::x() const
@@ -55,4 +54,9 @@ std::ostream& operator << (std::ostream& out, const Point& v)
 {
     out << v.x() << "\t" << v.y() << "\t" << v.z();
     return out;
+}
+
+unsigned int Point::getDebugCounter() const
+{
+    return m_debug_counter;
 }
