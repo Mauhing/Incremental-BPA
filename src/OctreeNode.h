@@ -275,13 +275,13 @@ class TOctreeNode
          * @return pointer to the beginning of the list
          */
         //typename std::list<T>::iterator points_begin();
-        typename std::unordered_set<T*>::iterator points_begin();
+        typename std::unordered_set<T*>::const_iterator points_begin();
         
         /** @brief get a pointer to the end of the list of points
          * @return pointer to the end of 'points'
          */
         //typename std::list<T>::iterator points_end();
-        typename std::unordered_set<T*>::iterator points_end();
+        typename std::unordered_set<T*>::const_iterator points_end();
         
         /** @brief get a const pointer to the list of points
          * @return const pointer to the beginning of the list
@@ -511,15 +511,15 @@ Point TOctreeNode<T>::getOrigin() const
 }
 
 template<class T>
-typename std::unordered_set<T*>::iterator TOctreeNode<T>::points_begin()
+typename std::unordered_set<T*>::const_iterator TOctreeNode<T>::points_begin()
 {
-    return m_points.begin();
+    return m_points.cbegin();
 }
 
 template<class T>
-typename std::unordered_set<T*>::iterator TOctreeNode<T>::points_end()
+typename std::unordered_set<T*>::const_iterator TOctreeNode<T>::points_end()
 {
-    return m_points.end();
+    return m_points.cend();
 }
 
 template<class T>

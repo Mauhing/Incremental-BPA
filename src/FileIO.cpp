@@ -261,7 +261,7 @@ void FileIO::saveContent(OctreeNodeV* node, ofstream& f)
         //{
         //    f << *iter <<std::endl;
         //} 
-        Vertex_UnOrdSet::iterator iter;
+        Vertex_UnOrdSet::const_iterator iter;
         for(iter = node->points_begin(); iter != node->points_end();
             ++iter)
         {

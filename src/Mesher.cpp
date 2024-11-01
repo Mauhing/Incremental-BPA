@@ -248,7 +248,7 @@ void Mesher::findSeedTriangle(OctreeNodeV* node, bool &found)
     else if( node->getNpts() != 0)
     {
         //Vertex_list::iterator pi = node->points_begin();
-        typename Vertex_UnOrdSet::iterator pi = node->points_begin();
+        typename Vertex_UnOrdSet::const_iterator pi = node->points_begin();
         while( pi != node->points_end())
         {
             // current approach is find seed and expand
@@ -965,7 +965,7 @@ void Mesher::findSeedTriangle(OctreeNodeV* containment_node, OctreeNodeV* node,
     else if( node->getNpts() != 0)
     {
         //Vertex_list::iterator pi = node->points_begin();
-        Vertex_UnOrdSet::iterator pi = node->points_begin();
+        Vertex_UnOrdSet::const_iterator pi = node->points_begin();
         while( pi != node->points_end())
         {
             Vertex* v = *pi;
@@ -1161,7 +1161,7 @@ void Mesher::collectActiveEdges(OctreeNodeV* containment_node,
     else
     {
         //Vertex_list::iterator vi;
-        Vertex_UnOrdSet::iterator vi;
+        Vertex_UnOrdSet::const_iterator vi;
         for(vi = containment_node->points_begin();
             vi != containment_node->points_end(); ++vi)
             {
@@ -1204,7 +1204,7 @@ void Mesher::collectBorderEdges(OctreeNodeV* containment_node,
     else
     {
         //Vertex_list::iterator vi;
-        Vertex_UnOrdSet::iterator vi;
+        Vertex_UnOrdSet::const_iterator vi;
         for(vi = containment_node->points_begin();
             vi != containment_node->points_end(); ++vi)
             {

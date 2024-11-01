@@ -355,15 +355,22 @@ void TOctreeIterator<T>::checkAllNodesPoints() {
         Point origin = node->getOrigin();
         double size = node->getSize();
 
-        //std::cout << "Node address: " << node << std::endl;
-        //std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
-        //std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
-        //std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl; 
+        std::cout << "Node address: " << node << std::endl;
+        std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
+        std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
+        std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl; 
 
         for (auto* point : points) {
             if (point->getDebugCounter() == 536) {
+                std::cout << "--------------------------------" << std::endl;
+                std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
                 std::cout << "Point address: " << point << std::endl;
                 std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
+                std::cout << "Node address: " << node << std::endl;
+                std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
+                std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
+                std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl; 
+                std::cout << "--------------------------------" << std::endl;
             }
         }
         
@@ -376,13 +383,11 @@ void TOctreeIterator<T>::checkAllNodesPoints() {
             {
                 std::cerr << "Error: Point outside node bounds!" << std::endl;
                 std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
-                std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
-                std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
-                std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl;
-                std::cout << "Node size: " << size << std::endl;
                 std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
                 std::cout << "Point address: " << point << std::endl;
-                //std::exit(EXIT_FAILURE);
+                std::cout << "Node address: " << node << std::endl;
+                std::cout << "Node size: " << size << std::endl;
+                std::exit(EXIT_FAILURE);
             }
         }
     });
@@ -648,7 +653,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T>* node,
         //    if(dist < m_sqradius)
         //        neighbors.push_back(&(*iter));
         //}
-        typename std::unordered_set<T*>::iterator iter;
+        typename std::unordered_set<T*>::const_iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
             T* v = *iter;
@@ -807,7 +812,7 @@ void TOctreeIterator<T>::exploreSort(TOctreeNode<T>* node,
         //    if(dist < m_sqradius)
         //        neighbors.insert( pair<double, T*>(dist, &(*iter)) );
         //}
-        typename std::unordered_set<T*>::iterator iter;
+        typename std::unordered_set<T*>::const_iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
             T* v = *iter;
@@ -1050,7 +1055,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
         //        return;
         //    }
         //}
-        typename std::unordered_set<T*>::iterator iter;
+        typename std::unordered_set<T*>::const_iterator iter;
         for(iter = node->points_begin(); iter != node->points_end(); ++iter)
         {
             T* v = *iter; 
