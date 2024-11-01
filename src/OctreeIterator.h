@@ -355,31 +355,9 @@ void TOctreeIterator<T>::checkAllNodesPoints() {
         Point origin = node->getOrigin();
         double size = node->getSize();
 
-        std::cout << "Node address: " << node << std::endl;
-        std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
-        std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
-        std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl; 
-
-        for (auto* point : points) {
-            if (point->getDebugCounter() == 536) {
-                std::cout << "--------------------------------" << std::endl;
-                std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
-                std::cout << "Point address: " << point << std::endl;
-                std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
-                std::cout << "Node address: " << node << std::endl;
-                std::cout << "Box x range: " << origin.x() << " " << origin.x() + size << std::endl;
-                std::cout << "Box y range: " << origin.y() << " " << origin.y() + size << std::endl;
-                std::cout << "Box z range: " << origin.z() << " " << origin.z() + size << std::endl; 
-                std::cout << "--------------------------------" << std::endl;
-            }
-        }
-        
         //Check each point is within node bounds
         for (auto* point : points) {
             if (!node->isInside(*point))
-            //if (point->x() < origin.x() || point->x() > (origin.x() + size) ||
-            //    point->y() < origin.y() || point->y() > (origin.y() + size) ||
-            //    point->z() < origin.z() || point->z() > (origin.z() + size)) 
             {
                 std::cerr << "Error: Point outside node bounds!" << std::endl;
                 std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;

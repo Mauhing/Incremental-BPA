@@ -333,9 +333,9 @@ bool Mesher::trySeed(Vertex& v)
             Vertex *v2 = candidate;
             if(changeHandness)
             {
-                Vertex temp = *v1;
-                *v1 = *v2;
-                *v2 = temp;
+                Vertex* temp = v1;
+                v1 = v2;
+                v2 = temp;
             } 
             // <<<
             // Now, the seed triangle will take account of the handness.
