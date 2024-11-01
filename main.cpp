@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Set vertices iterator
+    // Set the vertices iterator
     std::cout<<"****** Reconstructing with radii "<<std::flush;
     std::list<double>::const_iterator ri = options.radii.begin();
     while(ri != options.radii.end())
@@ -121,12 +121,13 @@ int main(int argc, char **argv)
 
     if(radius>0)
         iterator_vertices.setR(radius);
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // Copy the octree skeleton to a new octree
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Create the ball centers octree and its iterator
     OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
-    //OctreeBallCenters octree_ball_centers;
 
-    // Copy the octree iterator
     OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
 
     if (radius > 0)
