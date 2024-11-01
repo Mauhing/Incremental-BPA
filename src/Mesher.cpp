@@ -1342,20 +1342,21 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
         }
         // Delete the vertex.
         delete v;
+        m_nvertices--;
     } 
     
     // Clear the temporary list to free the memory.
     temporary_orphan_vertices.clear();
 
     // Update the node that if the vertex is trimmed, change it into ORPHAN.
-    for (auto v : points)
-    {
-        if (v->getType() == Vertex::POTENTIAL)
-        {
-            v->setType(Vertex::ORPHAN);
-            m_nvertices--; 
-        }
-    }
+    //for (auto v : points)
+    //{
+    //    if (v->getType() == Vertex::POTENTIAL)
+    //    {
+    //        v->setType(Vertex::ORPHAN);
+    //        m_nvertices--; 
+    //    }
+    //}
     
 }
 

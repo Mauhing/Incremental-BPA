@@ -86,11 +86,12 @@ int main(int argc, char **argv)
     // Octree creation
     time_t start,end;
     std::time(&start);
-    OctreeVertices octree;
+
+    OctreeVertices octree_vertices;
     if(radius >0)
     {
         //ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
-        ok = FileIO::readFromBatchAndSortPoints(batch_data[0], octree, radius);
+        ok = FileIO::readFromBatchAndSortPoints(batch_data[0], octree_vertices, radius);
     } 
     if( !ok )
     {
@@ -99,7 +100,7 @@ int main(int argc, char **argv)
     }
     std::time(&end);
 
-    octree.printOctreeStat();
+    octree_vertices.printOctreeStat();
     std::cout<<"Reading and sorting points in this octree took "
             <<difftime(end,start)<<" s."<<std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -116,13 +117,13 @@ int main(int argc, char **argv)
     }
     std::cout<<"******"<<std::endl;
 
-    OctreeIteratorVertices iterator(&octree);
+    OctreeIteratorVertices iterator_vertices(&octree_vertices);
 
     if(radius>0)
-        iterator.setR(radius);
+        iterator_vertices.setR(radius);
 
     // Copy the octree skeleton to a new octree
-    OctreeBallCenters octree_ball_centers = octree.copy_skeleton<BallCenter>();
+    OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
     //OctreeBallCenters octree_ball_centers;
 
     // Copy the octree iterator
@@ -135,53 +136,37 @@ int main(int argc, char **argv)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Bootstrapping reconstruction
     std::time(&start);
-    Mesher mesher(&octree, &iterator, 
+    Mesher mesher(&octree_vertices, &iterator_vertices, 
                    &octree_ball_centers, 
                    &octree_ball_centers_iterator);
-
-    std::cout << "Sanity checking all nodes points" << std::endl;
-    std::cout << "Vertices" << std::endl;
-    std::cout <<" Number of points: " << iterator.debug_checkTotalNumberOfElements() << std::endl;
-    iterator.debug_checkAllNodesPoints();
 
     std::cout << "Reconstructing the mesh" << std::endl;
     mesher.reconstruct(options.radii);
     std::time(&end);
     std::cout << "Finish reconstruction" << std::endl;
     
-    //octree.printOctreeStat();
-    std::cout << "Sanity checking all nodes points" << std::endl;
-    std::cout << "Vertices" << std::endl;
-    //iterator.setR(radius);
-    std::cout <<" Number of points: " << iterator.debug_checkTotalNumberOfElements() << std::endl;
-    iterator.debug_checkAllNodesPoints();
-    std::exit(EXIT_SUCCESS);
-
-    mesher.print_stats();
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
     std::cout << "Filling holes..." << std::endl;
     std::time(&start);
-    //mesher.fillHoles();
+    mesher.fillHoles();
     std::time(&end);
     std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
-    //mesher.clearOrphanVertices();
+    mesher.clearOrphanVertices();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Sanity check
     std::cout << "Sanity checking all nodes points" << std::endl;
-    std::cout << "Vertices" << std::endl;
-    iterator.setR(radius);
-    iterator.debug_checkAllNodesPoints();
-
     std::cout << "Ball centers" << std::endl;
     octree_ball_centers_iterator.debug_checkAllNodesPoints();
+    std::cout << "Number of ball centers: " << octree_ball_centers_iterator.debug_checkTotalNumberOfElements() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    std::exit(EXIT_SUCCESS);
 
     //#ifdef _DEBUG
     //std::cout << "Sanity check: check orientation" << std::endl;
@@ -221,7 +206,7 @@ int main(int argc, char **argv)
         }
         std::cout << "Expanding octree vertices" << std::endl;
         for (auto& vertex : vertices) {
-            octree.checkSizeAndexpand(vertex);
+            octree_vertices.checkSizeAndexpand(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -245,7 +230,7 @@ int main(int argc, char **argv)
         // Add the new vertices to the octree
         std::cout << "Adding new vertices to the octree" << std::endl;
         for (auto& vertex : vertices) {
-            octree.checkSizeAndaddPoint(vertex);
+            octree_vertices.checkSizeAndaddPoint(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
