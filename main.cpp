@@ -70,7 +70,6 @@ int main(int argc, char **argv)
     FileIO::setBaseOutputFilename(options.outfile.erase(options.outfile.find(".ply"), 4));
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Read the input file
     bool ok;
@@ -80,7 +79,6 @@ int main(int argc, char **argv)
     std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
     std::cout << "batch_data size: " << batch_data.size() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Octree creation
@@ -105,7 +103,6 @@ int main(int argc, char **argv)
             <<difftime(end,start)<<" s."<<std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the vertices iterator
     std::cout<<"****** Reconstructing with radii "<<std::flush;
@@ -122,7 +119,6 @@ int main(int argc, char **argv)
     if(radius>0)
         iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Create the ball centers octree and its iterator
