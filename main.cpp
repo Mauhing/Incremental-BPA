@@ -141,8 +141,8 @@ int main(int argc, char **argv)
 
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Vertices" << std::endl;
-    std::cout <<" Number of points: " << iterator.checkTotalNumberOfElements() << std::endl;
-    iterator.checkAllNodesPoints();
+    std::cout <<" Number of points: " << iterator.debug_checkTotalNumberOfElements() << std::endl;
+    iterator.debug_checkAllNodesPoints();
 
     std::cout << "Reconstructing the mesh" << std::endl;
     mesher.reconstruct(options.radii);
@@ -153,8 +153,8 @@ int main(int argc, char **argv)
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Vertices" << std::endl;
     //iterator.setR(radius);
-    std::cout <<" Number of points: " << iterator.checkTotalNumberOfElements() << std::endl;
-    iterator.checkAllNodesPoints();
+    std::cout <<" Number of points: " << iterator.debug_checkTotalNumberOfElements() << std::endl;
+    iterator.debug_checkAllNodesPoints();
     std::exit(EXIT_SUCCESS);
 
     mesher.print_stats();
@@ -177,10 +177,10 @@ int main(int argc, char **argv)
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Vertices" << std::endl;
     iterator.setR(radius);
-    iterator.checkAllNodesPoints();
+    iterator.debug_checkAllNodesPoints();
 
     std::cout << "Ball centers" << std::endl;
-    octree_ball_centers_iterator.checkAllNodesPoints();
+    octree_ball_centers_iterator.debug_checkAllNodesPoints();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     //#ifdef _DEBUG

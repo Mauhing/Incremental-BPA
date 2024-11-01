@@ -316,10 +316,10 @@ class TOctreeIterator
         template<typename Func>
         void loopOverAllNodes(TOctreeNode<T>* node, Func f);
 
-    public: // sanity check
-        void checkAllNodesPoints();
+    public: // debug fuction
+        void debug_checkAllNodesPoints();
 
-        unsigned int checkTotalNumberOfElements() const;
+        unsigned int debug_checkTotalNumberOfElements() const;
 };
 
 template<class T>
@@ -346,7 +346,7 @@ void TOctreeIterator<T>::loopOverAllNodes(TOctreeNode<T>* node, Func f)
 }
 
 template<class T>
-void TOctreeIterator<T>::checkAllNodesPoints() {
+void TOctreeIterator<T>::debug_checkAllNodesPoints() {
     loopOverAllNodes(m_octree->getRoot(), [this](TOctreeNode<T>* node) {
         // Get all points in this node
         auto& points = node->GetPoints();
@@ -361,7 +361,6 @@ void TOctreeIterator<T>::checkAllNodesPoints() {
             {
                 std::cerr << "Error: Point outside node bounds!" << std::endl;
                 std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
-                std::cout << "Point debug counter: " << point->getDebugCounter() << std::endl;
                 std::cout << "Point address: " << point << std::endl;
                 std::cout << "Node address: " << node << std::endl;
                 std::cout << "Node size: " << size << std::endl;
@@ -1049,7 +1048,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
 }
 
 template<class T>
-static unsigned int checkTotalNumberOfElementsNode(TOctreeNode<T>* node)
+static unsigned int debug_checkTotalNumberOfElementsNode(TOctreeNode<T>* node)
 {
     if (node->isLeaf())
         return static_cast<unsigned int>(node->GetPoints().size());
@@ -1059,40 +1058,17 @@ static unsigned int checkTotalNumberOfElementsNode(TOctreeNode<T>* node)
         for (unsigned int i = 0; i < 8; i++)
         {
             if (node->getChild(i) != NULL)
-                total_points += checkTotalNumberOfElementsNode(node->getChild(i));
+                total_points += debug_checkTotalNumberOfElementsNode(node->getChild(i));
         }
         return total_points;
     }
 }
 
 template<class T>
-unsigned int TOctreeIterator<T>::checkTotalNumberOfElements() const
+unsigned int TOctreeIterator<T>::debug_checkTotalNumberOfElements() const
 {
     TOctreeNode<T>* node = m_octree->getRoot();
-    return checkTotalNumberOfElementsNode(node);
+    return debug_checkTotalNumberOfElementsNode(node);
 }
 
-//template<class T>
-//void TOctreeIterator<T>::loopOverAllNodes(void (*func)(TOctreeNode<T>*)) const
-//{
-//    TOctreeNode<T>* node = m_octree->getRoot();
-//    loopOverRestNodes(node, func);
-//}
-//
-//template<class T>
-//void TOctreeIterator<T>::loopOverRestNodes(TOctreeNode<T>* node, void (*func)(TOctreeNode<T>*)) const
-//{
-//    if(node->getDepth() != 0)
-//    {
-//        for(unsigned int i = 0; i < 8; i++)
-//        {
-//            if(node->getChild(i) != NULL)
-//                loopOverRestNodes(node->getChild(i), func);
-//        }
-//    }
-//    else if (node->getNpts() != 0)
-//    {
-//        func(node);
-//    }
-//}
 #endif

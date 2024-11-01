@@ -52,8 +52,3 @@ std::ostream& operator << (std::ostream& out, const Point& v)
     out << v.x() << "\t" << v.y() << "\t" << v.z();
     return out;
 }
-
-unsigned int Point::getDebugCounter() const
-{
-    return m_debug_counter;
-}
