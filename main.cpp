@@ -45,6 +45,9 @@
 
 int main(int argc, char **argv)
 {
+    unsigned int text_index = 3;
+    std::cout << "text_index: " << text_index << std::endl;
+
     ProgramOptions options = parseCommandLine(argc, argv);
 
     // Use the parsed options
@@ -141,9 +144,12 @@ int main(int argc, char **argv)
     mesher.reconstruct(options.radii);
     std::time(&end);
     std::cout << "Finish reconstruction" << std::endl;
-    
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Fill holes
     std::cout << "Filling holes..." << std::endl;
     std::time(&start);
     mesher.fillHoles();
@@ -152,16 +158,16 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Clear orphan vertices
-    mesher.clearOrphanVertices();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Sanity check
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Ball centers" << std::endl;
-    octree_ball_centers_iterator.debug_checkAllNodesPoints();
     std::cout << "Number of ball centers: " << octree_ball_centers_iterator.debug_checkTotalNumberOfElements() << std::endl;
+    octree_ball_centers_iterator.debug_checkAllNodesPoints();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Clear orphan vertices
+    mesher.clearOrphanVertices();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     std::exit(EXIT_SUCCESS);
 

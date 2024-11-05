@@ -360,8 +360,11 @@ void TOctreeIterator<T>::debug_checkAllNodesPoints() {
             if (!node->isInside(*point))
             {
                 std::cerr << "Error: Point outside node bounds!" << std::endl;
-                std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
                 std::cout << "Point address: " << point << std::endl;
+                std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
+                std::cout << "X bounds: " << origin.x() << " " << origin.x() + size << std::endl;
+                std::cout << "Y bounds: " << origin.y() << " " << origin.y() + size << std::endl;
+                std::cout << "Z bounds: " << origin.z() << " " << origin.z() + size << std::endl;
                 std::cout << "Node address: " << node << std::endl;
                 std::cout << "Node size: " << size << std::endl;
                 std::exit(EXIT_FAILURE);
