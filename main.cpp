@@ -45,9 +45,6 @@
 
 int main(int argc, char **argv)
 {
-    unsigned int text_index = 3;
-    std::cout << "text_index: " << text_index << std::endl;
-
     ProgramOptions options = parseCommandLine(argc, argv);
 
     // Use the parsed options

@@ -438,33 +438,33 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
     {
         #ifdef _DEBUG
         //print the class name of the object
-        std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
-                                 std::is_same<T, BallCenter>::value ? "BallCenter" : 
-                                 "Unknown") << std::endl;
-        if (x_in_box != PointRespectToBox::INSIDE) {
-            std::cout << "x outside the box" << std::endl;
-            std::cout << "n_x: " << n_x << std::endl;
-            std::cout << "x_in_box: " << x_in_box << std::endl;
-            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        }
-        if (y_in_box != PointRespectToBox::INSIDE) {
-            std::cout << "y outside the box" << std::endl;
-            std::cout << "n_y: " << n_y << std::endl;
-            std::cout << "y_in_box: " << y_in_box << std::endl;
-            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        }
-        if (z_in_box != PointRespectToBox::INSIDE) {
-            std::cout << "z outside the box" << std::endl;
-            std::cout << "n_z: " << n_z << std::endl;
-            std::cout << "z_in_box: " << z_in_box << std::endl;
-            std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-            std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-            std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
-        }
+        //std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
+        //                         std::is_same<T, BallCenter>::value ? "BallCenter" : 
+        //                         "Unknown") << std::endl;
+        //if (x_in_box != PointRespectToBox::INSIDE) {
+        //    std::cout << "x outside the box" << std::endl;
+        //    std::cout << "n_x: " << n_x << std::endl;
+        //    std::cout << "x_in_box: " << x_in_box << std::endl;
+        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        //}
+        //if (y_in_box != PointRespectToBox::INSIDE) {
+        //    std::cout << "y outside the box" << std::endl;
+        //    std::cout << "n_y: " << n_y << std::endl;
+        //    std::cout << "y_in_box: " << y_in_box << std::endl;
+        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        //}
+        //if (z_in_box != PointRespectToBox::INSIDE) {
+        //    std::cout << "z outside the box" << std::endl;
+        //    std::cout << "n_z: " << n_z << std::endl;
+        //    std::cout << "z_in_box: " << z_in_box << std::endl;
+        //    std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        //    std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        //    std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+        //}
         #endif
 
         unsigned int n_max = (n_x > n_y) ? ((n_x > n_z) ? n_x : n_z) : ((n_y > n_z) ? n_y : n_z);
@@ -478,22 +478,23 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
         {
             // First update the locational code for all nodes
             unsigned int top_level = m_root->getDepth();
-            unsigned int insert_level;
 
             // Update all node
             for (auto* node : m_created_nodes)
             {
                 //TOctreeNode<T> *node = *it;
-                insert_level = top_level - node->getDepth();
-                node->setXLoc( node->getXLoc() + ( x_insert_index<<(insert_level) ) );
-                node->setYLoc( node->getYLoc() + ( y_insert_index<<(insert_level) ) );
-                node->setZLoc( node->getZLoc() + ( z_insert_index<<(insert_level) ) );
+                node->setXLoc( node->getXLoc() + ( x_insert_index<<(top_level) ) );
+                node->setYLoc( node->getYLoc() + ( y_insert_index<<(top_level) ) );
+                node->setZLoc( node->getZLoc() + ( z_insert_index<<(top_level) ) );
             }
 
             // Then add parent
-            double x = (x_insert_index == 0) ? m_origin.x() : m_origin.x() - m_size;
-            double y = (y_insert_index == 0) ? m_origin.y() : m_origin.y() - m_size;
-            double z = (z_insert_index == 0) ? m_origin.z() : m_origin.z() - m_size;
+            double x = (x_in_box == PointRespectToBox::LEFT) ? m_origin.x() - m_size : m_origin.x();
+            double y = (y_in_box == PointRespectToBox::LEFT) ? m_origin.y() - m_size : m_origin.y();
+            double z = (z_in_box == PointRespectToBox::LEFT) ? m_origin.z() - m_size : m_origin.z();
+            //double x = (x_in_box == PointRespectToBox::RIGHT) ? m_origin.x() : m_origin.x() - m_size;
+            //double y = (y_in_box == PointRespectToBox::RIGHT) ? m_origin.y() : m_origin.y() - m_size;
+            //double z = (z_in_box == PointRespectToBox::RIGHT) ? m_origin.z() : m_origin.z() - m_size;
             
             // Create new root node
             Point new_origin(x, y, z);
@@ -513,6 +514,7 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             m_size *= 2;
             m_nb_interval = pow2(m_root_depth + 1);
             m_origin = new_origin;
+            m_root_depth = m_root->getDepth();
             // bug, we should also update m_root_depth
             
             // Insert the new root node

@@ -52,3 +52,8 @@ Facet *BallCenter::getFacet() const
 {
     return m_facet;
 }
+
+TOctreeNode<BallCenter>* BallCenter::getOctreeNodeLeaf() const
+{
+    return m_octree_node;
+}

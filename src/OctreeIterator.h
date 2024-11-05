@@ -349,23 +349,24 @@ template<class T>
 void TOctreeIterator<T>::debug_checkAllNodesPoints() {
     loopOverAllNodes(m_octree->getRoot(), [this](TOctreeNode<T>* node) {
         // Get all points in this node
-        auto& points = node->GetPoints();
+        auto& objects = node->GetPoints();
         
         // Get node bounds
         Point origin = node->getOrigin();
         double size = node->getSize();
 
         //Check each point is within node bounds
-        for (auto* point : points) {
-            if (!node->isInside(*point))
+        for (auto* object : objects) {
+            if (!node->isInside(*object))
             {
                 std::cerr << "Error: Point outside node bounds!" << std::endl;
-                std::cout << "Point address: " << point << std::endl;
-                std::cout << "Point: " << point->x() << " " << point->y() << " " << point->z() << std::endl;
+                std::cout << "object address: " << object << std::endl;
+                std::cout << "object location: " << object->x() << " " << object->y() << " " << object->z() << std::endl;
                 std::cout << "X bounds: " << origin.x() << " " << origin.x() + size << std::endl;
                 std::cout << "Y bounds: " << origin.y() << " " << origin.y() + size << std::endl;
                 std::cout << "Z bounds: " << origin.z() << " " << origin.z() + size << std::endl;
                 std::cout << "Node address: " << node << std::endl;
+                std::cout << "Object octree node: " << object->getOctreeNodeLeaf() << std::endl;
                 std::cout << "Node size: " << size << std::endl;
                 std::exit(EXIT_FAILURE);
             }
