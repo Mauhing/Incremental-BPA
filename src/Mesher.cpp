@@ -187,8 +187,6 @@ void Mesher::furtherReconstruct()
 
     unsigned int depth = m_octree_vertices->getDepth();
     m_iterator_vertices->setDepth(depth);
-
-    
     
     reconstruct();
 }
@@ -1360,7 +1358,7 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
     
 }
 
-static void removeFacet(Facet* facet, std::list<Facet*>& m_facets, unsigned int& m_nfacets, Edge_star_list& m_border_edges)
+void Mesher::removeFacet(Facet* facet)
 {
     Vertex* vertex[3];
     for (int i = 0; i < 3; ++i)
@@ -1383,6 +1381,7 @@ static void removeFacet(Facet* facet, std::list<Facet*>& m_facets, unsigned int&
             // In this case, the edge is shared by two facets.
             e->removeAdjacentFacet(facet);
             e->setType(Edge::EdgeType::BORDER);
+            m_border_edges.push_back(e);
             continue;
         }
         if(doesFacet1Exist != doesFacet2Exist) 
@@ -1426,7 +1425,7 @@ void Mesher::removeFacets(std::set<Facet*> &collision_facets)
 {
     for (auto facet : collision_facets)
     {
-        removeFacet(facet, m_facets, m_nfacets, m_border_edges);
+        removeFacet(facet);
     }
 }
 
@@ -1530,15 +1529,13 @@ Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
 
         // if any squared distance is less than the squared radius, the vertex is inside a ball
         for (auto& neighbor : neighbors) {
-            // print radius
-            //std::cout << "Squared distance: " << neighbor.first << std::endl;
-            //std::cout << "m_sq_ball_radius: " << m_sq_ball_radius << std::endl;
             if (neighbor.first < m_sq_ball_radius && neighbor.second != nullptr) {
                 BallCenter* ball_center = neighbor.second;
                 Facet* facet = ball_center->getFacet();
                 if (facet != nullptr) {
                     collision_facets.insert(facet);
-                    std::cout << "Address of facet: " << facet << std::endl;
+                    std::cout << "squared distance: " << neighbor.first << std::endl;
+                    //std::cout << "Address of facet: " << facet << std::endl;
                 }
                 else {
                     std::cerr << "Error: The facet is nullptr" << std::endl;

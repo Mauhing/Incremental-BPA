@@ -421,6 +421,8 @@ class Mesher
 
     public:
         void removeFacets(std::set<Facet*> &boundary_facets);
+        
+        void removeFacet(Facet* facet);
 
         void removeOrphanAndUpdate(TOctreeNode<Vertex>* node);
 

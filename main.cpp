@@ -166,7 +166,6 @@ int main(int argc, char **argv)
     // Clear orphan vertices
     mesher.clearOrphanVertices();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    std::exit(EXIT_SUCCESS);
 
     //#ifdef _DEBUG
     //std::cout << "Sanity check: check orientation" << std::endl;
@@ -253,6 +252,7 @@ int main(int argc, char **argv)
         mesher.print_stats();
         
         FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
+        //std::exit(EXIT_SUCCESS);
     }
  
 
