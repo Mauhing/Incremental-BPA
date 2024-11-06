@@ -90,8 +90,8 @@ class Mesher
         /** @brief square ball radius*/
         double m_sq_ball_radius;
 
-        /** @brief number of vertices*/
-        unsigned int m_nvertices;
+        /** @brief number of current index vertex*/
+        unsigned int m_vertice_idx;
 
         /** @brief number of facets*/
         unsigned int m_nfacets;
@@ -438,6 +438,7 @@ class Mesher
 
         void clearOrphanVertices();
 
+        void exileVertex(Vertex* vertex);
 
     public: // Sanity check
         void SanityCheckOrientation() const;

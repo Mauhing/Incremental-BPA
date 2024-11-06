@@ -353,8 +353,11 @@ TOctreeNode<T>::~TOctreeNode()
     m_depth = 0;
     m_npts = 0;
     for(int i = 0; i<8 ; i++)
+    {
         delete m_child[i];
-    m_parent = NULL;
+        m_child[i] = nullptr;
+    }
+    m_parent = nullptr;
     m_origin = Point();
     m_size = 0.0;
 }

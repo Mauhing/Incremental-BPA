@@ -125,7 +125,11 @@ Facet::Facet(Edge* edge, Vertex* vertex, Point &ball_center)
 Facet::~Facet()
 { 
     delete m_ball_center_ptr;
-    m_ball_center_ptr = NULL;
+    m_ball_center_ptr = nullptr;
+    for (int i = 0; i < 3; i++)
+    {
+        m_vertex[i] = nullptr;
+    }
 }
 
 void Facet::insertNewBoundaryEdge(Edge* edge)

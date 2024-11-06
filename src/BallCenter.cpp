@@ -26,6 +26,7 @@ BallCenter::~BallCenter()
     if (m_octree_node != nullptr)
     {
         m_octree_node->removeElement(this);
+        m_octree_node->decreaseNptsByOne();
         m_octree_node = nullptr;
     }
     m_facet = nullptr;

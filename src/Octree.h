@@ -293,6 +293,13 @@ TOctree<T>::~TOctree()
         m_root = NULL;
     }
     m_nb_non_empty_cells.clear();
+    m_created_nodes.clear();
+    //while (!m_created_nodes.empty())
+    //{
+    //    TOctreeNode<T>* node = *m_created_nodes.begin();
+    //    m_created_nodes.erase(node);
+    //    //delete node;
+    //}
 }
 
 

@@ -185,7 +185,7 @@ int main(int argc, char **argv)
     //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     //#endif
     
-    for (size_t batch_index = 1; batch_index < 2; batch_index++) {
+    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++) {
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -263,5 +263,8 @@ int main(int argc, char **argv)
     }
     std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
 
+    mesher.~Mesher();
+    octree_vertices.~OctreeVertices();
+    octree_ball_centers.~OctreeBallCenters();
     return EXIT_SUCCESS;
 }

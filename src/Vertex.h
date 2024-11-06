@@ -45,7 +45,7 @@ using namespace std;
 class Vertex : public Point
 {
     public:
-    enum VertexType : unsigned int {ORPHAN=0, FRONT=1, INNER=2, POTENTIAL=3}; //VertexType itself does not form a namespace
+    enum VertexType : unsigned int {ORPHAN=0, FRONT=1, INNER=2}; //VertexType itself does not form a namespace
     /** @brief overloading operator <<
      * @param out output stream
      * @param v vertex

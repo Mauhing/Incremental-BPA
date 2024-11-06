@@ -51,7 +51,7 @@ Mesher::Mesher()
     m_octree_vertices = NULL;
     m_iterator_vertices = NULL;
     m_nfacets = 0;
-    m_nvertices = 0;
+    m_vertice_idx = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = NULL;
     m_octree_ball_centers_iterator = NULL;
@@ -65,7 +65,7 @@ Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
     m_ball_radius = iterator->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
     m_nfacets = 0;
-    m_nvertices = 0;
+    m_vertice_idx = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = octree_ball_centers;
     m_octree_ball_centers_iterator = octree_ball_centers_iterator;
@@ -73,8 +73,11 @@ Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
 
 Mesher::~Mesher()
 {
-    m_octree_vertices = NULL;
-    m_iterator_vertices = NULL;
+    m_octree_vertices = nullptr;
+    m_iterator_vertices = nullptr;
+    m_octree_ball_centers = nullptr;
+    m_octree_ball_centers_iterator = nullptr;
+
     m_edge_front.clear();
     m_border_edges.clear();
 
@@ -88,7 +91,7 @@ Mesher::~Mesher()
     m_facets.clear();
     m_vertices.clear();
     m_nfacets = 0;
-    m_nvertices = 0;
+    m_vertice_idx = 0;
 }
 
 
@@ -111,7 +114,7 @@ double Mesher::getSquareBallRadius() const
 
 unsigned int Mesher::nVertices() const
 {
-    return m_nvertices;
+    return static_cast<unsigned int>(m_vertices.size());
 }
 
 
@@ -343,7 +346,7 @@ bool Mesher::trySeed(Vertex& v)
             addFacet(facet);
 
             if(m_nfacets % 10000 == 0)
-            std::cout<<m_nvertices<<" vertices. "<<m_nfacets<<" facets. "
+            std::cout<<m_nfacets<<" facets. "
             <<m_edge_front.size()<<" front edges. "
             <<m_border_edges.size()<<" border edges."<<std::endl;
 
@@ -748,7 +751,7 @@ void Mesher::expandTriangulation()
             m_edge_front.push_front(e2);
 
         //if(m_nfacets % 10000 == 0)
-        //    std::cout<<m_nvertices<<" vertices. "<<m_nfacets<<" facets. "
+        //    std::cout<<m_vertice_idx<<" vertices. "<<m_nfacets<<" facets. "
         //    <<m_edge_front.size()<<" front edges. "
         //    <<m_border_edges.size()<<" border edges."<<std::endl;
     }
@@ -875,9 +878,9 @@ void Mesher::addVertex(Vertex* v)
     bool is_empty = m_recycle_vertices_idx.empty();
     if (is_empty)
     {
-        v->setIndex(m_nvertices);
+        v->setIndex(m_vertice_idx);
         m_vertices.push_back(v);
-        m_nvertices++;
+        m_vertice_idx++;
     }
     else
     {
@@ -886,7 +889,6 @@ void Mesher::addVertex(Vertex* v)
 
         v->setIndex(idx);
         m_vertices.push_back(v);
-        m_nvertices++; 
     }
 
 }
@@ -1258,7 +1260,7 @@ void Mesher::merge(Mesher& mesher)
     {
         Vertex *v = *vi;
         unsigned int index = v->index();
-        v->setIndex(index + m_nvertices);
+        v->setIndex(index + m_vertice_idx);
         m_vertices.push_back(v);
     }
 
@@ -1284,7 +1286,7 @@ void Mesher::merge(Mesher& mesher)
         mesher.m_border_edges.clear();
 
     m_nfacets = static_cast<unsigned int>(m_facets.size());
-    m_nvertices = static_cast<unsigned int>(m_vertices.size());
+    //m_vertice_idx = static_cast<unsigned int>(m_vertices.size());
 }
 
 std::set<Facet*>& Mesher::getBoundaryFacets() const
@@ -1336,26 +1338,26 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
         // Retrieve the index of the vertex.
         if (v->index() != -1)
         {
-            m_recycle_vertices_idx.insert(v->index());
+            std::cerr << "Error:Orphan Vertex index is not -1!" << std::endl;
+            std::exit(EXIT_FAILURE);
         }
         // Delete the vertex.
         delete v;
-        m_nvertices--;
+        //m_vertice_idx--;
     } 
     
     // Clear the temporary list to free the memory.
     temporary_orphan_vertices.clear();
-
-    // Update the node that if the vertex is trimmed, change it into ORPHAN.
-    //for (auto v : points)
-    //{
-    //    if (v->getType() == Vertex::POTENTIAL)
-    //    {
-    //        v->setType(Vertex::ORPHAN);
-    //        m_nvertices--; 
-    //    }
-    //}
     
+}
+
+void Mesher::exileVertex(Vertex* vertex)
+{
+    m_recycle_vertices_idx.insert(vertex->index());
+
+    vertex->setType(Vertex::VertexType::ORPHAN);
+    vertex->setIndex(-1);
+    m_vertices.remove(vertex);
 }
 
 void Mesher::removeFacet(Facet* facet)
@@ -1398,7 +1400,6 @@ void Mesher::removeFacet(Facet* facet)
             std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
             std::exit(EXIT_FAILURE);
         }
-        
     }
 
     // Deal with the vertices.
@@ -1413,7 +1414,7 @@ void Mesher::removeFacet(Facet* facet)
         }
         else // The vertex is not shared by any other facets.
         {
-            vertex[i]->setType(Vertex::VertexType::POTENTIAL);
+            exileVertex(vertex[i]);
         }
     } 
     m_facets.remove(facet);
@@ -1534,7 +1535,6 @@ Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
                 Facet* facet = ball_center->getFacet();
                 if (facet != nullptr) {
                     collision_facets.insert(facet);
-                    std::cout << "squared distance: " << neighbor.first << std::endl;
                     //std::cout << "Address of facet: " << facet << std::endl;
                 }
                 else {
