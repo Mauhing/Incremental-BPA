@@ -170,22 +170,21 @@ class TOctree
 
         T* checkSizeAndaddPoint(const T& pt);
 
-        void debugPrint()
-        {
-            //for (typename std::set<TOctreeNode<T>*>::iterator it = m_created_nodes.begin(); it != m_created_nodes.end(); ++it)
-            for (auto* node: m_created_nodes)
-            {
-                std::cout << " <<<< " << std::endl;
-                std::cout << "Node: depth " << node->getDepth() << " size " << node->getSize() << std::endl;
-                std::cout << "X start " << node->getOrigin().x() << std::endl;
-                std::cout << "X end " << node->getOrigin().x() + node->getSize() << std::endl;
-                std::cout << "Depth in binary " << std::bitset<32>(node->getDepth()) << std::endl;
-                std::cout << "XLoc in binary: " << std::bitset<32>(node->getXLoc()) << std::endl;
-                if (node->getDepth() == 0) {
-                    std::cout << "Number of pts contained: " << node->getNpts() << std::endl;
-                }
-            }
-        }
+        //void debugPrint()
+        //{
+        //    for (auto* node: m_created_nodes)
+        //    {
+        //        std::cout << " <<<< " << std::endl;
+        //        std::cout << "Node: depth " << node->getDepth() << " size " << node->getSize() << std::endl;
+        //        std::cout << "X start " << node->getOrigin().x() << std::endl;
+        //        std::cout << "X end " << node->getOrigin().x() + node->getSize() << std::endl;
+        //        std::cout << "Depth in binary " << std::bitset<32>(node->getDepth()) << std::endl;
+        //        std::cout << "XLoc in binary: " << std::bitset<32>(node->getXLoc()) << std::endl;
+        //        if (node->getDepth() == 0) {
+        //            std::cout << "Number of pts contained: " << node->getNpts() << std::endl;
+        //        }
+        //    }
+        //}
 
         void checkSizeAndexpand(const T& pt);
 
@@ -229,17 +228,42 @@ class TOctree
          */
         std::vector<unsigned int> m_nb_non_empty_cells;
 
-        /**
-         *@brief pointer to all the nodes of the octree
-         * Add by Yip
-         */
-        std::set<TOctreeNode<T>*> m_created_nodes;
+
 
     public:
         template<typename U>
         TOctree<U> copy_skeleton() const;
+
+    private: // helper functions to make another function shorter
+        void expandAllNodeLoc(unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
+
+        void updateNodeLoc(TOctreeNode<T>* node, unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
         
 };
+
+template<class T>
+void TOctree<T>::expandAllNodeLoc(unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index)
+{
+    updateNodeLoc(m_root, level, x_insert_index, y_insert_index, z_insert_index);
+}
+
+template<class T>
+void TOctree<T>::updateNodeLoc(TOctreeNode<T>* node, unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index)
+{
+    if( node->getDepth() != 0)
+    {
+        for(unsigned int i = 0; i<8; i++)
+        {
+            if(node->getChild(i) != NULL)
+            {
+                updateNodeLoc(node->getChild(i), level, x_insert_index, y_insert_index, z_insert_index);
+            }
+        }
+    }
+    node->setXLoc( node->getXLoc() + ( x_insert_index<<(level) ) );
+    node->setYLoc( node->getYLoc() + ( y_insert_index<<(level) ) );
+    node->setZLoc( node->getZLoc() + ( z_insert_index<<(level) ) );    
+}
 
 template<class T>
 TOctree<T>::TOctree()
@@ -293,13 +317,7 @@ TOctree<T>::~TOctree()
         m_root = NULL;
     }
     m_nb_non_empty_cells.clear();
-    m_created_nodes.clear();
-    //while (!m_created_nodes.empty())
-    //{
-    //    TOctreeNode<T>* node = *m_created_nodes.begin();
-    //    m_created_nodes.erase(node);
-    //    //delete node;
-    //}
+
 }
 
 
@@ -318,9 +336,6 @@ void TOctree<T>::initialize(Point& origin, double size)
     m_root->setZLoc(0);
     
     m_root->setParent(NULL);
-
-    // Insert root node
-    m_created_nodes.insert(m_root);
 }
 
 
@@ -487,21 +502,16 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             unsigned int top_level = m_root->getDepth();
 
             // Update all node
-            for (auto* node : m_created_nodes)
-            {
-                //TOctreeNode<T> *node = *it;
-                node->setXLoc( node->getXLoc() + ( x_insert_index<<(top_level) ) );
-                node->setYLoc( node->getYLoc() + ( y_insert_index<<(top_level) ) );
-                node->setZLoc( node->getZLoc() + ( z_insert_index<<(top_level) ) );
-            }
+
+            // Alternative1
+            expandAllNodeLoc(top_level, x_insert_index, y_insert_index, z_insert_index); 
+             
+
 
             // Then add parent
             double x = (x_in_box == PointRespectToBox::LEFT) ? m_origin.x() - m_size : m_origin.x();
             double y = (y_in_box == PointRespectToBox::LEFT) ? m_origin.y() - m_size : m_origin.y();
             double z = (z_in_box == PointRespectToBox::LEFT) ? m_origin.z() - m_size : m_origin.z();
-            //double x = (x_in_box == PointRespectToBox::RIGHT) ? m_origin.x() : m_origin.x() - m_size;
-            //double y = (y_in_box == PointRespectToBox::RIGHT) ? m_origin.y() : m_origin.y() - m_size;
-            //double z = (z_in_box == PointRespectToBox::RIGHT) ? m_origin.z() : m_origin.z() - m_size;
             
             // Create new root node
             Point new_origin(x, y, z);
@@ -525,7 +535,6 @@ void TOctree<T>::checkSizeAndexpand(const T& pt)
             // bug, we should also update m_root_depth
             
             // Insert the new root node
-            m_created_nodes.insert(new_root_node);
         }
     }     
 }
@@ -580,7 +589,6 @@ T* TOctree<T>::addPoint(const T& pt)
             child->setYLoc( node->getYLoc() + ( y<<(childDepth) ) );
             child->setZLoc( node->getZLoc() + ( z<<(childDepth) ) );
             m_nb_non_empty_cells[childDepth] += 1;
-            m_created_nodes.insert(child); 
             //std::cout << "Adding child node at depth " << childDepth << std::endl;
         }
         node = node->getChild(childIndex);

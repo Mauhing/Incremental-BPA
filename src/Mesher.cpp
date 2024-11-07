@@ -87,9 +87,8 @@ Mesher::~Mesher()
         delete *fi;
         *fi = NULL;
     }
-
-    m_facets.clear();
     m_vertices.clear();
+    m_facets.clear();
     m_nfacets = 0;
     m_vertice_idx = 0;
 }
