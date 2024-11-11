@@ -327,6 +327,7 @@ TOctreeNode<T>::TOctreeNode()
     m_npts = 0;
     m_origin = Point();
     m_size = 0.0;
+    m_points.clear();
 }
 
 template<class T>
@@ -340,6 +341,7 @@ TOctreeNode<T>::TOctreeNode(Point& origin, double size, unsigned int depth)
     m_npts = 0;
     m_origin = origin;
     m_size = size;
+    m_points.clear();
 }
 
 template<class T>

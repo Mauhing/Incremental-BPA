@@ -113,7 +113,9 @@ class TOctree
          * @return root of the octree
          */
         TOctreeNode<T>* getRoot() const;
-            
+
+        //copy constructor
+        TOctree(const TOctree& other);
             
     public : //adding points
         
@@ -305,6 +307,7 @@ TOctree<T>::TOctree(Point& origin, double size, unsigned int depth)
 template<class T>
 TOctree<T>::~TOctree()
 {
+    std::cout << "TOctree destructor" << std::endl;
     m_size = 0;
     m_root_depth = 0;
     m_nb_interval = 0;
@@ -326,6 +329,13 @@ void TOctree<T>::initialize(Point& origin, double size)
 {
     m_size = size;
     m_origin = origin; 
+
+    if (m_root != nullptr) {
+        std::cout << "The initializer detected that the root is not nullptr" << std::endl;
+        std::cout << "resetting the root" << std::endl;
+        delete m_root;
+        m_root = nullptr;
+    }
     
     m_root = new TOctreeNode<T>(m_origin, m_size, m_root_depth);
     
@@ -688,6 +698,19 @@ TOctree<U> TOctree<T>::copy_skeleton() const
     Point origin = m_origin;
     new_octree.initialize(origin, m_size);
     return new_octree;
+}
+
+template<class T>
+TOctree<T>::TOctree(const TOctree<T>& other) {
+    std::cout << "Copy constructor called" << std::endl;    
+    std::cout << "Copy constructor called" << std::endl;    
+    std::cout << "Copy constructor called" << std::endl;    
+    std::cout << "Copy constructor called" << std::endl;    
+    std::cout << "Copy constructor called" << std::endl;    
+    std::cout << "Copy constructor called" << std::endl;    
+    this->setDepth(other.getDepth());
+    Point origin = other.getOrigin();
+    this->initialize(origin, other.getSize()); 
 }
 
 #endif

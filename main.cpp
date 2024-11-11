@@ -34,7 +34,25 @@
 
 //#include <open3d/Open3D.h>
 
+#include <cstdlib>
+void* operator new(std::size_t size) {
+    void* p = std::malloc(size);
+    if (p == (void*)0x5555555d3b30) {
+        std::cout << "Allocating at watched address: " << p << std::endl;
+        // Add breakpoint here
+        //__builtin_trap();  // Or use your debugger's breakpoint
+    }
+    return p;
+}
 
+void operator delete(void* p) noexcept {
+    if (p == (void*)0x5555555d3b30) {
+        std::cout << "Deleting at watched address: " << p << std::endl;
+        // Add breakpoint here
+        //__builtin_trap();  // Or use your debugger's breakpoint
+    }
+    std::free(p);
+}
 
 /**
  * @brief main function for the ball pivoting reconstruction
@@ -76,7 +94,19 @@ int main(int argc, char **argv)
     std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
-    std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
+    //std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
+    std::vector<string> batch_data;
+    try {
+        batch_data = FileIO::readIntoFileBatch(infile.c_str());
+        if (batch_data.empty()) {
+            std::cerr << "Error: No data read from file" << std::endl;
+            return EXIT_FAILURE;
+        }
+        } 
+    catch (const std::exception& e) {
+        std::cerr << "Error reading file: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
     std::cout << "batch_data size: " << batch_data.size() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -122,7 +152,11 @@ int main(int argc, char **argv)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Create the ball centers octree and its iterator
-    OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
+    //OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
+    OctreeBallCenters octree_ball_centers;
+    octree_ball_centers.setDepth(octree_vertices.getDepth()); 
+    Point origin = octree_vertices.getOrigin();
+    octree_ball_centers.initialize(origin, octree_vertices.getSize());
 
     OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
 
@@ -143,6 +177,7 @@ int main(int argc, char **argv)
     std::cout << "Finish reconstruction" << std::endl;
     std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
              <<"s."<<std::endl;
+    mesher.print_stats();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -185,7 +220,7 @@ int main(int argc, char **argv)
     //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     //#endif
     
-    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++) {
+    for (size_t batch_index = 1; batch_index < 9; batch_index++) {
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -263,8 +298,5 @@ int main(int argc, char **argv)
     }
     std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
 
-    mesher.~Mesher();
-    octree_vertices.~OctreeVertices();
-    octree_ball_centers.~OctreeBallCenters();
     return EXIT_SUCCESS;
 }

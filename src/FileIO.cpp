@@ -274,14 +274,21 @@ void FileIO::saveContent(OctreeNodeV* node, ofstream& f)
 //add by mauhing
 std::vector<string> FileIO::readIntoFileBatch(const char *filenames)
 {
+    if (!filenames) {
+        throw std::invalid_argument("Null filename provided");
+    }
+
     // get the filename first.
     std::string filename = filenames;
-
-    // read the file line by line.
-    std::ifstream whole_data(filename);
-    std::string line;
     std::vector<string> batch_data;
 
+    std::ifstream whole_data(filename);
+    if (!whole_data.is_open()) {
+        throw std::runtime_error("Could not open file: " + filename);
+    }
+
+    // read the file line by line.
+    std::string line;
     std::string temp_data;
     while (std::getline(whole_data, line))
     {
@@ -306,6 +313,8 @@ std::vector<string> FileIO::readIntoFileBatch(const char *filenames)
             batch_data.push_back(temp_data);
         }
     }
+
+    whole_data.close();
     return batch_data;
 }
 

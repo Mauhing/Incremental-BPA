@@ -73,6 +73,7 @@ Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
 
 Mesher::~Mesher()
 {
+    std::cout << "Mesher destructor" << std::endl;
     m_octree_vertices = nullptr;
     m_iterator_vertices = nullptr;
     m_octree_ball_centers = nullptr;
@@ -87,10 +88,29 @@ Mesher::~Mesher()
         delete *fi;
         *fi = NULL;
     }
-    m_vertices.clear();
     m_facets.clear();
+
+    //for (auto it = m_vertices.begin(); it != m_vertices.end(); ++it) {
+    //    *it = nullptr;
+    //}
+    // Now clear vertices with validation
+    for (auto v : m_vertices) {
+        if (v != nullptr) {
+            std::cout << "Attempting to access vertex at " << v << std::endl;
+            try {
+                // Validate the pointer before deletion
+                volatile int testAccess = v->index(); // Will crash if pointer is invalid
+                delete v;
+            } catch (...) {
+                std::cerr << "Error accessing vertex at " << v << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    m_vertices.clear();
     m_nfacets = 0;
-    m_vertice_idx = 0;
+    m_vertice_idx = 0; 
 }
 
 
@@ -873,7 +893,6 @@ void Mesher::addVertex(Vertex* v)
 {
     if(v->index() != -1)
         return;
-    
     bool is_empty = m_recycle_vertices_idx.empty();
     if (is_empty)
     {
@@ -1225,69 +1244,6 @@ void Mesher::collectBorderEdges(OctreeNodeV* containment_node,
 
 
 
-
-void Mesher::merge(Mesher& mesher)
-{
-    //merging the sets of facets
-    m_facets.splice(m_facets.end(), mesher.m_facets);
-
-    Edge_star_list::iterator ei = m_edge_front.begin();
-    //merging the edge fronts
-    while( ei != m_edge_front.end())
-    {
-        if((*ei)->getType() == Edge::INNER)
-        {
-            ei = m_edge_front.erase(ei);
-            continue;
-        }
-
-        else if((*ei)->getType() == Edge::FRONT)
-        {
-            ++ei;
-        }
-
-        else if((*ei)->getType() == Edge::BORDER)
-        {
-            ei = m_edge_front.erase(ei);
-            continue;
-        }
-    }
-
-    //merging the sets of vertices and renumbering them
-    Vertex_star_list::iterator vi;
-    for(vi = mesher.m_vertices.begin(); vi != mesher.m_vertices.end(); ++vi)
-    {
-        Vertex *v = *vi;
-        unsigned int index = v->index();
-        v->setIndex(index + m_vertice_idx);
-        m_vertices.push_back(v);
-    }
-
-    //adding the node border edges (edges that could not be expanded due
-    //to spatial containment) and add them to the front
-    for(ei = mesher.m_node_border_edges.begin();
-        ei != mesher.m_node_border_edges.end() ; ++ei)
-        {
-            m_edge_front.push_back(*ei);
-        }
-        mesher.m_node_border_edges.clear();
-
-    //get the border edges and add it to the global mesher
-    for(ei = mesher.m_border_edges.begin();
-        ei != mesher.m_border_edges.end() ; ++ei)
-        {
-            if((*ei)->getFacet2()!=NULL)
-            {
-                continue;
-            }
-            m_border_edges.push_back(*ei);
-        }
-        mesher.m_border_edges.clear();
-
-    m_nfacets = static_cast<unsigned int>(m_facets.size());
-    //m_vertice_idx = static_cast<unsigned int>(m_vertices.size());
-}
-
 std::set<Facet*>& Mesher::getBoundaryFacets() const
 {
     std::set<Facet*> *boundary_facets = new std::set<Facet*>();
@@ -1402,7 +1358,7 @@ void Mesher::removeFacet(Facet* facet)
     }
 
     // Deal with the vertices.
-    // We do not delete the vertex.
+    // This function does not delete the vertex.
     for(unsigned int i=0;i<3;++i)
     {
         vertex[i]->removeAdjacentFacet(facet);
