@@ -23,20 +23,20 @@
 #include <iostream>
 
 
-Vertex::Vertex() : Point()
-{
-    m_nx=m_ny=m_nz=0.0;
-    m_index = -1;
-    setType(Vertex::ORPHAN);
-    m_octreeNodeLeaf = NULL;
-}
+//Vertex::Vertex() : Point(), m_nx(0.0), m_ny(0.0), m_nz(0.0)
+//{
+//    //m_nx=m_ny=m_nz=0.0;
+//    m_index = -1;
+//    setType(Vertex::ORPHAN);
+//    m_octreeNodeLeaf = NULL;
+//}
 
 Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
-                : Point(x,y,z)
+                : Point(x,y,z), m_nx(nx), m_ny(ny), m_nz(nz)
 {
-    m_nx = nx;
-    m_ny = ny;
-    m_nz = nz;
+    //m_nx = nx;
+    //m_ny = ny;
+    //m_nz = nz;
     m_index = -1;
     setType(Vertex::ORPHAN);
     m_octreeNodeLeaf = NULL;
@@ -44,7 +44,8 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
 
 Vertex::~Vertex()
 {
-    m_nx=m_ny=m_nz=0.0;
+    //m_nx=m_ny=m_nz=0.0;
+    //std::cout << "Vertex destructor called" << std::endl;
     m_index = -1;
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();

@@ -56,7 +56,7 @@ class Vertex : public Point
     private : //properties
     
         /** @brief nx, ny, nz normal coordinates*/
-        double m_nx, m_ny, m_nz;
+        const double m_nx, m_ny, m_nz;
         
         /** @brief set of adjacent edges*/
         Edge_set m_adjacentEdges;
@@ -77,13 +77,13 @@ class Vertex : public Point
     public : //constructor+destructor
     
         /** @brief default constructor*/
-        Vertex();
+        Vertex() = delete;
         
         /** @brief constructor from coordinates and normal*/
         Vertex(double x, double y, double z, double nx, double ny, double nz);
           
         /** @brief default destrictor*/
-        ~Vertex();
+        virtual ~Vertex();
     
     public : //accessors + modifiers
    
@@ -206,6 +206,13 @@ class Vertex : public Point
 
 };
 
-
+//class MyVertex:public Vertex
+//{
+//    public:
+//        MyVertex(double x, double y, double z, double nx, double ny, double nz);
+//        ~MyVertex();
+//        public:
+//        virtual bool isCompatibleWithAndHandnessCheck(const Vertex &v1, const Vertex &v2, bool &changeHandness) const; 
+//};
 
 #endif

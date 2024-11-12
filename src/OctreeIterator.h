@@ -58,13 +58,13 @@ class TOctreeIterator
     
     public ://constructor+destructor
         /** @brief constructor*/
-        TOctreeIterator<T>();
+        TOctreeIterator();
         
         /** @brief constructor*/
-        TOctreeIterator<T>(TOctree<T> * octree);
+        TOctreeIterator(TOctree<T> * octree);
         
         /** @brief destructor*/
-        ~TOctreeIterator<T>();
+        ~TOctreeIterator();
      
     public : //accessors modifiers
      
@@ -395,6 +395,7 @@ TOctreeIterator<T>::TOctreeIterator(TOctree<T>* octree)
 template<class T>
 TOctreeIterator<T>::~TOctreeIterator()
 {
+    std::cout << "TOctreeIterator destructor called" << std::endl;
     m_octree = NULL;
 }
 

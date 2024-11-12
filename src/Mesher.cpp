@@ -90,23 +90,6 @@ Mesher::~Mesher()
     }
     m_facets.clear();
 
-    //for (auto it = m_vertices.begin(); it != m_vertices.end(); ++it) {
-    //    *it = nullptr;
-    //}
-    // Now clear vertices with validation
-    for (auto v : m_vertices) {
-        if (v != nullptr) {
-            std::cout << "Attempting to access vertex at " << v << std::endl;
-            try {
-                // Validate the pointer before deletion
-                volatile int testAccess = v->index(); // Will crash if pointer is invalid
-                delete v;
-            } catch (...) {
-                std::cerr << "Error accessing vertex at " << v << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-    }
 
     m_vertices.clear();
     m_nfacets = 0;
@@ -1298,7 +1281,7 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
         }
         // Delete the vertex.
         delete v;
-        //m_vertice_idx--;
+        m_vertice_idx--;
     } 
     
     // Clear the temporary list to free the memory.
@@ -1507,4 +1490,10 @@ void Mesher::clearOrphanVertices()
     m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
         this->removeOrphanAndUpdate(node); 
     });
+}
+
+void Mesher::debug_print_vertices() const
+{
+    // Number of vertices
+    std::cout << "Number of vertices: " << m_vertices.size() << std::endl;  
 }

@@ -37,7 +37,7 @@
 #include <cstdlib>
 void* operator new(std::size_t size) {
     void* p = std::malloc(size);
-    if (p == (void*)0x5555555d3b30) {
+    if (p == (void*)0x5555555d4730) {
         std::cout << "Allocating at watched address: " << p << std::endl;
         // Add breakpoint here
         //__builtin_trap();  // Or use your debugger's breakpoint
@@ -46,7 +46,7 @@ void* operator new(std::size_t size) {
 }
 
 void operator delete(void* p) noexcept {
-    if (p == (void*)0x5555555d3b30) {
+    if (p == (void*)0x5555555d4730) {
         std::cout << "Deleting at watched address: " << p << std::endl;
         // Add breakpoint here
         //__builtin_trap();  // Or use your debugger's breakpoint
@@ -63,6 +63,26 @@ void operator delete(void* p) noexcept {
 
 int main(int argc, char **argv)
 {
+#if 0
+{
+    time_t start, end;
+    std::vector<Vertex*> vertices;
+    start = std::time(nullptr);
+    for (int i = 0; i < 1000000; i++) {
+        vertices.push_back(new Vertex(0, 0, 0, 0, 0, 0));
+        vertices.push_back(new Vertex(1, 0, 0, 0, 0, 0));
+        vertices.push_back(new Vertex(0, 1, 0, 0, 0, 0));
+    }
+    for (auto vertex : vertices) {
+        delete vertex;
+    }
+    end = std::time(nullptr);
+    std::cout << "Time taken: " << difftime(end, start) << " seconds" << std::endl;
+    return 0;
+
+}
+#endif
+
     ProgramOptions options = parseCommandLine(argc, argv);
 
     // Use the parsed options
@@ -220,7 +240,7 @@ int main(int argc, char **argv)
     //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     //#endif
     
-    for (size_t batch_index = 1; batch_index < 9; batch_index++) {
+    for (size_t batch_index = 1; batch_index < 4; batch_index++) {
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -285,7 +305,8 @@ int main(int argc, char **argv)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         mesher.print_stats();
-        
+        mesher.debug_print_vertices();
+
         FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
         //std::exit(EXIT_SUCCESS);
     }

@@ -442,6 +442,8 @@ class Mesher
 
     public: // Sanity check
         void SanityCheckOrientation() const;
+        
+        void debug_print_vertices() const;
 };
 
 #endif
