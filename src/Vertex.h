@@ -83,7 +83,7 @@ class Vertex : public Point
         Vertex(double x, double y, double z, double nx, double ny, double nz);
           
         /** @brief default destrictor*/
-        virtual ~Vertex();
+        ~Vertex();
     
     public : //accessors + modifiers
    
@@ -203,6 +203,12 @@ class Vertex : public Point
     public : // added by mauhing
         const Facet_set& adjacentFacets() const;
 
+
+    private:
+        static bool printing_in_destruct;
+
+    public:
+        static void setPrintingInDestruct(bool print);
 
 };
 

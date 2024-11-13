@@ -357,11 +357,6 @@ class Mesher
          */
         void addVertex(Vertex *v);
 
-        /** @brief merge with another mesher (useful for safe-thread meshing)
-         * @param mesher another mesher
-         */
-        void merge(Mesher &mesher);
-
         /** @brief change the radius and set the border edges as the edge front
          * @param radius new radius to be tested
          */

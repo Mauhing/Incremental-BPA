@@ -228,7 +228,7 @@ class TOctree
         /**
          *@brief number of non-empty cells per level
          */
-        std::vector<unsigned int> m_nb_non_empty_cells;
+        //std::vector<unsigned int> m_nb_non_empty_cells;
 
 
 
@@ -288,7 +288,7 @@ TOctree<T>::TOctree(unsigned int depth)
     m_nb_interval = pow2(depth);
     m_npoints = 0;
     m_root = NULL;
-    m_nb_non_empty_cells.assign(depth,0);
+    //m_nb_non_empty_cells.assign(depth,0);
 }
 
 
@@ -301,7 +301,7 @@ TOctree<T>::TOctree(Point& origin, double size, unsigned int depth)
     m_origin = origin;
     m_npoints = 0;
     m_root = NULL;
-    m_nb_non_empty_cells.assign(depth,0);
+    //m_nb_non_empty_cells.assign(depth,0);
 }
 
 template<class T>
@@ -319,7 +319,7 @@ TOctree<T>::~TOctree()
         delete m_root;
         m_root = NULL;
     }
-    m_nb_non_empty_cells.clear();
+    //m_nb_non_empty_cells.clear();
 
 }
 
@@ -360,8 +360,8 @@ void TOctree<T>::setDepth(unsigned int depth)
 {
     m_root_depth = depth;
     m_nb_interval = pow2(depth);
-    m_nb_non_empty_cells.clear();
-    m_nb_non_empty_cells.assign(depth,0);
+    //m_nb_non_empty_cells.clear();
+    //m_nb_non_empty_cells.assign(depth,0);
 }
 
 template<class T>
@@ -598,7 +598,7 @@ T* TOctree<T>::addPoint(const T& pt)
             child->setXLoc( node->getXLoc() + ( x<<(childDepth) ) );
             child->setYLoc( node->getYLoc() + ( y<<(childDepth) ) );
             child->setZLoc( node->getZLoc() + ( z<<(childDepth) ) );
-            m_nb_non_empty_cells[childDepth] += 1;
+            //m_nb_non_empty_cells[childDepth] += 1;
             //std::cout << "Adding child node at depth " << childDepth << std::endl;
         }
         node = node->getChild(childIndex);
@@ -664,7 +664,8 @@ void TOctree<T>::printOctreeStat()
     {
         std::cout<<"level "<<i<<" ; The size length "<<size
         <<" ; mean number of points: "
-        <<(double)m_npoints / ((double)m_nb_non_empty_cells[i])
+        //<<(double)m_npoints / ((double)m_nb_non_empty_cells[i])
+        << "currently unavailable"
         <<std::endl;
         size = size / 2.0;
     }

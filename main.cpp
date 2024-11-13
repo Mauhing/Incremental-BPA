@@ -34,25 +34,25 @@
 
 //#include <open3d/Open3D.h>
 
-#include <cstdlib>
-void* operator new(std::size_t size) {
-    void* p = std::malloc(size);
-    if (p == (void*)0x5555555d4730) {
-        std::cout << "Allocating at watched address: " << p << std::endl;
-        // Add breakpoint here
-        //__builtin_trap();  // Or use your debugger's breakpoint
-    }
-    return p;
-}
-
-void operator delete(void* p) noexcept {
-    if (p == (void*)0x5555555d4730) {
-        std::cout << "Deleting at watched address: " << p << std::endl;
-        // Add breakpoint here
-        //__builtin_trap();  // Or use your debugger's breakpoint
-    }
-    std::free(p);
-}
+//#include <cstdlib>
+//void* operator new(std::size_t size) {
+//    void* p = std::malloc(size);
+//    if (p == (void*)0x5555555d2b30) {
+//        std::cout << "Allocating at watched address: " << p << std::endl;
+//        // Add breakpoint here
+//        //__builtin_trap();  // Or use your debugger's breakpoint
+//    }
+//    return p;
+//}
+//
+//void operator delete(void* p) noexcept {
+//    if (p == (void*)0x5555555d2b30) {
+//        std::cout << "Deleting at watched address: " << p << std::endl;
+//        // Add breakpoint here
+//        //__builtin_trap();  // Or use your debugger's breakpoint
+//    }
+//    std::free(p);
+//}
 
 /**
  * @brief main function for the ball pivoting reconstruction
@@ -227,11 +227,11 @@ int main(int argc, char **argv)
     //mesher.SanityCheckOrientation();
     //#endif
 
-    if(! FileIO::saveMeshDebug("_cumulative0.txt", mesher))
-    {
-        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
-        return EXIT_FAILURE;
-    }
+    //if(! FileIO::saveMeshDebug("_cumulative0.txt", mesher))
+    //{
+    //    std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+    //    return EXIT_FAILURE;
+    //}
 
     // Sanity check: save border edges
     //#ifdef _DEBUG
@@ -240,7 +240,7 @@ int main(int argc, char **argv)
     //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
     //#endif
     
-    for (size_t batch_index = 1; batch_index < 4; batch_index++) {
+    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++) {
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -277,8 +277,8 @@ int main(int argc, char **argv)
         
         mesher.print_stats();
 
-        FileIO::saveMeshDebug("_state1_facets.txt", mesher);
-        FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
+        //FileIO::saveMeshDebug("_state1_facets.txt", mesher);
+        //FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Add the new vertices to the octree
@@ -307,17 +307,19 @@ int main(int argc, char **argv)
         mesher.print_stats();
         mesher.debug_print_vertices();
 
-        FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
+        //FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
         //std::exit(EXIT_SUCCESS);
     }
  
 
-    if(! FileIO::saveMeshDebug("_final.txt", mesher))
-    {
-        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
-        return EXIT_FAILURE;
-    }
-    std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
+    //if(! FileIO::saveMeshDebug("_final.txt", mesher))
+    //{
+    //    std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+    //    return EXIT_FAILURE;
+    //}
+    //std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
 
+    Vertex::setPrintingInDestruct(true);
+    std::cout << "Setting printing in destruct to true" << std::endl;
     return EXIT_SUCCESS;
 }

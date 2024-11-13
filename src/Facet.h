@@ -123,6 +123,7 @@ class Facet
 
         static std::set<Edge*> getRecordedNewBoundaryEdges();
 
+
 };
 
 #endif

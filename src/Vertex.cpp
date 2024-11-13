@@ -45,12 +45,15 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
 Vertex::~Vertex()
 {
     //m_nx=m_ny=m_nz=0.0;
-    //std::cout << "Vertex destructor called" << std::endl;
     m_index = -1;
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
     m_type = Vertex::ORPHAN; //0
     m_octreeNodeLeaf = NULL;
+    //if (printing_in_destruct)
+    //{
+        //std::cout << "Vertex destructor called" << std::endl;
+    //}
 }
 
 bool Vertex::addAdjacentEdge(Edge* edge)
@@ -310,3 +313,9 @@ const Facet_set& Vertex::adjacentFacets() const
     return m_adjacentFacets;
 }
 
+bool Vertex::printing_in_destruct = false;
+
+void Vertex::setPrintingInDestruct(bool print)
+{
+    printing_in_destruct = print;
+}

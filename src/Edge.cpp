@@ -59,6 +59,7 @@ Edge::Edge(Vertex* src, Vertex* tgt)
 
 Edge::~Edge()
 {
+    //std::cout << "Edge destructor called" << std::endl;
     m_src = NULL;
     m_tgt = NULL;
     m_facet1 = NULL;

@@ -85,11 +85,11 @@ Mesher::~Mesher()
     Facet_star_list::iterator fi;
     for(fi = m_facets.begin(); fi != m_facets.end(); ++fi)
     {
-        delete *fi;
+        //delete *fi;
+        removeFacet(*fi);
         *fi = NULL;
     }
     m_facets.clear();
-
 
     m_vertices.clear();
     m_nfacets = 0;
@@ -1355,8 +1355,6 @@ void Mesher::removeFacet(Facet* facet)
             exileVertex(vertex[i]);
         }
     } 
-    m_facets.remove(facet);
-    m_nfacets--;
     delete facet;
 }
 
@@ -1365,6 +1363,8 @@ void Mesher::removeFacets(std::set<Facet*> &collision_facets)
     for (auto facet : collision_facets)
     {
         removeFacet(facet);
+        m_facets.remove(facet);
+        m_nfacets--;
     }
 }
 
