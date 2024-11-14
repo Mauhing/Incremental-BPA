@@ -87,6 +87,11 @@ int Vertex::index()
 
 void Vertex::setIndex(int index)
 {
+    if (index < -1)
+    {
+        std::cerr << "Vertex index is less than -1" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
     m_index = index;
 }
 

@@ -874,8 +874,15 @@ void Mesher::addFacet(Facet* f)
 
 void Mesher::addVertex(Vertex* v)
 {
+    if (v->index() < -1)
+    {
+        std::cerr << "Vertex index is less than -1" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
     if(v->index() != -1)
         return;
+
     bool is_empty = m_recycle_vertices_idx.empty();
     if (is_empty)
     {
@@ -1281,7 +1288,6 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
         }
         // Delete the vertex.
         delete v;
-        m_vertice_idx--;
     } 
     
     // Clear the temporary list to free the memory.

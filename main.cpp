@@ -227,11 +227,11 @@ int main(int argc, char **argv)
     //mesher.SanityCheckOrientation();
     //#endif
 
-    //if(! FileIO::saveMeshDebug("_cumulative0.txt", mesher))
-    //{
-    //    std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
-    //    return EXIT_FAILURE;
-    //}
+    if(! FileIO::saveMeshDebug("_cumulative0.txt", mesher))
+    {
+        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+        return EXIT_FAILURE;
+    }
 
     // Sanity check: save border edges
     //#ifdef _DEBUG
@@ -307,17 +307,16 @@ int main(int argc, char **argv)
         mesher.print_stats();
         mesher.debug_print_vertices();
 
-        //FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
-        //std::exit(EXIT_SUCCESS);
+        FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
     }
  
 
-    //if(! FileIO::saveMeshDebug("_final.txt", mesher))
-    //{
-    //    std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
-    //    return EXIT_FAILURE;
-    //}
-    //std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
+    if(! FileIO::saveMeshDebug("_final.txt", mesher))
+    {
+        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+        return EXIT_FAILURE;
+    }
+    std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
 
     Vertex::setPrintingInDestruct(true);
     std::cout << "Setting printing in destruct to true" << std::endl;
