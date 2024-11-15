@@ -3,9 +3,9 @@
  * @brief main program file for the ball pivoting method
  * @author Julie Digne julie.digne@liris.cnrs.fr
  * @date 2012/11/14
- * 
+ *
  * @copyright This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published 
+ * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
@@ -13,9 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 
 #include <iostream>
 #include <sstream>
@@ -32,72 +31,129 @@
 #include "src/types.h"
 #include "src/ProgramOptions.hpp"
 
-//#include <open3d/Open3D.h>
+#include <Open3D.h>
 
-//#include <cstdlib>
-//void* operator new(std::size_t size) {
-//    void* p = std::malloc(size);
-//    if (p == (void*)0x5555555d2b30) {
-//        std::cout << "Allocating at watched address: " << p << std::endl;
-//        // Add breakpoint here
-//        //__builtin_trap();  // Or use your debugger's breakpoint
-//    }
-//    return p;
-//}
+// #include <cstdlib>
+// void* operator new(std::size_t size) {
+//     void* p = std::malloc(size);
+//     if (p == (void*)0x5555555d2b30) {
+//         std::cout << "Allocating at watched address: " << p << std::endl;
+//         // Add breakpoint here
+//         //__builtin_trap();  // Or use your debugger's breakpoint
+//     }
+//     return p;
+// }
 //
-//void operator delete(void* p) noexcept {
-//    if (p == (void*)0x5555555d2b30) {
-//        std::cout << "Deleting at watched address: " << p << std::endl;
-//        // Add breakpoint here
-//        //__builtin_trap();  // Or use your debugger's breakpoint
-//    }
-//    std::free(p);
-//}
+// void operator delete(void* p) noexcept {
+//     if (p == (void*)0x5555555d2b30) {
+//         std::cout << "Deleting at watched address: " << p << std::endl;
+//         // Add breakpoint here
+//         //__builtin_trap();  // Or use your debugger's breakpoint
+//     }
+//     std::free(p);
+// }
 
 /**
  * @brief main function for the ball pivoting reconstruction
  * @param argc
  * @param argv
  * @return 1 if the program exited successfully
- */ 
+ */
 
 int main(int argc, char **argv)
 {
 #if 0
-{
-    time_t start, end;
-    std::vector<Vertex*> vertices;
-    start = std::time(nullptr);
-    for (int i = 0; i < 1000000; i++) {
-        vertices.push_back(new Vertex(0, 0, 0, 0, 0, 0));
-        vertices.push_back(new Vertex(1, 0, 0, 0, 0, 0));
-        vertices.push_back(new Vertex(0, 1, 0, 0, 0, 0));
-    }
-    for (auto vertex : vertices) {
-        delete vertex;
-    }
-    end = std::time(nullptr);
-    std::cout << "Time taken: " << difftime(end, start) << " seconds" << std::endl;
-    return 0;
+    {
+        // Create a visualizer object
+        open3d::visualization::Visualizer visualizer;
 
-}
+        // Create a window and add the geometry
+        visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 1600, 900);
+
+        // Show back face
+        visualizer.GetRenderOption().mesh_show_back_face_ = true;
+
+        // Create a shared pointer to store the mesh
+        std::shared_ptr<open3d::geometry::TriangleMesh> mesh;
+
+        // Create initial vertices and triangle
+        mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+        mesh->vertices_ = {
+            Eigen::Vector3d(0, 0, 0),
+            Eigen::Vector3d(1, 0, 0),
+            Eigen::Vector3d(0, 1, 0)};
+        mesh->triangles_ = {
+            {0, 1, 2} // Single triangle
+        };
+
+        // Compute normals and set color
+        mesh->ComputeVertexNormals();
+        mesh->ComputeTriangleNormals();
+        mesh->PaintUniformColor({0.5, 0.5, 0.5});
+
+        // Add the mesh to the visualizer
+        visualizer.AddGeometry(mesh);
+
+        // Print controls
+        std::cout << "Controls:" << std::endl;
+        std::cout << "- Left click + drag: Rotate" << std::endl;
+        std::cout << "- Right click + drag: Pan" << std::endl;
+        std::cout << "- Mouse wheel: Zoom" << std::endl;
+        std::cout << "- 'R' key: Reset view" << std::endl;
+        std::cout << "- 'Q' key or ESC: Exit" << std::endl;
+
+        auto start_time = std::chrono::steady_clock::now();
+        bool updated = false;
+
+        // Main visualization loop
+        while (visualizer.PollEvents())
+        {
+            auto current_time = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+
+            // Update geometry after 5 seconds
+            if (elapsed >= 5 && !updated)
+            {
+                mesh->vertices_ = {
+                    {0, 0, 0},
+                    {1, 0, 0},
+                    {0, 1, 0},
+                    {1, 1, 0}};
+                mesh->triangles_ = {
+                    {0, 1, 2}, // First triangle
+                    {1, 2, 3}  // Second triangle
+                };
+
+                mesh->ComputeVertexNormals();
+                mesh->ComputeTriangleNormals();
+
+                visualizer.UpdateGeometry(mesh);
+                updated = true;
+            }
+
+            visualizer.UpdateRender();
+        }
+
+        visualizer.DestroyVisualizerWindow();
+        return 0;
+    }
 #endif
-
+    // Parse the command line
     ProgramOptions options = parseCommandLine(argc, argv);
 
     // Use the parsed options
     std::cout << "Input files: " << options.input_infiles << std::endl;
     std::cout << "Output file: " << options.outfile << std::endl;
     std::cout << "Radii: ";
-    for (const auto& radius : options.radii) {
+    for (const auto &radius : options.radii)
+    {
         std::cout << radius << " ";
     }
     std::cout << std::endl;
     std::cout << "Parallel flag: " << (options.parallel_flag ? "true" : "false") << std::endl;
 
-
     double radius = -1;
-    if(options.radii.size() > 0)
+    if (options.radii.size() > 0)
     {
         options.radii.sort();
         radius = options.radii.front();
@@ -114,16 +170,19 @@ int main(int argc, char **argv)
     std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
-    //std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
+    // std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
     std::vector<string> batch_data;
-    try {
+    try
+    {
         batch_data = FileIO::readIntoFileBatch(infile.c_str());
-        if (batch_data.empty()) {
+        if (batch_data.empty())
+        {
             std::cerr << "Error: No data read from file" << std::endl;
             return EXIT_FAILURE;
         }
-        } 
-    catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
         std::cerr << "Error reading file: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
@@ -132,49 +191,49 @@ int main(int argc, char **argv)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Octree creation
-    time_t start,end;
+    time_t start, end;
     std::time(&start);
 
     OctreeVertices octree_vertices;
-    if(radius >0)
+    if (radius > 0)
     {
-        //ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius); 
+        // ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius);
         ok = FileIO::readFromBatchAndSortPoints(batch_data[0], octree_vertices, radius);
-    } 
-    if( !ok )
+    }
+    if (!ok)
     {
-        std::cerr<<"Pb opening the file; exiting."<<std::endl;
+        std::cerr << "Pb opening the file; exiting." << std::endl;
         return EXIT_FAILURE;
     }
     std::time(&end);
 
     octree_vertices.printOctreeStat();
-    std::cout<<"Reading and sorting points in this octree took "
-            <<difftime(end,start)<<" s."<<std::endl;
+    std::cout << "Reading and sorting points in this octree took "
+              << difftime(end, start) << " s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the vertices iterator
-    std::cout<<"****** Reconstructing with radii "<<std::flush;
+    std::cout << "****** Reconstructing with radii " << std::flush;
     std::list<double>::const_iterator ri = options.radii.begin();
-    while(ri != options.radii.end())
+    while (ri != options.radii.end())
     {
-        std::cout<< *ri <<"; ";
+        std::cout << *ri << "; ";
         ++ri;
     }
-    std::cout<<"******"<<std::endl;
+    std::cout << "******" << std::endl;
 
     OctreeIteratorVertices iterator_vertices(&octree_vertices);
 
-    if(radius>0)
+    if (radius > 0)
         iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Create the ball centers octree and its iterator
-    //OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
+    // OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
     OctreeBallCenters octree_ball_centers;
-    octree_ball_centers.setDepth(octree_vertices.getDepth()); 
+    octree_ball_centers.setDepth(octree_vertices.getDepth());
     Point origin = octree_vertices.getOrigin();
     octree_ball_centers.initialize(origin, octree_vertices.getSize());
 
@@ -187,16 +246,16 @@ int main(int argc, char **argv)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Bootstrapping reconstruction
     std::time(&start);
-    Mesher mesher(&octree_vertices, &iterator_vertices, 
-                   &octree_ball_centers, 
-                   &octree_ball_centers_iterator);
+    Mesher mesher(&octree_vertices, &iterator_vertices,
+                  &octree_ball_centers,
+                  &octree_ball_centers_iterator);
 
     std::cout << "Reconstructing the mesh" << std::endl;
     mesher.reconstruct(options.radii);
     std::time(&end);
     std::cout << "Finish reconstruction" << std::endl;
-    std::cout<<"Reconstructing the mesh took "<<difftime(end,start)
-             <<"s."<<std::endl;
+    std::cout << "Reconstructing the mesh took " << difftime(end, start)
+              << "s." << std::endl;
     mesher.print_stats();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -206,7 +265,7 @@ int main(int argc, char **argv)
     std::time(&start);
     mesher.fillHoles();
     std::time(&end);
-    std::cout << "Filling holes took " << difftime(end,start) << "s." << std::endl;
+    std::cout << "Filling holes took " << difftime(end, start) << "s." << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -222,25 +281,49 @@ int main(int argc, char **argv)
     mesher.clearOrphanVertices();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    //#ifdef _DEBUG
-    //std::cout << "Sanity check: check orientation" << std::endl;
-    //mesher.SanityCheckOrientation();
-    //#endif
+    // #ifdef _DEBUG
+    // std::cout << "Sanity check: check orientation" << std::endl;
+    // mesher.SanityCheckOrientation();
+    // #endif
 
-    if(! FileIO::saveMeshDebug("_cumulative0.txt", mesher))
+    if (!FileIO::saveMeshDebug("_cumulative0.txt", mesher))
     {
-        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+        std::cerr << "Pb saving the mesh; exiting." << std::endl;
         return EXIT_FAILURE;
     }
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Create a visualizer object
+    open3d::visualization::Visualizer visualizer;
+
+    // Create a window and add the geometry
+    visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 1600, 900);
+
+    // Show back face
+    visualizer.GetRenderOption().mesh_show_back_face_ = true;
+
+    // Create a shared pointer to store the mesh
+    std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh;
+
+    // Create initial vertices and triangle
+    o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+
+    mesher.renderIntoOpen3D(*o3d_mesh);
+
+    visualizer.AddGeometry(o3d_mesh);
+
+    visualizer.Run();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     // Sanity check: save border edges
-    //#ifdef _DEBUG
-    //std::cout << "Sanity check: save border edges after trimming" << std::endl;
-    //Edge_star_list border_edges = mesher.getBorderEdges();
-    //FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
-    //#endif
-    
-    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++) {
+    // #ifdef _DEBUG
+    // std::cout << "Sanity check: save border edges after trimming" << std::endl;
+    // Edge_star_list border_edges = mesher.getBorderEdges();
+    // FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
+    // #endif
+
+    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++)
+    {
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -248,25 +331,27 @@ int main(int argc, char **argv)
         // Get the next batch
         std::cout << "Remove overlape vertices in next batch" << std::endl;
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Expand the ballcenters octree
         // std::cout << "Vertices size: " << vertices.size() << std::endl;
         std::cout << "Expanding octree ball centers" << std::endl;
-        for (auto& vertex : vertices) {
+        for (auto &vertex : vertices)
+        {
             BallCenter ball_center(vertex, nullptr);
             octree_ball_centers.checkSizeAndexpand(ball_center);
         }
         std::cout << "Expanding octree vertices" << std::endl;
-        for (auto& vertex : vertices) {
+        for (auto &vertex : vertices)
+        {
             octree_vertices.checkSizeAndexpand(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Collection of collision facets
-        Facet_set collision_facets = mesher.computeCollisionFacets(vertices); 
+        Facet_set collision_facets = mesher.computeCollisionFacets(vertices);
         std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -274,16 +359,17 @@ int main(int argc, char **argv)
         // Remove the collision facets
         mesher.removeFacets(collision_facets); // This function is very wrong
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
+
         mesher.print_stats();
 
-        //FileIO::saveMeshDebug("_state1_facets.txt", mesher);
-        //FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
+        // FileIO::saveMeshDebug("_state1_facets.txt", mesher);
+        // FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Add the new vertices to the octree
         std::cout << "Adding new vertices to the octree" << std::endl;
-        for (auto& vertex : vertices) {
+        for (auto &vertex : vertices)
+        {
             octree_vertices.checkSizeAndaddPoint(vertex);
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -293,7 +379,7 @@ int main(int argc, char **argv)
         std::cout << "Further reconstructing" << std::endl;
         mesher.furtherReconstruct();
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
+
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Fill holes
         mesher.fillHoles();
@@ -308,17 +394,24 @@ int main(int argc, char **argv)
         mesher.debug_print_vertices();
 
         FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
-    }
- 
 
-    if(! FileIO::saveMeshDebug("_final.txt", mesher))
+        mesher.renderIntoOpen3D(*o3d_mesh);
+        visualizer.UpdateGeometry(o3d_mesh);
+        visualizer.UpdateRender();
+        visualizer.PollEvents(); // Add small delay to allow visualization refresh
+
+    }
+
+    if (!FileIO::saveMeshDebug("_final.txt", mesher))
     {
-        std::cerr<<"Pb saving the mesh; exiting."<<std::endl;
+        std::cerr << "Pb saving the mesh; exiting." << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout<<"Mesh saved in" << "_final.txt"<<std::endl;
+    std::cout << "Mesh saved in" << "_final.txt" << std::endl;
 
     Vertex::setPrintingInDestruct(true);
     std::cout << "Setting printing in destruct to true" << std::endl;
+
+    visualizer.DestroyVisualizerWindow();
     return EXIT_SUCCESS;
 }

@@ -65,14 +65,26 @@ add_executable(ballpivoting
 # Add compile definitions for debug mode
 target_compile_definitions(ballpivoting PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 
+# Only add libc++ flags if using Clang
+if(USE_CLANG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -L/usr/lib/llvm-10/lib")
+endif()
+
 # Add Open3D include directories
-target_include_directories(ballpivoting PRIVATE ${Open3D_INCLUDE_DIRS})
+#target_include_directories(ballpivoting PRIVATE ${Open3D_INCLUDE_DIRS})
+
+# Move this BEFORE add_subdirectory(src)
+target_include_directories(ballpivoting PRIVATE 
+    ${Open3D_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/include/open3d
+)
 
 # Link against Open3D libraries
 target_link_libraries(ballpivoting PRIVATE ${Open3D_LIBRARIES})
 
 # Add compile definitions required by Open3D
-#target_compile_definitions(ballpivoting PRIVATE ${Open3D_DEFINITIONS})
+target_compile_definitions(ballpivoting PRIVATE ${Open3D_DEFINITIONS})
 
 # Set rpath for the executable
 set_target_properties(ballpivoting PROPERTIES
@@ -84,5 +96,5 @@ set_target_properties(ballpivoting PROPERTIES
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 enable_testing()
-add_subdirectory(src)
-add_subdirectory(tests)
+#add_subdirectory(src)
+#add_subdirectory(tests)

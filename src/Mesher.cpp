@@ -1503,3 +1503,25 @@ void Mesher::debug_print_vertices() const
     // Number of vertices
     std::cout << "Number of vertices: " << m_vertices.size() << std::endl;  
 }
+
+void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh& O3d_mesh)
+{
+    // Resize the vertices and triangles
+    O3d_mesh.vertices_.resize(m_vertices.size());
+    O3d_mesh.triangles_.resize(m_facets.size());
+    
+    unsigned int i = 0;
+    for (auto facet : m_facets)
+    {
+        unsigned int idx0 = facet->getVertex(0)->index();
+        unsigned int idx1 = facet->getVertex(1)->index();
+        unsigned int idx2 = facet->getVertex(2)->index();
+        O3d_mesh.triangles_[i] = Eigen::Vector3i(idx0, idx1, idx2);
+        
+        O3d_mesh.vertices_[idx0] = Eigen::Vector3d(facet->getVertex(0)->x(), facet->getVertex(0)->y(), facet->getVertex(0)->z());
+        O3d_mesh.vertices_[idx1] = Eigen::Vector3d(facet->getVertex(1)->x(), facet->getVertex(1)->y(), facet->getVertex(1)->z());
+        O3d_mesh.vertices_[idx2] = Eigen::Vector3d(facet->getVertex(2)->x(), facet->getVertex(2)->y(), facet->getVertex(2)->z());   
+
+        i++;
+    }
+}

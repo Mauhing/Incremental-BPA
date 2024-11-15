@@ -46,6 +46,8 @@
 #include "Edge.h"
 #include "utilities.h"
 #include "types.h"
+#include <Open3D.h>
+
 /**
  * @class Mesher
  * @brief Performs the triangulation of the input points
@@ -434,6 +436,8 @@ class Mesher
         void clearOrphanVertices();
 
         void exileVertex(Vertex* vertex);
+
+        void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh);
 
     public: // Sanity check
         void SanityCheckOrientation() const;
