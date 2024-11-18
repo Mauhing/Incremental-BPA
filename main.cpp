@@ -357,7 +357,6 @@ int main(int argc, char **argv)
         std::ref(o3d_mesh_mutex), 
         std::ref(should_exit)
     );
-    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
