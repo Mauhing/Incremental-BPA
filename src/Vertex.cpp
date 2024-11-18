@@ -50,10 +50,7 @@ Vertex::~Vertex()
     m_adjacentFacets.clear();
     m_type = Vertex::ORPHAN; //0
     m_octreeNodeLeaf = NULL;
-    //if (printing_in_destruct)
-    //{
-        //std::cout << "Vertex destructor called" << std::endl;
-    //}
+
 }
 
 bool Vertex::addAdjacentEdge(Edge* edge)
@@ -318,9 +315,3 @@ const Facet_set& Vertex::adjacentFacets() const
     return m_adjacentFacets;
 }
 
-bool Vertex::printing_in_destruct = false;
-
-void Vertex::setPrintingInDestruct(bool print)
-{
-    printing_in_destruct = print;
-}

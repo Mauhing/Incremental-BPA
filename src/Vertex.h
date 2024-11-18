@@ -26,8 +26,8 @@
 #include "types.h"
 //#include "OctreeNode.h"
 
-class Edge;
-class Facet;
+//class Edge;
+//class Facet;
 //class OctreeNodeV;
 template<typename T> class TOctreeNode; // Forward declaration
 

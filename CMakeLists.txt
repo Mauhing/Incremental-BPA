@@ -78,6 +78,7 @@ endif()
 target_include_directories(ballpivoting PRIVATE 
     ${Open3D_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/include/open3d
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Link against Open3D libraries

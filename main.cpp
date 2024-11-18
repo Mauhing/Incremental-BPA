@@ -345,8 +345,5 @@ int main(int argc, char **argv)
     }
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
 
-    Vertex::setPrintingInDestruct(true);
-    std::cout << "Setting printing in destruct to true" << std::endl;
-
     return EXIT_SUCCESS;
 }
