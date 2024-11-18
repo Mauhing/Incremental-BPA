@@ -48,12 +48,19 @@ void visualizationThread(
     visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.GetRenderOption().point_size_ = 5.0;
 
-    // Create a shared pointer to store the mesh
-    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-    visualizer.AddGeometry(o3d_mesh);
-
     // Store the color we want to maintain
     const Eigen::Vector3d golden_color(1.0, 0.7, 0.0);
+
+    // Create a shared pointer to store the mesh
+    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    // Add initial mesh data
+    {
+        std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+        mesher.renderIntoOpen3D(*o3d_mesh);
+        o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), Eigen::Vector3d(1.0, 0.7, 0.0));
+        o3d_mesh->ComputeTriangleNormals();
+    }
+    visualizer.AddGeometry(o3d_mesh);
 
     // Set default viewpoint
     visualizer.GetViewControl().SetFront({0, 0, -1});
@@ -350,7 +357,7 @@ int main(int argc, char **argv)
         std::ref(o3d_mesh_mutex), 
         std::ref(should_exit)
     );
-
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
