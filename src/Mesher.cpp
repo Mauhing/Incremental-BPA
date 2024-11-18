@@ -174,28 +174,6 @@ void Mesher::reconstruct(const std::list<double>& radii)
     }
 }
 
-void Mesher::furtherReconstruct()
-{
-    for (Edge* e : m_border_edges) {
-        e->setType(Edge::FRONT);
-        m_edge_front.push_back(e);
-    }
-    m_border_edges.clear();
-     
-    #ifdef _DEBUG
-    if (m_edge_front.size() == 0) {
-        std::cerr << "Error: No front edges found after further reconstruction" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-    #endif
-
-
-    unsigned int depth = m_octree_vertices->getDepth();
-    m_iterator_vertices->setDepth(depth);
-    
-    reconstruct();
-}
-
 
 void Mesher::changeRadius(double radius)
 {
@@ -1449,7 +1427,7 @@ void Mesher::SanityCheckOrientation() const
 
 void Mesher::print_stats()
 {
-    std::cout << ">>>>>>" << std::endl;
+    std::cout << ">>>>>>>>" << std::endl;
     std::cout<<"Reconstructed mesh: "<<this->nVertices()
              <<" vertices; "<<this->nFacets()<<" facets. ";
     std::cout<<this->nBorderEdges()<<" border edges"<<std::endl;
@@ -1598,7 +1576,23 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Further reconstruction
     std::cout << "Further reconstructing" << std::endl;
-    this->furtherReconstruct();
+    for (Edge* e : m_border_edges) {
+        e->setType(Edge::FRONT);
+        m_edge_front.push_back(e);
+    }
+    m_border_edges.clear();
+     
+    #ifdef _DEBUG
+    if (m_edge_front.size() == 0) {
+        std::cerr << "Error: No front edges found after further reconstruction" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
+
+    unsigned int depth = m_octree_vertices->getDepth();
+    m_iterator_vertices->setDepth(depth);
+    
+    this->reconstruct();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

@@ -424,9 +424,7 @@ class Mesher
         void removeOrphanAndUpdate(TOctreeNode<Vertex>* node);
 
         const std::list<Facet*>& getFacets() const;
-        
-        void furtherReconstruct();
-        
+         
         Edge_star_list getBorderEdges() const;
 
         void print_stats(); 
