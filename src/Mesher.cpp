@@ -1574,7 +1574,6 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Collection of collision facets
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
-    std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1589,11 +1588,10 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Add the new vertices to the octree
-    std::cout << "Adding new vertices to the octree" << std::endl;
     for (auto &vertex : vertices)
     {
-        // TODO: In the main.cpp, it has already checked the size of the octree. We should not check it again.
-        m_octree_vertices->checkSizeAndaddPoint(vertex);
+        // Remark that this function does not check the size of the octree.
+        m_octree_vertices->addPoint(vertex);
     }
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
