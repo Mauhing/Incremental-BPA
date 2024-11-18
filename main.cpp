@@ -33,25 +33,72 @@
 
 #include <Open3D.h>
 
-// #include <cstdlib>
-// void* operator new(std::size_t size) {
-//     void* p = std::malloc(size);
-//     if (p == (void*)0x5555555d2b30) {
-//         std::cout << "Allocating at watched address: " << p << std::endl;
-//         // Add breakpoint here
-//         //__builtin_trap();  // Or use your debugger's breakpoint
-//     }
-//     return p;
-// }
-//
-// void operator delete(void* p) noexcept {
-//     if (p == (void*)0x5555555d2b30) {
-//         std::cout << "Deleting at watched address: " << p << std::endl;
-//         // Add breakpoint here
-//         //__builtin_trap();  // Or use your debugger's breakpoint
-//     }
-//     std::free(p);
-// }
+#include <thread>
+#include <mutex>
+#include <atomic>
+
+void visualizationThread(
+    Mesher& mesher,
+    std::mutex& o3d_mesh_mutex,
+    std::atomic<bool>& should_exit
+) {
+    // Create a visualizer object
+    open3d::visualization::Visualizer visualizer;
+    visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 1600, 900);
+    visualizer.GetRenderOption().mesh_show_back_face_ = true;
+    visualizer.GetRenderOption().point_size_ = 5.0;
+
+    // Create a shared pointer to store the mesh
+    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    visualizer.AddGeometry(o3d_mesh);
+
+    // Store the color we want to maintain
+    const Eigen::Vector3d golden_color(1.0, 0.7, 0.0);
+
+    // Set default viewpoint
+    visualizer.GetViewControl().SetFront({0, 0, -1});
+    visualizer.GetViewControl().SetLookat({0, 0, 0});
+    visualizer.GetViewControl().SetUp({0, 1, 0});
+    visualizer.GetViewControl().SetZoom(0.7);
+
+    bool first_frame = true;
+
+    // add coordinate axes
+    //open3d::geometry::TriangleMesh coordinate_axes;
+
+
+    // Visualization loop
+    while (!should_exit) {
+        if (!visualizer.PollEvents()) {  // Window was closed
+            should_exit = true;  // Signal main thread to exit
+            break;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+            mesher.renderIntoOpen3D(*o3d_mesh);
+            
+            // Reapply color after mesh update
+            o3d_mesh->vertex_colors_.clear();
+            o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
+            
+            o3d_mesh->ComputeVertexNormals();
+            o3d_mesh->ComputeTriangleNormals();
+            visualizer.UpdateGeometry(o3d_mesh);
+
+            // Reset view on first frame to ensure mesh is visible
+            if (first_frame && o3d_mesh->vertices_.size() > 0) {
+                visualizer.ResetViewPoint(true);
+                first_frame = false;
+            }
+        }
+        
+        visualizer.UpdateRender();
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+
+    visualizer.DestroyVisualizerWindow();
+}
 
 /**
  * @brief main function for the ball pivoting reconstruction
@@ -293,26 +340,18 @@ int main(int argc, char **argv)
     }
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Create a visualizer object
-    open3d::visualization::Visualizer visualizer;
+    // Create shared data structures and synchronization primitives
+    std::mutex o3d_mesh_mutex;
+    std::atomic<bool> should_exit(false);
 
-    // Create a window and add the geometry
-    visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 1600, 900);
+    // Create visualization thread
+    std::thread vis_thread(visualizationThread, 
+        std::ref(mesher), 
+        std::ref(o3d_mesh_mutex), 
+        std::ref(should_exit)
+    );
 
-    // Show back face
-    visualizer.GetRenderOption().mesh_show_back_face_ = true;
 
-    // Create a shared pointer to store the mesh
-    std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh;
-
-    // Create initial vertices and triangle
-    o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-
-    mesher.renderIntoOpen3D(*o3d_mesh);
-
-    visualizer.AddGeometry(o3d_mesh);
-
-    visualizer.Run();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Sanity check: save border edges
@@ -324,6 +363,10 @@ int main(int argc, char **argv)
 
     for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++)
     {
+        if (should_exit) {  // Check if visualization window was closed
+            break;
+        }
+
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "Processing batch " << batch_index << std::endl;
 
@@ -349,58 +392,61 @@ int main(int argc, char **argv)
         }
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Collection of collision facets
-        Facet_set collision_facets = mesher.computeCollisionFacets(vertices);
-        std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Remove the collision facets
-        mesher.removeFacets(collision_facets); // This function is very wrong
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        mesher.print_stats();
-
-        // FileIO::saveMeshDebug("_state1_facets.txt", mesher);
-        // FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Add the new vertices to the octree
-        std::cout << "Adding new vertices to the octree" << std::endl;
-        for (auto &vertex : vertices)
         {
-            octree_vertices.checkSizeAndaddPoint(vertex);
+            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // Collection of collision facets
+            Facet_set collision_facets = mesher.computeCollisionFacets(vertices);
+            std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // Remove the collision facets
+            mesher.removeFacets(collision_facets); // This function is very wrong
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+            mesher.print_stats();
+
+            // FileIO::saveMeshDebug("_state1_facets.txt", mesher);
+            // FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
+
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // Add the new vertices to the octree
+            std::cout << "Adding new vertices to the octree" << std::endl;
+            for (auto &vertex : vertices)
+            {
+                octree_vertices.checkSizeAndaddPoint(vertex);
+            }
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // Further reconstruction
+            std::cout << "Further reconstructing" << std::endl;
+            mesher.furtherReconstruct();
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // Fill holes
+            mesher.fillHoles();
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // Clear orphan vertices
+            mesher.clearOrphanVertices();
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         }
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Further reconstruction
-        std::cout << "Further reconstructing" << std::endl;
-        mesher.furtherReconstruct();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Fill holes
-        mesher.fillHoles();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Clear orphan vertices
-        mesher.clearOrphanVertices();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+         
 
         mesher.print_stats();
         mesher.debug_print_vertices();
 
         FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
-
-        mesher.renderIntoOpen3D(*o3d_mesh);
-        visualizer.UpdateGeometry(o3d_mesh);
-        visualizer.UpdateRender();
-        visualizer.PollEvents(); // Add small delay to allow visualization refresh
-
+        
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
+
+    should_exit = true;
+    vis_thread.join();
 
     if (!FileIO::saveMeshDebug("_final.txt", mesher))
     {
@@ -412,6 +458,5 @@ int main(int argc, char **argv)
     Vertex::setPrintingInDestruct(true);
     std::cout << "Setting printing in destruct to true" << std::endl;
 
-    visualizer.DestroyVisualizerWindow();
     return EXIT_SUCCESS;
 }

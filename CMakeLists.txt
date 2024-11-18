@@ -92,6 +92,16 @@ set_target_properties(ballpivoting PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
 )
 
+# Find pthread
+find_package(Threads REQUIRED)
+# Link against Open3D libraries
+target_link_libraries(ballpivoting PRIVATE ${Open3D_LIBRARIES})
+# Link against Open3D libraries and pthread
+target_link_libraries(ballpivoting PRIVATE 
+    ${Open3D_LIBRARIES}
+    Threads::Threads
+)
+
 # Export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

@@ -1507,21 +1507,64 @@ void Mesher::debug_print_vertices() const
 void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh& O3d_mesh)
 {
     // Resize the vertices and triangles
-    O3d_mesh.vertices_.resize(m_vertices.size());
-    O3d_mesh.triangles_.resize(m_facets.size());
+    //O3d_mesh.vertices_.resize(m_vertices.size());
+    //O3d_mesh.triangles_.resize(m_facets.size());
     
-    unsigned int i = 0;
+    //unsigned int i = 0;
+    //for (auto facet : m_facets)
+    //{
+    //    unsigned int idx0 = facet->getVertex(0)->index();
+    //    unsigned int idx1 = facet->getVertex(1)->index();
+    //    unsigned int idx2 = facet->getVertex(2)->index();
+    //    O3d_mesh.triangles_[i] = Eigen::Vector3i(idx0, idx1, idx2);
+    //    
+    //    O3d_mesh.vertices_[idx0] = Eigen::Vector3d(facet->getVertex(0)->x(), facet->getVertex(0)->y(), facet->getVertex(0)->z());
+    //    O3d_mesh.vertices_[idx1] = Eigen::Vector3d(facet->getVertex(1)->x(), facet->getVertex(1)->y(), facet->getVertex(1)->z());
+    //    O3d_mesh.vertices_[idx2] = Eigen::Vector3d(facet->getVertex(2)->x(), facet->getVertex(2)->y(), facet->getVertex(2)->z());   
+
+    //    i++;
+    //}
+    
+    // Clear existing mesh data
+    O3d_mesh.vertices_.clear();
+    O3d_mesh.triangles_.clear();
+
+    // Create a map of vertices to their new indices
+    std::unordered_map<Vertex*, int> vertex_to_index;  // Changed to int
+    int current_index = 0;  // Changed to int
+
+    // First pass: collect unique vertices and assign new indices
     for (auto facet : m_facets)
     {
-        unsigned int idx0 = facet->getVertex(0)->index();
-        unsigned int idx1 = facet->getVertex(1)->index();
-        unsigned int idx2 = facet->getVertex(2)->index();
-        O3d_mesh.triangles_[i] = Eigen::Vector3i(idx0, idx1, idx2);
-        
-        O3d_mesh.vertices_[idx0] = Eigen::Vector3d(facet->getVertex(0)->x(), facet->getVertex(0)->y(), facet->getVertex(0)->z());
-        O3d_mesh.vertices_[idx1] = Eigen::Vector3d(facet->getVertex(1)->x(), facet->getVertex(1)->y(), facet->getVertex(1)->z());
-        O3d_mesh.vertices_[idx2] = Eigen::Vector3d(facet->getVertex(2)->x(), facet->getVertex(2)->y(), facet->getVertex(2)->z());   
-
-        i++;
+        for (int i = 0; i < 3; i++)
+        {
+            Vertex* v = facet->getVertex(i);
+            if (vertex_to_index.find(v) == vertex_to_index.end())
+            {
+                vertex_to_index[v] = current_index++;
+                O3d_mesh.vertices_.push_back(
+                    Eigen::Vector3d(v->x(), v->y(), v->z())
+                );
+            }
+        }
     }
+
+    // Second pass: create triangles using the new indices
+    for (auto facet : m_facets)
+    {
+        O3d_mesh.triangles_.push_back(
+            Eigen::Vector3i(
+                vertex_to_index[facet->getVertex(0)],
+                vertex_to_index[facet->getVertex(1)],
+                vertex_to_index[facet->getVertex(2)]
+            )
+        );
+    }
+
+    // Debug output
+    #ifndef _DEBUG
+    //std::cout << "Mesher: Converted " << vertex_to_index.size() 
+    //          << " vertices and " << m_facets.size() 
+    //          << " triangles to Open3D mesh" << std::endl;
+    #endif
 }
