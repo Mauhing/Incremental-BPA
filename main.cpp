@@ -71,8 +71,8 @@ void visualizationThread(
     bool first_frame = true;
 
     // add coordinate axes
-    //open3d::geometry::TriangleMesh coordinate_axes;
-
+    auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(5.0);
+    visualizer.AddGeometry(coordinate_axes);
 
     // Visualization loop
     while (!should_exit) {
@@ -116,82 +116,6 @@ void visualizationThread(
 
 int main(int argc, char **argv)
 {
-#if 0
-    {
-        // Create a visualizer object
-        open3d::visualization::Visualizer visualizer;
-
-        // Create a window and add the geometry
-        visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 1600, 900);
-
-        // Show back face
-        visualizer.GetRenderOption().mesh_show_back_face_ = true;
-
-        // Create a shared pointer to store the mesh
-        std::shared_ptr<open3d::geometry::TriangleMesh> mesh;
-
-        // Create initial vertices and triangle
-        mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-        mesh->vertices_ = {
-            Eigen::Vector3d(0, 0, 0),
-            Eigen::Vector3d(1, 0, 0),
-            Eigen::Vector3d(0, 1, 0)};
-        mesh->triangles_ = {
-            {0, 1, 2} // Single triangle
-        };
-
-        // Compute normals and set color
-        mesh->ComputeVertexNormals();
-        mesh->ComputeTriangleNormals();
-        mesh->PaintUniformColor({0.5, 0.5, 0.5});
-
-        // Add the mesh to the visualizer
-        visualizer.AddGeometry(mesh);
-
-        // Print controls
-        std::cout << "Controls:" << std::endl;
-        std::cout << "- Left click + drag: Rotate" << std::endl;
-        std::cout << "- Right click + drag: Pan" << std::endl;
-        std::cout << "- Mouse wheel: Zoom" << std::endl;
-        std::cout << "- 'R' key: Reset view" << std::endl;
-        std::cout << "- 'Q' key or ESC: Exit" << std::endl;
-
-        auto start_time = std::chrono::steady_clock::now();
-        bool updated = false;
-
-        // Main visualization loop
-        while (visualizer.PollEvents())
-        {
-            auto current_time = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
-
-            // Update geometry after 5 seconds
-            if (elapsed >= 5 && !updated)
-            {
-                mesh->vertices_ = {
-                    {0, 0, 0},
-                    {1, 0, 0},
-                    {0, 1, 0},
-                    {1, 1, 0}};
-                mesh->triangles_ = {
-                    {0, 1, 2}, // First triangle
-                    {1, 2, 3}  // Second triangle
-                };
-
-                mesh->ComputeVertexNormals();
-                mesh->ComputeTriangleNormals();
-
-                visualizer.UpdateGeometry(mesh);
-                updated = true;
-            }
-
-            visualizer.UpdateRender();
-        }
-
-        visualizer.DestroyVisualizerWindow();
-        return 0;
-    }
-#endif
     // Parse the command line
     ProgramOptions options = parseCommandLine(argc, argv);
 
@@ -396,53 +320,13 @@ int main(int argc, char **argv)
         {
             octree_vertices.checkSizeAndexpand(vertex);
         }
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         {
             std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // Collection of collision facets
-            Facet_set collision_facets = mesher.computeCollisionFacets(vertices);
-            std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // Remove the collision facets
-            mesher.removeFacets(collision_facets); // This function is very wrong
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-            mesher.print_stats();
-
-            // FileIO::saveMeshDebug("_state1_facets.txt", mesher);
-            // FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
-
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // Add the new vertices to the octree
-            std::cout << "Adding new vertices to the octree" << std::endl;
-            for (auto &vertex : vertices)
-            {
-                octree_vertices.checkSizeAndaddPoint(vertex);
-            }
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // Further reconstruction
-            std::cout << "Further reconstructing" << std::endl;
-            mesher.furtherReconstruct();
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // Fill holes
-            mesher.fillHoles();
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // Clear orphan vertices
-            mesher.clearOrphanVertices();
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            mesher.batchReconstruct(vertices);
         }
-         
-
+ 
         mesher.print_stats();
         mesher.debug_print_vertices();
 

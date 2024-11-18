@@ -1568,3 +1568,48 @@ void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh& O3d_mesh)
     //          << " triangles to Open3D mesh" << std::endl;
     #endif
 }
+
+void Mesher::batchReconstruct(std::list<Vertex>& vertices)
+{
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Collection of collision facets
+    Facet_set collision_facets = this->computeCollisionFacets(vertices);
+    std::cout << "Number of facets to remove: " << collision_facets.size() << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Remove the collision facets
+    this->removeFacets(collision_facets); // This function is very wrong
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    this->print_stats();
+
+    // FileIO::saveMeshDebug("_state1_facets.txt", mesher);
+    // FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Add the new vertices to the octree
+    std::cout << "Adding new vertices to the octree" << std::endl;
+    for (auto &vertex : vertices)
+    {
+        // TODO: In the main.cpp, it has already checked the size of the octree. We should not check it again.
+        m_octree_vertices->checkSizeAndaddPoint(vertex);
+    }
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Further reconstruction
+    std::cout << "Further reconstructing" << std::endl;
+    this->furtherReconstruct();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Fill holes
+    this->fillHoles();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Clear orphan vertices
+    this->clearOrphanVertices();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}

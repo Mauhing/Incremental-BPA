@@ -437,6 +437,9 @@ class Mesher
 
         void exileVertex(Vertex* vertex);
 
+        void batchReconstruct(std::list<Vertex>& vertices);
+
+    public: // Open3D rendering
         void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh);
 
     public: // Sanity check
