@@ -848,10 +848,7 @@ void Mesher::addFacet(Facet* f)
     BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
     f->setBallCenterPtr(ball_center);
 
-    // Trigger visualization update if enabled
-    if (m_enable_visualization && m_visualization_callback) {
-        m_visualization_callback();
-    }
+
 }
 
 

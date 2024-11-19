@@ -442,20 +442,10 @@ class Mesher
     public: // Boundaries computation
         void removeSingular();
 
-    private:
-        std::function<void()> m_visualization_callback;
-        bool m_enable_visualization;
 
     public: // Open3D rendering
         void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh);
 
-        void setVisualizationCallback(std::function<void()> callback) {
-            m_visualization_callback = callback;
-        }
-        
-        void enableVisualization(bool enable) {
-            m_enable_visualization = enable;
-        }
 
     public: // Sanity check
         void SanityCheckOrientation() const; 
