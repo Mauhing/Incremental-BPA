@@ -96,7 +96,7 @@ class Mesher
         unsigned int m_vertice_idx;
 
         /** @brief number of facets*/
-        unsigned int m_nfacets;
+        unsigned int m_nfacets; // TODO: remove this
         
         std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
@@ -418,7 +418,9 @@ class Mesher
 
     public:
         void removeFacets(std::set<Facet*> &boundary_facets);
-        
+
+        void removeFacets(std::unordered_set<Facet*> &boundary_facets);
+
         void removeFacet(Facet* facet);
 
         void removeOrphanAndUpdate(TOctreeNode<Vertex>* node);
@@ -437,13 +439,26 @@ class Mesher
 
         void batchReconstruct(std::list<Vertex>& vertices);
 
+    public: // Boundaries computation
+        void removeSingular();
+
+    private:
+        std::function<void()> m_visualization_callback;
+        bool m_enable_visualization;
+
     public: // Open3D rendering
         void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh);
 
-    public: // Sanity check
-        void SanityCheckOrientation() const;
+        void setVisualizationCallback(std::function<void()> callback) {
+            m_visualization_callback = callback;
+        }
         
-        void debug_print_vertices() const;
+        void enableVisualization(bool enable) {
+            m_enable_visualization = enable;
+        }
+
+    public: // Sanity check
+        void SanityCheckOrientation() const; 
 };
 
 #endif

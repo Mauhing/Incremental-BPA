@@ -847,6 +847,11 @@ void Mesher::addFacet(Facet* f)
     Point temp_ball_center = f->getBallCenter();
     BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
     f->setBallCenterPtr(ball_center);
+
+    // Trigger visualization update if enabled
+    if (m_enable_visualization && m_visualization_callback) {
+        m_visualization_callback();
+    }
 }
 
 
@@ -1342,9 +1347,19 @@ void Mesher::removeFacet(Facet* facet)
     delete facet;
 }
 
-void Mesher::removeFacets(std::set<Facet*> &collision_facets)
+void Mesher::removeFacets(std::set<Facet*> &facets)
 {
-    for (auto facet : collision_facets)
+    for (auto facet : facets)
+    {
+        removeFacet(facet);
+        m_facets.remove(facet);
+        m_nfacets--;
+    }
+}
+
+void Mesher::removeFacets(std::unordered_set<Facet*> &facets)
+{
+    for (auto facet : facets)
     {
         removeFacet(facet);
         m_facets.remove(facet);
@@ -1476,12 +1491,6 @@ void Mesher::clearOrphanVertices()
     });
 }
 
-void Mesher::debug_print_vertices() const
-{
-    // Number of vertices
-    std::cout << "Number of vertices: " << m_vertices.size() << std::endl;  
-}
-
 void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh& O3d_mesh)
 {
     // Resize the vertices and triangles
@@ -1601,7 +1610,65 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Remove singular vertices
+    this->removeSingular();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
     this->clearOrphanVertices();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+}
+
+
+void Mesher::removeSingular()
+{
+    // If edgefront is not empty, return error
+    #ifdef _DEBUG
+    if (m_edge_front.size() != 0) {
+        std::cerr << "Error: Edgefront is not empty" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
+ 
+ 
+    while (true) {
+        std::unordered_map<Vertex*, unsigned int> vertex_counter;
+        for (Edge* e : this->m_border_edges) {
+            vertex_counter.insert({e->getSource(), 0});
+            vertex_counter.insert({e->getTarget(), 0});
+        }
+
+        for (Edge* e : this->m_border_edges) {
+            vertex_counter[e->getSource()]++;
+            vertex_counter[e->getTarget()]++;
+        }
+        
+        std::unordered_set<Vertex*> singular_vertices;
+        for (auto& pair : vertex_counter) {
+            if (pair.second > 2) {
+                singular_vertices.insert(pair.first);
+            }
+        }
+        
+        if (singular_vertices.size() == 0) {
+            break;
+        }
+        else{
+            std::cout << "Singular vertices found: " << singular_vertices.size() << std::endl;
+        }
+
+        // collect the facets that are adjacent to the singular vertices
+        std::unordered_set<Facet*> singular_facets;
+        for (Vertex* v : singular_vertices) {
+            for (Facet* f : v->adjacentFacets()) {
+                singular_facets.insert(f);
+            }
+        }
+
+        // remove the singular facets
+        this->removeFacets(singular_facets);
+    }
+    std::cout << "If you are seeing this, message this means that the function has not finished implementing" << std::endl;
 }

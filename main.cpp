@@ -58,9 +58,18 @@ void visualizationThread(
         std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
         mesher.renderIntoOpen3D(*o3d_mesh);
         o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), Eigen::Vector3d(1.0, 0.7, 0.0));
-        o3d_mesh->ComputeTriangleNormals();
+        //o3d_mesh->ComputeTriangleNormals();
     }
     visualizer.AddGeometry(o3d_mesh);
+
+    // Add a dummy line segment
+    auto line_segment = std::make_shared<open3d::geometry::LineSet>();
+    line_segment->points_.push_back(Eigen::Vector3d(0, 3, 0));
+    line_segment->points_.push_back(Eigen::Vector3d(5, 3, 0));
+    line_segment->lines_.push_back(Eigen::Vector2i(0, 1));
+    line_segment->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0)); // Red color
+    visualizer.GetRenderOption().line_width_ = 500.0; // Make lines thicker
+    visualizer.AddGeometry(line_segment);
 
     // Set default viewpoint
     visualizer.GetViewControl().SetFront({0, 0, -1});
@@ -264,11 +273,11 @@ int main(int argc, char **argv)
     // mesher.SanityCheckOrientation();
     // #endif
 
-    if (!FileIO::saveMeshDebug("_cumulative0.txt", mesher))
-    {
-        std::cerr << "Pb saving the mesh; exiting." << std::endl;
-        return EXIT_FAILURE;
-    }
+    //if (!FileIO::saveMeshDebug("_cumulative0.txt", mesher))
+    //{
+    //    std::cerr << "Pb saving the mesh; exiting." << std::endl;
+    //    return EXIT_FAILURE;
+    //}
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Create shared data structures and synchronization primitives
@@ -328,12 +337,17 @@ int main(int argc, char **argv)
         }
  
         mesher.print_stats();
-        mesher.debug_print_vertices();
-
-        FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
         
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::cout << "Press enter to continue" << std::endl;
+        std::cin.get();
+
+        //FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
+        
     }
+
+    // wait for terminal input
+    std::cout << "Press Enter to exit..." << std::endl;
+    std::cin.get();
 
     should_exit = true;
     vis_thread.join();
