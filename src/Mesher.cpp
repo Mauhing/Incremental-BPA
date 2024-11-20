@@ -1,10 +1,10 @@
 /**
  * @file Mesher.cpp
- * @brief defines methods for building a surface mesh from points stored in an 
+ * @brief defines methods for building a surface mesh from points stored in an
  * octree these methods are declared in Mesher.h
  * @author Julie Digne julie.digne@liris.cnrs.fr
  * @date 2012/10/17
- * @copyright This file implements an algorithm possibly linked to the patent 
+ * @copyright This file implements an algorithm possibly linked to the patent
  * US6968299B1.
  * This file is made available for the exclusive aim of serving as
  * scientific tool to verify the soundness and completeness of the
@@ -19,7 +19,7 @@
  * can benefit from the following license terms attached to this
  * file.
  * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published 
+ * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
@@ -27,7 +27,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Mesher.h"
 #include "OctreeIterator.h"
@@ -36,7 +36,7 @@
 #include <cmath>
 #include <cassert>
 #ifndef USE_CLANG
-    #include <omp.h>
+#include <omp.h>
 #endif
 #include <sstream>
 #include <memory>
@@ -46,10 +46,9 @@ const double PI = 3.1415926535;
 
 using namespace std;
 
-Mesher::Mesher():
-    visualization_mutex(nullptr),
-    visualization_cv(nullptr),
-    new_facet_added(false) 
+Mesher::Mesher() : visualization_mutex(nullptr),
+                   visualization_cv(nullptr),
+                   new_facet_added(false)
 {
     m_octree_vertices = NULL;
     m_iterator_vertices = NULL;
@@ -60,12 +59,11 @@ Mesher::Mesher():
     m_octree_ball_centers_iterator = NULL;
 }
 
-Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
-               OctreeBallCenters* octree_ball_centers, OctreeIteratorBallCenters* octree_ball_centers_iterator)
-               :
-    visualization_mutex(nullptr),
-    visualization_cv(nullptr),
-    new_facet_added(false) 
+Mesher::Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator,
+               OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator)
+    : visualization_mutex(nullptr),
+      visualization_cv(nullptr),
+      new_facet_added(false)
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
@@ -90,9 +88,9 @@ Mesher::~Mesher()
     m_border_edges.clear();
 
     Facet_star_list::iterator fi;
-    for(fi = m_facets.begin(); fi != m_facets.end(); ++fi)
+    for (fi = m_facets.begin(); fi != m_facets.end(); ++fi)
     {
-        //delete *fi;
+        // delete *fi;
         removeFacet(*fi);
         *fi = NULL;
     }
@@ -100,15 +98,13 @@ Mesher::~Mesher()
 
     m_vertices.clear();
     m_nfacets = 0;
-    m_vertice_idx = 0; 
+    m_vertice_idx = 0;
 }
-
-
 
 void Mesher::setBallRadius(double r)
 {
     m_ball_radius = r;
-    m_sq_ball_radius = r*r;
+    m_sq_ball_radius = r * r;
 }
 
 double Mesher::getBallRadius() const
@@ -126,7 +122,6 @@ unsigned int Mesher::nVertices() const
     return static_cast<unsigned int>(m_vertices.size());
 }
 
-
 unsigned int Mesher::nFacets() const
 {
     return m_nfacets;
@@ -134,33 +129,32 @@ unsigned int Mesher::nFacets() const
 
 unsigned int Mesher::nFrontEdges() const
 {
-    return (unsigned int) m_edge_front.size();
+    return (unsigned int)m_edge_front.size();
 }
 
 unsigned int Mesher::nBorderEdges() const
 {
-    return (unsigned int) m_border_edges.size();
+    return (unsigned int)m_border_edges.size();
 }
 
-//unsigned int Mesher::getNumBallCenters() const
+// unsigned int Mesher::getNumBallCenters() const
 //{
-//    return m_num_ball_centers;
-//}
-
+//     return m_num_ball_centers;
+// }
 
 void Mesher::reconstruct()
 {
-    std::cout<<"***********Ball radius "<<m_ball_radius
-             <<" ***********"<<std::endl;
+    std::cout << "***********Ball radius " << m_ball_radius
+              << " ***********" << std::endl;
 
-    if(m_edge_front.empty())
+    if (m_edge_front.empty())
     {
-        std::cout<<"No front edge found, looking for seed triangle."
-                 <<std::endl;
+        std::cout << "No front edge found, looking for seed triangle."
+                  << std::endl;
         bool ok = findSeedTriangle();
-        if(!ok)
-            std::cout<<"No seed triangle found, no triangulation done!"
-            <<std::endl;
+        if (!ok)
+            std::cout << "No seed triangle found, no triangulation done!"
+                      << std::endl;
     }
     else
     {
@@ -170,8 +164,7 @@ void Mesher::reconstruct()
     }
 }
 
-
-void Mesher::reconstruct(const std::list<double>& radii)
+void Mesher::reconstruct(const std::list<double> &radii)
 {
     std::cout << "single threaded reconstruction" << std::endl;
     for (double radius : radii)
@@ -181,19 +174,18 @@ void Mesher::reconstruct(const std::list<double>& radii)
     }
 }
 
-
 void Mesher::changeRadius(double radius)
 {
     setBallRadius(radius);
     Edge_star_list::iterator ei = m_border_edges.begin();
-    while(ei != m_border_edges.end())
+    while (ei != m_border_edges.end())
     {
         Edge *e = *ei;
         Facet *f = e->getFacet1();
 
         Point center;
-        if(emptyBallConfiguration(f->vertex(0), f->vertex(1),
-            f->vertex(2),center))
+        if (emptyBallConfiguration(f->vertex(0), f->vertex(1),
+                                   f->vertex(2), center))
         {
             e->setType(Edge::FRONT);
             m_edge_front.push_back(e);
@@ -202,18 +194,16 @@ void Mesher::changeRadius(double radius)
         }
         ++ei;
     }
-    std::cout<<"After changing radius, "<<m_edge_front.size()
-             <<" front edges and "<<m_border_edges.size()
-             <<" border edges."<<std::endl;
+    std::cout << "After changing radius, " << m_edge_front.size()
+              << " front edges and " << m_border_edges.size()
+              << " border edges." << std::endl;
 }
-
 
 void Mesher::resetOctree(OctreeVertices *octree, OctreeIteratorVertices *iterator)
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
 }
-
 
 bool Mesher::findSeedTriangle()
 {
@@ -223,28 +213,28 @@ bool Mesher::findSeedTriangle()
     return found;
 }
 
-void Mesher::findSeedTriangle(OctreeNodeV* node, bool &found)
+void Mesher::findSeedTriangle(OctreeNodeV *node, bool &found)
 {
-    if( node->getDepth() != 0)
+    if (node->getDepth() != 0)
     {
-        for(unsigned int i = 0; i<8; i++)
+        for (unsigned int i = 0; i < 8; i++)
         {
-            if(node->getChild(i) != NULL)
+            if (node->getChild(i) != NULL)
                 findSeedTriangle(node->getChild(i), found);
         }
     }
-    else if( node->getNpts() != 0)
+    else if (node->getNpts() != 0)
     {
-        //Vertex_list::iterator pi = node->points_begin();
+        // Vertex_list::iterator pi = node->points_begin();
         typename Vertex_UnOrdSet::const_iterator pi = node->points_begin();
-        while( pi != node->points_end())
+        while (pi != node->points_end())
         {
             // current approach is find seed and expand
             // then find a seed again and expand.
-            Vertex* v = *pi;
-            if(v->getType() == Vertex::ORPHAN) //0
+            Vertex *v = *pi;
+            if (v->getType() == Vertex::ORPHAN) // 0
             {
-                if(trySeed(*v))
+                if (trySeed(*v))
                 {
                     found = true;
                     expandTriangulation();
@@ -255,9 +245,7 @@ void Mesher::findSeedTriangle(OctreeNodeV* node, bool &found)
     }
 }
 
-
-
-bool Mesher::trySeed(Vertex& v)
+bool Mesher::trySeed(Vertex &v)
 {
     // First, get the neighbors of the current vertex v.
     // ni are the next vertices in the sorted neighbor list
@@ -269,14 +257,14 @@ bool Mesher::trySeed(Vertex& v)
     m_iterator_vertices->getSortedNeighbors(v, neighbors);
     m_iterator_vertices->setR(m_ball_radius);
 
-    if(neighbors.size()<3)
+    if (neighbors.size() < 3)
         return false;
 
     Neighbor_iterator ni = neighbors.begin();
-    while(ni != neighbors.end())
+    while (ni != neighbors.end())
     {
-        Vertex &vtest = *(ni->second); // The "second" is the vertex pointer stored in the neighbor star map
-        if( (vtest.getType() != Vertex::ORPHAN) || (&vtest == &v) ) //0
+        Vertex &vtest = *(ni->second);                             // The "second" is the vertex pointer stored in the neighbor star map
+        if ((vtest.getType() != Vertex::ORPHAN) || (&vtest == &v)) // 0
         {
             ++ni;
             continue;
@@ -287,11 +275,11 @@ bool Mesher::trySeed(Vertex& v)
 
         Vertex *candidate = NULL;
         Point center;
-        
+
         bool changeHandness = false;
-        while(nj != neighbors.end())
+        while (nj != neighbors.end())
         {
-            if(tryTriangleSeed(&v, &vtest, nj->second, neighbors, center, changeHandness))
+            if (tryTriangleSeed(&v, &vtest, nj->second, neighbors, center, changeHandness))
             {
                 candidate = nj->second;
                 break;
@@ -299,7 +287,7 @@ bool Mesher::trySeed(Vertex& v)
             ++nj;
         }
 
-        if(candidate != NULL)
+        if (candidate != NULL)
         {
             // <<<
             // To check any of the edges are not a front edge, we can use the getLinkingEdge method
@@ -307,9 +295,7 @@ bool Mesher::trySeed(Vertex& v)
             Edge *e2 = vtest.getLinkingEdge(candidate);
             Edge *e3 = v.getLinkingEdge(&vtest);
 
-            if( ((e1!=NULL)&&(e1->getType()!=Edge::FRONT))
-                ||((e2!=NULL)&&(e2->getType()!=Edge::FRONT))
-                ||((e3!=NULL)&&(e3->getType()!=Edge::FRONT)) )
+            if (((e1 != NULL) && (e1->getType() != Edge::FRONT)) || ((e2 != NULL) && (e2->getType() != Edge::FRONT)) || ((e3 != NULL) && (e3->getType() != Edge::FRONT)))
             {
                 ++ni;
                 continue;
@@ -319,41 +305,41 @@ bool Mesher::trySeed(Vertex& v)
             Vertex *v0 = &v;
             Vertex *v1 = &vtest;
             Vertex *v2 = candidate;
-            if(changeHandness)
+            if (changeHandness)
             {
-                Vertex* temp = v1;
+                Vertex *temp = v1;
                 v1 = v2;
                 v2 = temp;
-            } 
+            }
             // <<<
             // Now, the seed triangle will take account of the handness.
-            //Facet *facet = new Facet(&v, &vtest, candidate, center);
+            // Facet *facet = new Facet(&v, &vtest, candidate, center);
             Facet *facet = new Facet(v0, v1, v2, center);
             // >>>
             addFacet(facet);
 
-            if(m_nfacets % 10000 == 0)
-            std::cout<<m_nfacets<<" facets. "
-            <<m_edge_front.size()<<" front edges. "
-            <<m_border_edges.size()<<" border edges."<<std::endl;
+            if (m_nfacets % 10000 == 0)
+                std::cout << m_nfacets << " facets. "
+                          << m_edge_front.size() << " front edges. "
+                          << m_border_edges.size() << " border edges." << std::endl;
 
             e1 = v.getLinkingEdge(candidate);
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
 
-            //std::cout << "e1 start vertex: " << e1->getSource()->index() << std::endl;
-            //std::cout << "e2 start vertex: " << e2->getSource()->index() << std::endl;
-            //std::cout << "e3 start vertex: " << e3->getSource()->index() << std::endl; 
-            //std::cout << "================================" << std::endl; 
+            // std::cout << "e1 start vertex: " << e1->getSource()->index() << std::endl;
+            // std::cout << "e2 start vertex: " << e2->getSource()->index() << std::endl;
+            // std::cout << "e3 start vertex: " << e3->getSource()->index() << std::endl;
+            // std::cout << "================================" << std::endl;
 
-            if(e1->getType() == Edge::FRONT)
+            if (e1->getType() == Edge::FRONT)
                 m_edge_front.push_front(e1);
-            if(e2->getType() == Edge::FRONT)
+            if (e2->getType() == Edge::FRONT)
                 m_edge_front.push_front(e2);
-            if(e3->getType() == Edge::FRONT)
+            if (e3->getType() == Edge::FRONT)
                 m_edge_front.push_front(e3);
 
-            if(m_edge_front.size() > 0)
+            if (m_edge_front.size() > 0)
                 return true;
         }
         ++ni;
@@ -361,48 +347,45 @@ bool Mesher::trySeed(Vertex& v)
     return false;
 }
 
-
-bool Mesher::tryTriangleSeed(Vertex* v1, Vertex* v2, Vertex *v3, 
+bool Mesher::tryTriangleSeed(Vertex *v1, Vertex *v2, Vertex *v3,
                              Neighbor_star_map &neighbors,
                              Point &center,
                              bool &changeHandness) const
 {
-    //if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWith(*v1, *v2)))
-    //    return false;
-    if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWithAndHandnessCheck(*v1, *v2, changeHandness)))
+    // if((v3->getType() != Vertex::ORPHAN) || ( !v3->isCompatibleWith(*v1, *v2)))
+    //     return false;
+    if ((v3->getType() != Vertex::ORPHAN) || (!v3->isCompatibleWithAndHandnessCheck(*v1, *v2, changeHandness)))
         return false;
 
     Edge *e1 = v1->getLinkingEdge(v3);
     Edge *e2 = v2->getLinkingEdge(v3);
-    if(  ((e1!=NULL)&&(e1->getType()==Edge::INNER))
-        || ((e2!=NULL)&&(e2->getType()==Edge::INNER)))
+    if (((e1 != NULL) && (e1->getType() == Edge::INNER)) || ((e2 != NULL) && (e2->getType() == Edge::INNER)))
         return false;
 
     m_iterator_vertices->setR(m_ball_radius);
-    if(! computeBallCenter(*v1, *v2, *v3, center))
+    if (!computeBallCenter(*v1, *v2, *v3, center))
         return false;
 
     Neighbor_iterator ni;
-    for(ni = neighbors.begin(); ni != neighbors.end(); ++ni)
+    for (ni = neighbors.begin(); ni != neighbors.end(); ++ni)
     {
         Vertex *v = ni->second;
-        if((v == v1)||(v == v2)||(v == v3))
+        if ((v == v1) || (v == v2) || (v == v3))
             continue;
-        if( dist2(center,*v) < m_sq_ball_radius - 1e-16)
+        if (dist2(center, *v) < m_sq_ball_radius - 1e-16)
             return false;
     }
     return true;
 }
 
-
-bool Mesher::emptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
-                                    Point & center) const
+bool Mesher::emptyBallConfiguration(Vertex *v1, Vertex *v2, Vertex *v3,
+                                    Point &center) const
 {
     m_iterator_vertices->setR(m_ball_radius);
-    if(! computeBallCenter(*v1, *v2, *v3, center))
+    if (!computeBallCenter(*v1, *v2, *v3, center))
         return false;
 
-    std::set<Vertex*> facet_vertices;
+    std::set<Vertex *> facet_vertices;
 
     facet_vertices.insert(v1);
     facet_vertices.insert(v2);
@@ -411,170 +394,164 @@ bool Mesher::emptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
     return m_iterator_vertices->containsOnly(center, facet_vertices);
 }
 
-bool Mesher::checkEmptyBallConfiguration(Vertex* v1, Vertex* v2, Vertex* v3,
+bool Mesher::checkEmptyBallConfiguration(Vertex *v1, Vertex *v2, Vertex *v3,
                                          const Vertex_star_list &neighbors,
-                                         const Point & center) const
+                                         const Point &center) const
 {
-   Vertex_star_list::const_iterator ni;
-   for(ni = neighbors.begin() ; ni != neighbors.end(); ++ni)
-   {
-       const Vertex *v = *ni;
-       if((v == v1)||(v == v2)||(v == v3))
-           continue;
-       if(dist2(*v,center)<m_sq_ball_radius - 1e-16)
-       {
-        //if(v->getType() == Vertex::INNER)//2
-        // print v type
-        //std::cout << "v type: " << v->getType() << std::endl;
-            //std::cout << "v is inner" << std::endl;
-           return false;
-       }
-   }
+    Vertex_star_list::const_iterator ni;
+    for (ni = neighbors.begin(); ni != neighbors.end(); ++ni)
+    {
+        const Vertex *v = *ni;
+        if ((v == v1) || (v == v2) || (v == v3))
+            continue;
+        if (dist2(*v, center) < m_sq_ball_radius - 1e-16)
+        {
+            // if(v->getType() == Vertex::INNER)//2
+            //  print v type
+            // std::cout << "v type: " << v->getType() << std::endl;
+            // std::cout << "v is inner" << std::endl;
+            return false;
+        }
+    }
     return true;
 }
 
 bool Mesher::computeBallCenterUsingOrderOfVertices(const Vertex &v1, const Vertex &v2,
-                               const Vertex &v3, Point &center) const
+                                                   const Vertex &v3, Point &center) const
 {
-    //compute the circumcenter barycentric coordinates
+    // compute the circumcenter barycentric coordinates
     double c = dist2(v2, v1);
     double b = dist2(v1, v3);
     double a = dist2(v3, v2);
-    double alpha = a *( b + c - a);
-    double beta  = b *( a + c - b);
-    double gamma = c *( a + b - c);
+    double alpha = a * (b + c - a);
+    double beta = b * (a + c - b);
+    double gamma = c * (a + b - c);
     double temp = alpha + beta + gamma;
 
-    if(temp<1e-30)//aligned case
-	    return false;
-
+    if (temp < 1e-30) // aligned case
+        return false;
 
     alpha = alpha / temp;
-    beta  =  beta / temp;
+    beta = beta / temp;
     gamma = gamma / temp;
 
-
-    //computing the triangle circumcircle center
+    // computing the triangle circumcircle center
     double x = alpha * v1.x() + beta * v2.x() + gamma * v3.x();
     double y = alpha * v1.y() + beta * v2.y() + gamma * v3.y();
     double z = alpha * v1.z() + beta * v2.z() + gamma * v3.z();
 
-    //computing the radius of the circumcircle
+    // computing the radius of the circumcircle
     double sq_circumradius = a * b * c;
-
 
     a = sqrt(a);
     b = sqrt(b);
     c = sqrt(c);
 
     sq_circumradius = sq_circumradius /
-          ( (a + b + c) * (b + c - a) * (c + a - b) * (a + b - c) );
+                      ((a + b + c) * (b + c - a) * (c + a - b) * (a + b - c));
 
-    //compute the ortogonal distance from the hypothetic center to the triangle
+    // compute the ortogonal distance from the hypothetic center to the triangle
     double height = m_sq_ball_radius - sq_circumradius;
 
-    //compute the normal of the three points
-    double nx,ny,nz = 0;
+    // compute the normal of the three points
+    double nx, ny, nz = 0;
 
-    if(height >= 0.0)
+    if (height >= 0.0)
     {
         computeNormal(v1, v2, v3, nx, ny, nz);
         height = sqrt(height);
-        center = Point( x + height*nx, y + height*ny, z + height*nz);
+        center = Point(x + height * nx, y + height * ny, z + height * nz);
         return true;
     }
-    return false; 
+    return false;
 }
 
 bool Mesher::computeBallCenter(const Vertex &v1, const Vertex &v2,
                                const Vertex &v3, Point &center) const
 {
-    //compute the circumcenter barycentric coordinates
+    // compute the circumcenter barycentric coordinates
     double c = dist2(v2, v1);
     double b = dist2(v1, v3);
     double a = dist2(v3, v2);
-    double alpha = a *( b + c - a);
-    double beta  = b *( a + c - b);
-    double gamma = c *( a + b - c);
+    double alpha = a * (b + c - a);
+    double beta = b * (a + c - b);
+    double gamma = c * (a + b - c);
     double temp = alpha + beta + gamma;
 
-    if(temp<1e-30)//aligned case
-	    return false;
-
+    if (temp < 1e-30) // aligned case
+        return false;
 
     alpha = alpha / temp;
-    beta  =  beta / temp;
+    beta = beta / temp;
     gamma = gamma / temp;
 
-
-    //computing the triangle circumcircle center
+    // computing the triangle circumcircle center
     double x = alpha * v1.x() + beta * v2.x() + gamma * v3.x();
     double y = alpha * v1.y() + beta * v2.y() + gamma * v3.y();
     double z = alpha * v1.z() + beta * v2.z() + gamma * v3.z();
 
-    //computing the radius of the circumcircle
+    // computing the radius of the circumcircle
     double sq_circumradius = a * b * c;
-
 
     a = sqrt(a);
     b = sqrt(b);
     c = sqrt(c);
 
     sq_circumradius = sq_circumradius /
-          ( (a + b + c) * (b + c - a) * (c + a - b) * (a + b - c) );
+                      ((a + b + c) * (b + c - a) * (c + a - b) * (a + b - c));
 
-    //compute the ortogonal distance from the hypothetic center to the triangle
+    // compute the ortogonal distance from the hypothetic center to the triangle
     double height = m_sq_ball_radius - sq_circumradius;
 
-    //compute the normal of the three points
-    double nx,ny,nz = 0;
+    // compute the normal of the three points
+    double nx, ny, nz = 0;
 
-    if(height >= 0.0)
+    if (height >= 0.0)
     {
         computeNormal(v1, v2, v3, nx, ny, nz);
         height = sqrt(height);
-        center = Point( x + height*nx, y + height*ny, z + height*nz);
+        center = Point(x + height * nx, y + height * ny, z + height * nz);
         return true;
     }
     return false;
 }
 
 // This function still use the normal of the input vertices.
-void Mesher::computeNormal(const Vertex& v1, const Vertex& v2, const Vertex& v3,
+void Mesher::computeNormal(const Vertex &v1, const Vertex &v2, const Vertex &v3,
                            double &nx, double &ny, double &nz) const
 {
-    cross_product( v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
-		   v3.x() - v1.x(), v3.y() - v1.y(), v3.z() - v1.z(),
-		   nx, ny, nz);
-    normalize(nx,ny,nz);
+    cross_product(v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
+                  v3.x() - v1.x(), v3.y() - v1.y(), v3.z() - v1.z(),
+                  nx, ny, nz);
+    normalize(nx, ny, nz);
 
     double mnx = v1.nx() + v2.nx() + v3.nx();
     double mny = v1.ny() + v2.ny() + v3.ny();
     double mnz = v1.nz() + v2.nz() + v3.nz();
 
-    normalize(mnx,mny,mnz);
+    normalize(mnx, mny, mnz);
 
-    if(nx*mnx + ny*mny + nz*mnz <0)
+    if (nx * mnx + ny * mny + nz * mnz < 0)
     {
-      nx = -nx;
-      ny = -ny;
-      nz = -nz;
+        nx = -nx;
+        ny = -ny;
+        nz = -nz;
     }
 }
 
-void Mesher::computeNormalUsingOrderOfVertices(const Vertex& v1, const Vertex& v2, const Vertex& v3,
-                           double &nx, double &ny, double &nz) const
+void Mesher::computeNormalUsingOrderOfVertices(const Vertex &v1, const Vertex &v2, const Vertex &v3,
+                                               double &nx, double &ny, double &nz) const
 {
-    cross_product( v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
-		   v3.x() - v1.x(), v3.y() - v1.y(), v3.z() - v1.z(),
-		   nx, ny, nz);
-    normalize(nx,ny,nz);
+    cross_product(v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
+                  v3.x() - v1.x(), v3.y() - v1.y(), v3.z() - v1.z(),
+                  nx, ny, nz);
+    normalize(nx, ny, nz);
 }
 
 ReconstructionType Mesher::computeReconstructionType(
-                                                    const Edge* eSource, 
-                                                    const Edge* eTarget,
-                                                    const Vertex* candidate) const
+    const Edge *eSource,
+    const Edge *eTarget,
+    const Vertex *candidate) const
 {
     // We can already assume the candidate is not INNER vertex.
     bool doesESourceExist = eSource != NULL;
@@ -596,7 +573,7 @@ ReconstructionType Mesher::computeReconstructionType(
     // If e1 or e2 is not a front edge, then no reconstruction is needed.
     bool isESourceNotFront = doesESourceExist && (eSource->getType() != Edge::FRONT);
     bool isETargetNotFront = doesETargetExist && (eTarget->getType() != Edge::FRONT);
-    
+
     if (isESourceNotFront || isETargetNotFront)
     {
         return ReconstructionType::NO_RECONSTRUCTION;
@@ -619,21 +596,21 @@ ReconstructionType Mesher::computeReconstructionType(
     }
 
     // If none of the above conditions are met, there are something wrong with the code.
-    throw std::runtime_error("Unknown reconstruction type in computeReconstructionType");    
+    throw std::runtime_error("Unknown reconstruction type in computeReconstructionType");
 }
 
 static bool isGoodOrentationWithSource(Edge *sideFrontEdge, Vertex *Source, Vertex *candidate)
 {
     Facet *facet = sideFrontEdge->getFacet1(); // Since it is sideFrontEdge, there should only one facet.
     bool isGoodOrentation = false;
-    
+
     // We expect the facet go from candidate to source
     // such that the twin we are creating will go from source to candidate.
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
     {
         Vertex *v0 = facet->vertex(i);
-        Vertex *v1 = facet->vertex((i+1)%3);
-        if(v0 == candidate && v1 == Source)
+        Vertex *v1 = facet->vertex((i + 1) % 3);
+        if (v0 == candidate && v1 == Source)
         {
             isGoodOrentation = true;
             break;
@@ -646,14 +623,14 @@ static bool isGoodOrentationWithTarget(Edge *sideFrontEdge, Vertex *Target, Vert
 {
     Facet *facet = sideFrontEdge->getFacet1(); // Since it is sideFrontEdge, there should only one facet.
     bool isGoodOrentation = false;
-    
+
     // We expect the facet go from target to candidate
     // such that the twin we are creating will go from candidate to target.
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
     {
         Vertex *v0 = facet->vertex(i);
-        Vertex *v1 = facet->vertex((i+1)%3);
-        if(v0 == Target && v1 == candidate)
+        Vertex *v1 = facet->vertex((i + 1) % 3);
+        if (v0 == Target && v1 == candidate)
         {
             isGoodOrentation = true;
             break;
@@ -662,23 +639,21 @@ static bool isGoodOrentationWithTarget(Edge *sideFrontEdge, Vertex *Target, Vert
     return isGoodOrentation;
 }
 
-
 void Mesher::expandTriangulation()
 {
-    while(! m_edge_front.empty() )
+    while (!m_edge_front.empty())
     {
         Edge *edge = m_edge_front.front();
         m_edge_front.pop_front();
 
-
-        if(edge->getType() != Edge::FRONT)
+        if (edge->getType() != Edge::FRONT)
             continue;
 
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);
 
-        if((candidate == NULL) || (candidate->getType()==Vertex::INNER) //2
-            ||(! candidate->isCompatibleWith(*edge)))
+        if ((candidate == NULL) || (candidate->getType() == Vertex::INNER) // 2
+            || (!candidate->isCompatibleWith(*edge)))
         {
             // If the candidate is type 2, which means it is an inner vertex.
             // In this case, we set the type of edge as BORDER.
@@ -693,18 +668,17 @@ void Mesher::expandTriangulation()
 
         ReconstructionType reconstructionType = computeReconstructionType(eSource, eTarget, candidate);
 
-        if(reconstructionType == ReconstructionType::NO_RECONSTRUCTION)
+        if (reconstructionType == ReconstructionType::NO_RECONSTRUCTION)
         {
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
 
-
         // <<< One more condition with good orentation.
-        if(reconstructionType == ReconstructionType::EAR_FILLING_FrontEdge_SOURCE)
+        if (reconstructionType == ReconstructionType::EAR_FILLING_FrontEdge_SOURCE)
         {
-            if(!isGoodOrentationWithSource(eSource, edge->getSource(), candidate))
+            if (!isGoodOrentationWithSource(eSource, edge->getSource(), candidate))
             {
                 std::cout << "Edge is not good orentation with source" << std::endl;
                 edge->setType(Edge::BORDER);
@@ -712,9 +686,9 @@ void Mesher::expandTriangulation()
                 continue;
             }
         }
-        if(reconstructionType == ReconstructionType::EAR_FILLING_FrontEdge_TARGET)
+        if (reconstructionType == ReconstructionType::EAR_FILLING_FrontEdge_TARGET)
         {
-            if(!isGoodOrentationWithTarget(eTarget, edge->getTarget(), candidate))
+            if (!isGoodOrentationWithTarget(eTarget, edge->getTarget(), candidate))
             {
                 std::cout << "Edge is not good orentation with target" << std::endl;
                 edge->setType(Edge::BORDER);
@@ -723,28 +697,27 @@ void Mesher::expandTriangulation()
             }
         }
         // >>>
-        
 
-        Facet * facet = new Facet(edge, candidate, center);
+        Facet *facet = new Facet(edge, candidate, center);
         addFacet(facet);
 
         Edge *e1 = candidate->getLinkingEdge(edge->getSource());
         Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if(e1->getType() == Edge::FRONT)
+        if (e1->getType() == Edge::FRONT)
             m_edge_front.push_front(e1);
 
-        if(e2->getType() == Edge::FRONT)
+        if (e2->getType() == Edge::FRONT)
             m_edge_front.push_front(e2);
 
-        //if(m_nfacets % 10000 == 0)
-        //    std::cout<<m_vertice_idx<<" vertices. "<<m_nfacets<<" facets. "
-        //    <<m_edge_front.size()<<" front edges. "
-        //    <<m_border_edges.size()<<" border edges."<<std::endl;
+        // if(m_nfacets % 10000 == 0)
+        //     std::cout<<m_vertice_idx<<" vertices. "<<m_nfacets<<" facets. "
+        //     <<m_edge_front.size()<<" front edges. "
+        //     <<m_border_edges.size()<<" border edges."<<std::endl;
     }
 }
 
-Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
+Vertex *Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 {
     Vertex *src = edge->getSource();
     Vertex *tgt = edge->getTarget();
@@ -752,63 +725,62 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
     Point mp = midpoint(*src, *tgt);
     Vertex_star_list neighbors;
 
-    double d = m_ball_radius + sqrt( m_sq_ball_radius - dist2(mp, *src) );
+    double d = m_ball_radius + sqrt(m_sq_ball_radius - dist2(mp, *src));
     m_iterator_vertices->setR(d);
-    m_iterator_vertices->getNeighbors(mp,neighbors);
+    m_iterator_vertices->getNeighbors(mp, neighbors);
     m_iterator_vertices->setR(m_ball_radius);
 
     Facet *facet = edge->getFacet1(); // Get the first facet.
     const Point &center = facet->getBallCenter();
 
     // <<< opp is used later to avoid adding the same vertex twice.
-    Vertex * opp = edge->getOppositeVertex();
+    Vertex *opp = edge->getOppositeVertex();
     // >>>
 
-    double vx,vy,vz;
-    vx = tgt->x()-src->x();
-    vy = tgt->y()-src->y();
-    vz = tgt->z()-src->z();
+    double vx, vy, vz;
+    vx = tgt->x() - src->x();
+    vy = tgt->y() - src->y();
+    vz = tgt->z() - src->z();
 
-    normalize(vx,vy,vz);
+    normalize(vx, vy, vz);
 
     // <<< ax, ay, az will be used to determine the angle between two vectors.
-    double ax,ay,az;
+    double ax, ay, az;
     ax = center.x() - mp.x();
     ay = center.y() - mp.y();
     az = center.z() - mp.z();
-    normalize(ax,ay,az);
+    normalize(ax, ay, az);
     // >>>
 
     Vertex *candidate = NULL;
     double min_angle = 2.0 * PI;
 
-    for(Vertex_star_list::const_iterator vi = neighbors.begin();
-        vi != neighbors.end(); ++vi)
+    for (Vertex_star_list::const_iterator vi = neighbors.begin();
+         vi != neighbors.end(); ++vi)
     {
         Vertex *v = *vi;
 
-        //if(v->getType() == Vertex::INNER) //2
-        //    continue;
-        // Type 2 is an inner vertex. In this function, we do not consider it
-        // but it does matter since "findCandidateVertex" will check if the
-        // candidate is type 2. If it is, it will set the edge type to 0, which is a border edge.
+        // if(v->getType() == Vertex::INNER) //2
+        //     continue;
+        //  Type 2 is an inner vertex. In this function, we do not consider it
+        //  but it does matter since "findCandidateVertex" will check if the
+        //  candidate is type 2. If it is, it will set the edge type to 0, which is a border edge.
 
         // <<< Avoid adding the same vertex twice.
-        if(( v == src)||(v == tgt)||(v == opp))
-          continue;
+        if ((v == src) || (v == tgt) || (v == opp))
+            continue;
         // >>>
 
-
         Point new_center;
-        if(! computeBallCenter(*src, *tgt, *v, new_center))
-          continue;
+        if (!computeBallCenter(*src, *tgt, *v, new_center))
+            continue;
 
         // <<< angle computation
-        double bx,by,bz;
+        double bx, by, bz;
         bx = new_center.x() - mp.x();
         by = new_center.y() - mp.y();
         bz = new_center.z() - mp.z();
-        normalize(bx,by,bz);
+        normalize(bx, by, bz);
 
         double cosinus = ax * bx + ay * by + az * bz;
 
@@ -817,77 +789,77 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 
         double angle = acos(cosinus);
 
-        double cpx,cpy,cpz;
+        double cpx, cpy, cpz;
         cross_product(ax, ay, az, bx, by, bz, cpx, cpy, cpz);
 
-        if( cpx * vx + cpy * vy + cpz * vz < 0)
-          angle = 2.0 * PI - angle; //This is the angle correction since acos is only in [0,PI]
+        if (cpx * vx + cpy * vy + cpz * vz < 0)
+            angle = 2.0 * PI - angle; // This is the angle correction since acos is only in [0,PI]
         // >>>
 
-        if(angle > min_angle)
-          continue;
+        if (angle > min_angle)
+            continue;
 
-        if(!checkEmptyBallConfiguration(src, tgt, v, neighbors, new_center))
-	        continue;
+        if (!checkEmptyBallConfiguration(src, tgt, v, neighbors, new_center))
+            continue;
 
         min_angle = angle;
         candidate = v;
         candidate_ball_center = new_center;
     }
-    //print candidate type
-    //if(candidate != NULL && candidate->getType() == 2)
-    //    std::cout << "!!!!!!!!   candidate type: " << candidate->getType() << std::endl;
+    // print candidate type
+    // if(candidate != NULL && candidate->getType() == 2)
+    //     std::cout << "!!!!!!!!   candidate type: " << candidate->getType() << std::endl;
     return candidate;
 }
 
-
-void Mesher::addFacet(Facet* f)
+void Mesher::addFacet(Facet *f)
 {
     if (visualization_mutex && visualization_cv)
     {
         std::unique_lock<std::mutex> lock(*visualization_mutex);
-        addVertex( f->vertex(0) );
-        addVertex( f->vertex(1) );
-        addVertex( f->vertex(2) );
+        addVertex(f->vertex(0));
+        addVertex(f->vertex(1));
+        addVertex(f->vertex(2));
 
         m_facets.push_back(f);
         m_nfacets++;
-        
-        //Update the ball centers octree.
+
+        // Update the ball centers octree.
         Point temp_ball_center = f->getBallCenter();
-        BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
+        BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
         f->setBallCenterPtr(ball_center);
 
         new_facet_added = true;
         visualization_cv->notify_one();
 
         // Add delay if slow visualization is enabled
-        if (m_slow_visualization) {
+        if (m_slow_visualization)
+        {
             // Release mutex before sleep to allow visualization updates
             lock.unlock();
-            //std::cout << "Press enter to continue" << std::endl;
-            //std::cin.get();
+            // std::cout << "Press enter to continue" << std::endl;
+            // std::cin.get();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             lock.lock();
         }
     }
     else
     {
-        addVertex( f->vertex(0) );
-        addVertex( f->vertex(1) );
-        addVertex( f->vertex(2) );
+        addVertex(f->vertex(0));
+        addVertex(f->vertex(1));
+        addVertex(f->vertex(2));
 
         m_facets.push_back(f);
         m_nfacets++;
-        
-        //Update the ball centers octree.
+
+        // Update the ball centers octree.
         Point temp_ball_center = f->getBallCenter();
-        BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
+        BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
         f->setBallCenterPtr(ball_center);
     }
 }
 
-
-void Mesher::addVertex(Vertex* v)
+void Mesher::addVertex(Vertex *v)
 {
     if (v->index() < -1)
     {
@@ -895,7 +867,7 @@ void Mesher::addVertex(Vertex* v)
         std::exit(EXIT_FAILURE);
     }
 
-    if(v->index() != -1)
+    if (v->index() != -1)
         return;
 
     bool is_empty = m_recycle_vertices_idx.empty();
@@ -913,58 +885,56 @@ void Mesher::addVertex(Vertex* v)
         v->setIndex(idx);
         m_vertices.push_back(v);
     }
-
 }
 
-
-std::list< Vertex* >::const_iterator Mesher::vertices_begin() const
+std::list<Vertex *>::const_iterator Mesher::vertices_begin() const
 {
     return m_vertices.begin();
 }
 
-std::list< Vertex* >::const_iterator Mesher::vertices_end() const
+std::list<Vertex *>::const_iterator Mesher::vertices_end() const
 {
     return m_vertices.end();
 }
-std::list< Facet* >::const_iterator Mesher::facets_begin() const
+std::list<Facet *>::const_iterator Mesher::facets_begin() const
 {
     return m_facets.begin();
 }
 
-std::list< Facet* >::const_iterator Mesher::facets_end() const
+std::list<Facet *>::const_iterator Mesher::facets_end() const
 {
     return m_facets.end();
 }
 
 void Mesher::fillHoles()
 {
-    Edge_star_iterator ei= m_border_edges.begin();
-    while(ei != m_border_edges.end())
+    Edge_star_iterator ei = m_border_edges.begin();
+    while (ei != m_border_edges.end())
     {
-        //during the filling process border edges become inner edges
-        //hence the following check
-        if((*ei)->getType() != Edge::BORDER)
+        // during the filling process border edges become inner edges
+        // hence the following check
+        if ((*ei)->getType() != Edge::BORDER)
         {
-	        ei = m_border_edges.erase(ei);
-	        continue;
+            ei = m_border_edges.erase(ei);
+            continue;
         }
         Vertex *src = (*ei)->getSource();
         Vertex *tgt = (*ei)->getTarget();
 
         Vertex *v = src->findBorder(tgt);
 
-        //if no oriented border links tgt to src (order is important since
-        //edges of the front are oriented consistently all over the front)
-        if(v == NULL)
+        // if no oriented border links tgt to src (order is important since
+        // edges of the front are oriented consistently all over the front)
+        if (v == NULL)
         {
-	        ++ei;
-	        continue;
+            ++ei;
+            continue;
         }
-        
+
         // computer ball center using order of vertices
         Point center;
         computeBallCenterUsingOrderOfVertices(*tgt, *src, *v, center);
-        
+
         // The new facet should be from target to source to mimic the half-edge data structure.
         Facet *f = new Facet(tgt, src, v, center);
         addFacet(f);
@@ -972,40 +942,38 @@ void Mesher::fillHoles()
     }
 }
 
-
-
-void Mesher::findSeedTriangle(OctreeNodeV* containment_node, OctreeNodeV* node,
-                                double d, bool& found)
+void Mesher::findSeedTriangle(OctreeNodeV *containment_node, OctreeNodeV *node,
+                              double d, bool &found)
 {
-    if( node->getDepth() != 0)
+    if (node->getDepth() != 0)
     {
-        for(unsigned int i = 0; i<8; i++)
+        for (unsigned int i = 0; i < 8; i++)
         {
-            if(node->getChild(i) != NULL)
+            if (node->getChild(i) != NULL)
                 findSeedTriangle(containment_node, node->getChild(i), d, found);
         }
     }
-    else if( node->getNpts() != 0)
+    else if (node->getNpts() != 0)
     {
-        //Vertex_list::iterator pi = node->points_begin();
+        // Vertex_list::iterator pi = node->points_begin();
         Vertex_UnOrdSet::const_iterator pi = node->points_begin();
-        while( pi != node->points_end())
+        while (pi != node->points_end())
         {
-            Vertex* v = *pi;
-            if(v->getType()==Vertex::FRONT) //1
+            Vertex *v = *pi;
+            if (v->getType() == Vertex::FRONT) // 1
             {
                 Edge_set &edges = v->adjacentEdges();
                 Edge_set::iterator ei;
-                for( ei = edges.begin(); ei != edges.end(); ++ei)
-                { // added the parantheses for compiler warning
-                    if((*ei)->getType() == Edge::FRONT) // 1
+                for (ei = edges.begin(); ei != edges.end(); ++ei)
+                {                                        // added the parantheses for compiler warning
+                    if ((*ei)->getType() == Edge::FRONT) // 1
                         m_edge_front.push_front(*ei);
                     expandTriangulationAroundNode(containment_node, d);
                 } // added the parantheses for compiler warning
             }
-            else if(v->getType() ==Vertex::ORPHAN) //0
+            else if (v->getType() == Vertex::ORPHAN) // 0
             {
-                if(trySeed(*v, containment_node, d))
+                if (trySeed(*v, containment_node, d))
                 {
                     found = true;
                     expandTriangulationAroundNode(containment_node, d);
@@ -1017,24 +985,23 @@ void Mesher::findSeedTriangle(OctreeNodeV* containment_node, OctreeNodeV* node,
     }
 }
 
-bool Mesher::trySeed(Vertex& v, OctreeNodeV *containment_node, double d)
+bool Mesher::trySeed(Vertex &v, OctreeNodeV *containment_node, double d)
 {
- 
 
     Neighbor_star_map neighbors;
     m_iterator_vertices->setR(2.0 * m_ball_radius);
     m_iterator_vertices->getSortedNeighbors(v, neighbors);
     m_iterator_vertices->setR(m_ball_radius);
 
-    if(neighbors.size()<3)
+    if (neighbors.size() < 3)
         return false;
 
     Neighbor_iterator ni = neighbors.begin();
-    while(ni != neighbors.end())
+    while (ni != neighbors.end())
     {
         Vertex &vtest = *(ni->second);
-        if( (vtest.getType() != Vertex::ORPHAN) || (&vtest == &v) //0
-            || (! containment_node->isInside(vtest, d)) )
+        if ((vtest.getType() != Vertex::ORPHAN) || (&vtest == &v) // 0
+            || (!containment_node->isInside(vtest, d)))
         {
             ++ni;
             continue;
@@ -1046,9 +1013,9 @@ bool Mesher::trySeed(Vertex& v, OctreeNodeV *containment_node, double d)
         Vertex *candidate = NULL;
         Point center;
         bool changeHandness = false; // just add it now for the program to run. Have to check if it works.
-        while(nj != neighbors.end())
+        while (nj != neighbors.end())
         {
-            if(tryTriangleSeed(&v, &vtest, nj->second, neighbors, center, changeHandness))
+            if (tryTriangleSeed(&v, &vtest, nj->second, neighbors, center, changeHandness))
             {
                 candidate = nj->second;
                 break;
@@ -1058,21 +1025,21 @@ bool Mesher::trySeed(Vertex& v, OctreeNodeV *containment_node, double d)
 
         // TODO: Use info from Handness further.
 
-        if(candidate == NULL)
+        if (candidate == NULL)
         {
             Edge *e = v.getLinkingEdge(&vtest);
-            if((e!=NULL)&&(e->getType()==Edge::FRONT)) //1
+            if ((e != NULL) && (e->getType() == Edge::FRONT)) // 1
                 m_edge_front.push_front(e);
         }
-        else if(containment_node->isInside(*candidate, d))
+        else if (containment_node->isInside(*candidate, d))
         {
             Edge *e1 = v.getLinkingEdge(candidate);
             Edge *e2 = vtest.getLinkingEdge(candidate);
             Edge *e3 = v.getLinkingEdge(&vtest);
 
-            if( ((e1!=NULL)&&(e1->getType()!=Edge::FRONT)) //1
-                ||((e2!=NULL)&&(e2->getType()!=Edge::FRONT)) //1
-                ||((e3!=NULL)&&(e3->getType()!=Edge::FRONT))) //1
+            if (((e1 != NULL) && (e1->getType() != Edge::FRONT))     // 1
+                || ((e2 != NULL) && (e2->getType() != Edge::FRONT))  // 1
+                || ((e3 != NULL) && (e3->getType() != Edge::FRONT))) // 1
             {
                 ++ni;
                 continue;
@@ -1080,55 +1047,53 @@ bool Mesher::trySeed(Vertex& v, OctreeNodeV *containment_node, double d)
 
             Facet *facet = new Facet(&v, &vtest, candidate, center);
             addFacet(facet);
-            
+
             e1 = v.getLinkingEdge(candidate);
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
 
-            if(e1->getType() == Edge::FRONT) //1
+            if (e1->getType() == Edge::FRONT) // 1
                 m_edge_front.push_front(e1);
-            if(e2->getType() == Edge::FRONT) //1
+            if (e2->getType() == Edge::FRONT) // 1
                 m_edge_front.push_front(e2);
-            if(e3->getType() == Edge::FRONT) //1
+            if (e3->getType() == Edge::FRONT) // 1
                 m_edge_front.push_front(e3);
 
-            if(m_edge_front.size() > 0)
+            if (m_edge_front.size() > 0)
                 return true;
         }
         ++ni;
     }
-    if(m_edge_front.size() > 0)
+    if (m_edge_front.size() > 0)
         return true;
     return false;
 }
 
-
-
 void Mesher::reconstructAroundNode(OctreeNodeV *containment_node, double d)
 {
-    if(!m_edge_front.empty())
+    if (!m_edge_front.empty())
         expandTriangulationAroundNode(containment_node, d);
 
     bool found = false;
     findSeedTriangle(containment_node, containment_node, d, found);
 }
 
-void Mesher::expandTriangulationAroundNode(OctreeNodeV* containment_node,
+void Mesher::expandTriangulationAroundNode(OctreeNodeV *containment_node,
                                            double d)
 {
-    while(! m_edge_front.empty() )
+    while (!m_edge_front.empty())
     {
         Edge *edge = m_edge_front.front();
         m_edge_front.pop_front();
 
-        if(edge->getType() != Edge::FRONT)
+        if (edge->getType() != Edge::FRONT)
             continue;
 
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);
 
-        if((candidate == NULL) || (candidate->getType()==Vertex::INNER) //2
-            ||  (! candidate->isCompatibleWith(*edge)))
+        if ((candidate == NULL) || (candidate->getType() == Vertex::INNER) // 2
+            || (!candidate->isCompatibleWith(*edge)))
         {
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
@@ -1138,72 +1103,69 @@ void Mesher::expandTriangulationAroundNode(OctreeNodeV* containment_node,
         Edge *e1 = candidate->getLinkingEdge(edge->getSource());
         Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if( ((e1!=NULL) && (e1->getType()!=Edge::FRONT))
-            || ((e2!=NULL) && (e2->getType()!=Edge::FRONT)))
+        if (((e1 != NULL) && (e1->getType() != Edge::FRONT)) || ((e2 != NULL) && (e2->getType() != Edge::FRONT)))
         {
             edge->setType(Edge::BORDER);
             m_border_edges.push_back(edge);
             continue;
         }
-        //checking that the front remains inside the given node and a small
-        // band around it
-        if(! containment_node->isInside(*candidate, d))
+        // checking that the front remains inside the given node and a small
+        //  band around it
+        if (!containment_node->isInside(*candidate, d))
         {
-            //edge->setType(1);
+            // edge->setType(1);
             edge->setType(Edge::FRONT);
             m_node_border_edges.push_back(edge);
             continue;
         }
 
-        Facet * facet = new Facet(edge, candidate, center);
+        Facet *facet = new Facet(edge, candidate, center);
         addFacet(facet);
 
         e1 = candidate->getLinkingEdge(edge->getSource());
         e2 = candidate->getLinkingEdge(edge->getTarget());
 
-        if(e1->getType() == Edge::FRONT)
+        if (e1->getType() == Edge::FRONT)
             m_edge_front.push_front(e1);
 
-        if(e2->getType() == Edge::FRONT)
+        if (e2->getType() == Edge::FRONT)
             m_edge_front.push_front(e2);
     }
 }
 
-
-void Mesher::collectActiveEdges(OctreeNodeV* containment_node,
+void Mesher::collectActiveEdges(OctreeNodeV *containment_node,
                                 Edge_set &active_edges)
 {
-    if(containment_node->getDepth() != 0)
+    if (containment_node->getDepth() != 0)
     {
-        for(unsigned int i = 0; i <8; ++i)
+        for (unsigned int i = 0; i < 8; ++i)
         {
-            if(containment_node->getChild(i) != NULL)
-                collectActiveEdges(containment_node->getChild(i),active_edges);
+            if (containment_node->getChild(i) != NULL)
+                collectActiveEdges(containment_node->getChild(i), active_edges);
         }
     }
     else
     {
-        //Vertex_list::iterator vi;
+        // Vertex_list::iterator vi;
         Vertex_UnOrdSet::const_iterator vi;
-        for(vi = containment_node->points_begin();
-            vi != containment_node->points_end(); ++vi)
-            {
-                Vertex* v = *vi;
-                if(v->getType() != Vertex::FRONT) //1
-                    continue;
+        for (vi = containment_node->points_begin();
+             vi != containment_node->points_end(); ++vi)
+        {
+            Vertex *v = *vi;
+            if (v->getType() != Vertex::FRONT) // 1
+                continue;
 
-                Edge_set &edges = v->adjacentEdges();
-                Edge_set::iterator ei;
-                for(ei = edges.begin(); ei != edges.end(); ++ei)
-                {
-                    Edge *e= *ei;
-                    if(e->getType() == Edge::FRONT)
-                        active_edges.insert(*ei);
-                }
+            Edge_set &edges = v->adjacentEdges();
+            Edge_set::iterator ei;
+            for (ei = edges.begin(); ei != edges.end(); ++ei)
+            {
+                Edge *e = *ei;
+                if (e->getType() == Edge::FRONT)
+                    active_edges.insert(*ei);
             }
+        }
     }
 }
-
 
 void Mesher::collectBorderEdges(OctreeNodeV *containment_node)
 {
@@ -1213,58 +1175,56 @@ void Mesher::collectBorderEdges(OctreeNodeV *containment_node)
                           border_edges.end());
 }
 
-void Mesher::collectBorderEdges(OctreeNodeV* containment_node,
-                                Edge_set& border_edges)
+void Mesher::collectBorderEdges(OctreeNodeV *containment_node,
+                                Edge_set &border_edges)
 {
-    if(containment_node->getDepth() != 0)
+    if (containment_node->getDepth() != 0)
     {
-        for(unsigned int i = 0; i <8; ++i)
+        for (unsigned int i = 0; i < 8; ++i)
         {
-            if(containment_node->getChild(i) != NULL)
-                collectBorderEdges(containment_node->getChild(i),border_edges);
+            if (containment_node->getChild(i) != NULL)
+                collectBorderEdges(containment_node->getChild(i), border_edges);
         }
     }
     else
     {
-        //Vertex_list::iterator vi;
+        // Vertex_list::iterator vi;
         Vertex_UnOrdSet::const_iterator vi;
-        for(vi = containment_node->points_begin();
-            vi != containment_node->points_end(); ++vi)
-            {
-                Vertex* v = *vi;
-                if(v->getType() != Vertex::FRONT) //1
-                    continue;
+        for (vi = containment_node->points_begin();
+             vi != containment_node->points_end(); ++vi)
+        {
+            Vertex *v = *vi;
+            if (v->getType() != Vertex::FRONT) // 1
+                continue;
 
-                Edge_set &edges = v->adjacentEdges();
-                Edge_set::iterator ei;
-                for(ei = edges.begin(); ei != edges.end(); ++ei)
-                {
-                    Edge *e= *ei;
-                    if(e->getType() == Edge::BORDER)
-                        border_edges.insert(*ei);
-                }
+            Edge_set &edges = v->adjacentEdges();
+            Edge_set::iterator ei;
+            for (ei = edges.begin(); ei != edges.end(); ++ei)
+            {
+                Edge *e = *ei;
+                if (e->getType() == Edge::BORDER)
+                    border_edges.insert(*ei);
             }
+        }
     }
 }
 
-
-
-std::set<Facet*>& Mesher::getBoundaryFacets() const
+std::set<Facet *> &Mesher::getBoundaryFacets() const
 {
-    std::set<Facet*> *boundary_facets = new std::set<Facet*>();
-    //auto boundary_facets = std::make_unique<std::set<Facet*>>(); // Smart pointer to manage the memory, please use #include <memory>
-    for (const auto& edge : m_border_edges)
+    std::set<Facet *> *boundary_facets = new std::set<Facet *>();
+    // auto boundary_facets = std::make_unique<std::set<Facet*>>(); // Smart pointer to manage the memory, please use #include <memory>
+    for (const auto &edge : m_border_edges)
     {
         Vertex *v1 = edge->getSource();
         Vertex *v2 = edge->getTarget();
-        
+
         Facet_set facets_set1 = v1->adjacentFacets();
         Facet_set facets_set2 = v2->adjacentFacets();
-        for (const auto& facet : facets_set1)
+        for (const auto &facet : facets_set1)
         {
             boundary_facets->insert(facet);
         }
-        for (const auto& facet : facets_set2)
+        for (const auto &facet : facets_set2)
         {
             boundary_facets->insert(facet);
         }
@@ -1273,20 +1233,20 @@ std::set<Facet*>& Mesher::getBoundaryFacets() const
     return *boundary_facets;
 }
 
-void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
+void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
 {
-    Vertex_UnOrdSet& points = node->GetPoints();    
+    Vertex_UnOrdSet &points = node->GetPoints();
 
-    std::list<Vertex*> temporary_orphan_vertices;
-    for ( auto iter = points.begin(); iter != points.end(); ++iter)
+    std::list<Vertex *> temporary_orphan_vertices;
+    for (auto iter = points.begin(); iter != points.end(); ++iter)
     {
-        Vertex* v = *iter;
+        Vertex *v = *iter;
         if (v->getType() == Vertex::ORPHAN)
         {
             temporary_orphan_vertices.push_back(v);
         }
-    } 
-    
+    }
+
     for (auto v : temporary_orphan_vertices)
     {
         // Update node
@@ -1303,14 +1263,13 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex>* node)
         }
         // Delete the vertex.
         delete v;
-    } 
-    
+    }
+
     // Clear the temporary list to free the memory.
     temporary_orphan_vertices.clear();
-    
 }
 
-void Mesher::exileVertex(Vertex* vertex)
+void Mesher::exileVertex(Vertex *vertex)
 {
     m_recycle_vertices_idx.insert(vertex->index());
 
@@ -1319,25 +1278,25 @@ void Mesher::exileVertex(Vertex* vertex)
     m_vertices.remove(vertex);
 }
 
-void Mesher::removeFacet(Facet* facet)
+void Mesher::removeFacet(Facet *facet)
 {
-    Vertex* vertex[3];
+    Vertex *vertex[3];
     for (int i = 0; i < 3; ++i)
     {
         vertex[i] = facet->getVertex(i);
     }
-    
-    //Deal with the edges first.
-    for(int i = 0; i < 3; ++i)
+
+    // Deal with the edges first.
+    for (int i = 0; i < 3; ++i)
     {
         int source_idx = i;
-        int target_idx = (i+1)%3;
+        int target_idx = (i + 1) % 3;
         Edge *e = vertex[source_idx]->getLinkingEdge(vertex[target_idx]);
-        
+
         bool doesFacet1Exist = (e->getFacet1() != NULL);
         bool doesFacet2Exist = (e->getFacet2() != NULL);
-        
-        if(doesFacet1Exist == true && doesFacet2Exist == true   )
+
+        if (doesFacet1Exist == true && doesFacet2Exist == true)
         {
             // In this case, the edge is shared by two facets.
             e->removeAdjacentFacet(facet);
@@ -1345,13 +1304,13 @@ void Mesher::removeFacet(Facet* facet)
             m_border_edges.push_back(e);
             continue;
         }
-        if(doesFacet1Exist != doesFacet2Exist) 
+        if (doesFacet1Exist != doesFacet2Exist)
         {
             vertex[source_idx]->removeAdjacentEdge(e);
             vertex[target_idx]->removeAdjacentEdge(e);
             m_border_edges.remove(e);
             delete e;
-            e=NULL;
+            e = NULL;
             continue;
         }
         if (doesFacet1Exist == false && doesFacet2Exist == false)
@@ -1363,7 +1322,7 @@ void Mesher::removeFacet(Facet* facet)
 
     // Deal with the vertices.
     // This function does not delete the vertex.
-    for(unsigned int i=0;i<3;++i)
+    for (unsigned int i = 0; i < 3; ++i)
     {
         vertex[i]->removeAdjacentFacet(facet);
         bool vertex_still_has_adjacent_facets = (vertex[i]->adjacentFacets().size() != 0);
@@ -1375,11 +1334,11 @@ void Mesher::removeFacet(Facet* facet)
         {
             exileVertex(vertex[i]);
         }
-    } 
+    }
     delete facet;
 }
 
-void Mesher::removeFacets(std::set<Facet*> &facets)
+void Mesher::removeFacets(std::set<Facet *> &facets)
 {
     for (auto facet : facets)
     {
@@ -1389,7 +1348,7 @@ void Mesher::removeFacets(std::set<Facet*> &facets)
     }
 }
 
-void Mesher::removeFacets(std::unordered_set<Facet*> &facets)
+void Mesher::removeFacets(std::unordered_set<Facet *> &facets)
 {
     for (auto facet : facets)
     {
@@ -1399,57 +1358,56 @@ void Mesher::removeFacets(std::unordered_set<Facet*> &facets)
     }
 }
 
-const std::list<Facet*>& Mesher::getFacets() const
+const std::list<Facet *> &Mesher::getFacets() const
 {
     return m_facets;
 }
-
 
 Edge_star_list Mesher::getBorderEdges() const
 {
     return m_border_edges;
 }
 
-bool sameOrientation(int i, Facet* query_facet)
+bool sameOrientation(int i, Facet *query_facet)
 {
-    
-    Vertex* queryV_Source = query_facet->getVertex(i);
-    Vertex* queryV_Target = query_facet->getVertex(i+1);
-    
-    Edge* e0 = queryV_Source->getLinkingEdge(queryV_Target);
-    Facet* facet_1, *facet_2;
+
+    Vertex *queryV_Source = query_facet->getVertex(i);
+    Vertex *queryV_Target = query_facet->getVertex(i + 1);
+
+    Edge *e0 = queryV_Source->getLinkingEdge(queryV_Target);
+    Facet *facet_1, *facet_2;
     facet_1 = e0->getFacet1();
     facet_2 = e0->getFacet2();
 
-    Facet* adjacent_facet = (facet_1 == query_facet) ? facet_2 : facet_1;
+    Facet *adjacent_facet = (facet_1 == query_facet) ? facet_2 : facet_1;
     if (adjacent_facet == NULL)
     {
         return true;
     }
     else
     {
-       for (int k = 0; k < 3; k++)
-       {
-            Vertex* adjV_source = adjacent_facet->getVertex(k);
-            Vertex* adjV_target = adjacent_facet->getVertex(k+1);
+        for (int k = 0; k < 3; k++)
+        {
+            Vertex *adjV_source = adjacent_facet->getVertex(k);
+            Vertex *adjV_target = adjacent_facet->getVertex(k + 1);
             if (adjV_source == queryV_Target && adjV_target == queryV_Source)
             {
                 return true;
             }
-       }
-        std::cout <<" Adress of query facet: " << query_facet << std::endl;
-        std::cout <<" Adress of queryV_Source: " << queryV_Source << std::endl;
-        std::cout <<" Adress of queryV_Target: " << queryV_Target << std::endl;
-        std::cout <<" Adress of adjacent_facet: " << adjacent_facet << std::endl;
-        std::cout <<" Adress of adjV_1: " << adjacent_facet->getVertex(0) << std::endl;
-        std::cout <<" Adress of adjV_2: " << adjacent_facet->getVertex(1) << std::endl;
-        std::cout <<" Adress of adjV_3: " << adjacent_facet->getVertex(2) << std::endl;
+        }
+        std::cout << " Adress of query facet: " << query_facet << std::endl;
+        std::cout << " Adress of queryV_Source: " << queryV_Source << std::endl;
+        std::cout << " Adress of queryV_Target: " << queryV_Target << std::endl;
+        std::cout << " Adress of adjacent_facet: " << adjacent_facet << std::endl;
+        std::cout << " Adress of adjV_1: " << adjacent_facet->getVertex(0) << std::endl;
+        std::cout << " Adress of adjV_2: " << adjacent_facet->getVertex(1) << std::endl;
+        std::cout << " Adress of adjV_3: " << adjacent_facet->getVertex(2) << std::endl;
 
         std::cerr << "Error: The orientation of the facet is incorrect." << std::endl;
         std::exit(EXIT_FAILURE);
 
-       return false;
-    } 
+        return false;
+    }
 }
 
 void Mesher::SanityCheckOrientation() const
@@ -1468,45 +1426,49 @@ void Mesher::SanityCheckOrientation() const
                 std::exit(EXIT_FAILURE);
             }
         }
-        
     }
 }
 
 void Mesher::print_stats()
 {
     std::cout << ">>>>>>>>" << std::endl;
-    std::cout<<"Reconstructed mesh: "<<this->nVertices()
-             <<" vertices; "<<this->nFacets()<<" facets. ";
-    std::cout<<this->nBorderEdges()<<" border edges"<<std::endl;
+    std::cout << "Reconstructed mesh: " << this->nVertices()
+              << " vertices; " << this->nFacets() << " facets. ";
+    std::cout << this->nBorderEdges() << " border edges" << std::endl;
     std::cout << "<<<<<<<<" << std::endl;
 }
 
-Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
+Facet_set Mesher::computeCollisionFacets(std::list<Vertex> &vertices)
 {
     Facet_set collision_facets;
     m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
-    for (auto& vertex : vertices) {
-        //Check if the vertex is in side the any ball
-        //Point point = Point(vertex.x(), vertex.y(), vertex.z());
-        std::map<double, BallCenter*> neighbors; // neighbor.first is the squared distance
+    for (auto &vertex : vertices)
+    {
+        // Check if the vertex is in side the any ball
+        // Point point = Point(vertex.x(), vertex.y(), vertex.z());
+        std::map<double, BallCenter *> neighbors; // neighbor.first is the squared distance
 
-        //unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
+        // unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         m_octree_ball_centers_iterator->getSortedNeighbors(vertex, neighbors);
 
-        //print the size of neighbors
+        // print the size of neighbors
         if (neighbors.size() == 0)
             continue;
 
         // if any squared distance is less than the squared radius, the vertex is inside a ball
-        for (auto& neighbor : neighbors) {
-            if (neighbor.first < m_sq_ball_radius && neighbor.second != nullptr) {
-                BallCenter* ball_center = neighbor.second;
-                Facet* facet = ball_center->getFacet();
-                if (facet != nullptr) {
+        for (auto &neighbor : neighbors)
+        {
+            if (neighbor.first < m_sq_ball_radius && neighbor.second != nullptr)
+            {
+                BallCenter *ball_center = neighbor.second;
+                Facet *facet = ball_center->getFacet();
+                if (facet != nullptr)
+                {
                     collision_facets.insert(facet);
-                    //std::cout << "Address of facet: " << facet << std::endl;
+                    // std::cout << "Address of facet: " << facet << std::endl;
                 }
-                else {
+                else
+                {
                     std::cerr << "Error: The facet is nullptr" << std::endl;
                     std::exit(EXIT_FAILURE);
                 }
@@ -1518,52 +1480,50 @@ Facet_set Mesher::computeCollisionFacets(std::list<Vertex>& vertices)
 
 void Mesher::clearOrphanVertices()
 {
-    m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex>* node) {
-        this->removeOrphanAndUpdate(node); 
-    });
+    m_iterator_vertices->loopOverAllNodes([this](TOctreeNode<Vertex> *node)
+                                          { this->removeOrphanAndUpdate(node); });
 }
 
-void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh& O3d_mesh)
+void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh &O3d_mesh)
 {
     // Resize the vertices and triangles
-    //O3d_mesh.vertices_.resize(m_vertices.size());
-    //O3d_mesh.triangles_.resize(m_facets.size());
-    
-    //unsigned int i = 0;
-    //for (auto facet : m_facets)
+    // O3d_mesh.vertices_.resize(m_vertices.size());
+    // O3d_mesh.triangles_.resize(m_facets.size());
+
+    // unsigned int i = 0;
+    // for (auto facet : m_facets)
     //{
-    //    unsigned int idx0 = facet->getVertex(0)->index();
-    //    unsigned int idx1 = facet->getVertex(1)->index();
-    //    unsigned int idx2 = facet->getVertex(2)->index();
-    //    O3d_mesh.triangles_[i] = Eigen::Vector3i(idx0, idx1, idx2);
-    //    
-    //    O3d_mesh.vertices_[idx0] = Eigen::Vector3d(facet->getVertex(0)->x(), facet->getVertex(0)->y(), facet->getVertex(0)->z());
-    //    O3d_mesh.vertices_[idx1] = Eigen::Vector3d(facet->getVertex(1)->x(), facet->getVertex(1)->y(), facet->getVertex(1)->z());
-    //    O3d_mesh.vertices_[idx2] = Eigen::Vector3d(facet->getVertex(2)->x(), facet->getVertex(2)->y(), facet->getVertex(2)->z());   
+    //     unsigned int idx0 = facet->getVertex(0)->index();
+    //     unsigned int idx1 = facet->getVertex(1)->index();
+    //     unsigned int idx2 = facet->getVertex(2)->index();
+    //     O3d_mesh.triangles_[i] = Eigen::Vector3i(idx0, idx1, idx2);
+    //
+    //     O3d_mesh.vertices_[idx0] = Eigen::Vector3d(facet->getVertex(0)->x(), facet->getVertex(0)->y(), facet->getVertex(0)->z());
+    //     O3d_mesh.vertices_[idx1] = Eigen::Vector3d(facet->getVertex(1)->x(), facet->getVertex(1)->y(), facet->getVertex(1)->z());
+    //     O3d_mesh.vertices_[idx2] = Eigen::Vector3d(facet->getVertex(2)->x(), facet->getVertex(2)->y(), facet->getVertex(2)->z());
 
     //    i++;
     //}
-    
+
     // Clear existing mesh data
     O3d_mesh.vertices_.clear();
     O3d_mesh.triangles_.clear();
 
     // Create a map of vertices to their new indices
-    std::unordered_map<Vertex*, int> vertex_to_index;  // Changed to int
-    int current_index = 0;  // Changed to int
+    std::unordered_map<Vertex *, int> vertex_to_index; // Changed to int
+    int current_index = 0;                             // Changed to int
 
     // First pass: collect unique vertices and assign new indices
     for (auto facet : m_facets)
     {
         for (int i = 0; i < 3; i++)
         {
-            Vertex* v = facet->getVertex(i);
+            Vertex *v = facet->getVertex(i);
             if (vertex_to_index.find(v) == vertex_to_index.end())
             {
                 vertex_to_index[v] = current_index++;
                 O3d_mesh.vertices_.push_back(
-                    Eigen::Vector3d(v->x(), v->y(), v->z())
-                );
+                    Eigen::Vector3d(v->x(), v->y(), v->z()));
             }
         }
     }
@@ -1575,20 +1535,18 @@ void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh& O3d_mesh)
             Eigen::Vector3i(
                 vertex_to_index[facet->getVertex(0)],
                 vertex_to_index[facet->getVertex(1)],
-                vertex_to_index[facet->getVertex(2)]
-            )
-        );
+                vertex_to_index[facet->getVertex(2)]));
     }
 
-    // Debug output
-    #ifndef _DEBUG
-    //std::cout << "Mesher: Converted " << vertex_to_index.size() 
-    //          << " vertices and " << m_facets.size() 
-    //          << " triangles to Open3D mesh" << std::endl;
-    #endif
+// Debug output
+#ifndef _DEBUG
+// std::cout << "Mesher: Converted " << vertex_to_index.size()
+//           << " vertices and " << m_facets.size()
+//           << " triangles to Open3D mesh" << std::endl;
+#endif
 }
 
-void Mesher::batchReconstruct(std::list<Vertex>& vertices)
+void Mesher::batchReconstruct(std::list<Vertex> &vertices)
 {
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Collection of collision facets
@@ -1620,22 +1578,24 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Further reconstruction
     std::cout << "Further reconstructing" << std::endl;
-    for (Edge* e : m_border_edges) {
+    for (Edge *e : m_border_edges)
+    {
         e->setType(Edge::FRONT);
         m_edge_front.push_back(e);
     }
     m_border_edges.clear();
-     
-    #ifdef _DEBUG
-    if (m_edge_front.size() == 0) {
+
+#ifdef _DEBUG
+    if (m_edge_front.size() == 0)
+    {
         std::cerr << "Error: No front edges found after further reconstruction" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    #endif
+#endif
 
     unsigned int depth = m_octree_vertices->getDepth();
     m_iterator_vertices->setDepth(depth);
-    
+
     this->reconstruct();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -1644,7 +1604,7 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     this->fillHoles();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    {   
+    {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove singular vertices
@@ -1656,51 +1616,58 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     // Clear orphan vertices
     this->clearOrphanVertices();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 }
-
 
 void Mesher::removeSingular()
 {
-    // If edgefront is not empty, return error
-    #ifdef _DEBUG
-    if (m_edge_front.size() != 0) {
+// If edgefront is not empty, return error
+#ifdef _DEBUG
+    if (m_edge_front.size() != 0)
+    {
         std::cerr << "Error: Edgefront is not empty" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    #endif
- 
- 
-    while (true) {
-        std::unordered_map<Vertex*, unsigned int> vertex_counter;
-        for (Edge* e : this->m_border_edges) {
+#endif
+
+    while (true)
+    {
+        std::unordered_map<Vertex *, unsigned int> vertex_counter;
+        for (Edge *e : this->m_border_edges)
+        {
             vertex_counter.insert({e->getSource(), 0});
             vertex_counter.insert({e->getTarget(), 0});
         }
 
-        for (Edge* e : this->m_border_edges) {
+        for (Edge *e : this->m_border_edges)
+        {
             vertex_counter[e->getSource()]++;
             vertex_counter[e->getTarget()]++;
         }
-        
-        std::unordered_set<Vertex*> singular_vertices;
-        for (auto& pair : vertex_counter) {
-            if (pair.second > 2) {
+
+        std::unordered_set<Vertex *> singular_vertices;
+        for (auto &pair : vertex_counter)
+        {
+            if (pair.second > 2)
+            {
                 singular_vertices.insert(pair.first);
             }
         }
-        
-        if (singular_vertices.size() == 0) {
+
+        if (singular_vertices.size() == 0)
+        {
             break;
         }
-        else{
+        else
+        {
             std::cout << "Singular vertices found: " << singular_vertices.size() << std::endl;
         }
 
         // collect the facets that are adjacent to the singular vertices
-        std::unordered_set<Facet*> singular_facets;
-        for (Vertex* v : singular_vertices) {
-            for (Facet* f : v->adjacentFacets()) {
+        std::unordered_set<Facet *> singular_facets;
+        for (Vertex *v : singular_vertices)
+        {
+            for (Facet *f : v->adjacentFacets())
+            {
                 singular_facets.insert(f);
             }
         }
