@@ -865,8 +865,8 @@ void Mesher::addFacet(Facet* f)
         if (m_slow_visualization) {
             // Release mutex before sleep to allow visualization updates
             lock.unlock();
-            std::cout << "Press enter to continue" << std::endl;
-            std::cin.get();
+            //std::cout << "Press enter to continue" << std::endl;
+            //std::cin.get();
             lock.lock();
         }
     }
