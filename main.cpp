@@ -40,6 +40,7 @@
 void visualizationThread(
     Mesher& mesher,
     std::mutex& o3d_mesh_mutex,
+    std::condition_variable& vis_cv,
     std::atomic<bool>& should_exit
 ) {
     // Create a visualizer object
@@ -77,7 +78,7 @@ void visualizationThread(
     visualizer.GetViewControl().SetUp({0, 1, 0});
     visualizer.GetViewControl().SetZoom(0.7);
 
-    bool first_frame = true;
+    //bool first_frame = true;
 
     // add coordinate axes
     auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(5.0);
@@ -90,27 +91,28 @@ void visualizationThread(
             break;
         }
 
+        // Wait for new facet with timeout
         {
-            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-            mesher.renderIntoOpen3D(*o3d_mesh);
-            
-            // Reapply color after mesh update
-            o3d_mesh->vertex_colors_.clear();
-            o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
-            
-            o3d_mesh->ComputeVertexNormals();
-            o3d_mesh->ComputeTriangleNormals();
-            visualizer.UpdateGeometry(o3d_mesh);
+            std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
+            vis_cv.wait_for(lock, 
+                std::chrono::milliseconds(16),  // Short timeout for responsiveness
+                [&mesher]{ return mesher.hasNewFacet(); });
 
-            // Reset view on first frame to ensure mesh is visible
-            if (first_frame && o3d_mesh->vertices_.size() > 0) {
-                visualizer.ResetViewPoint(true);
-                first_frame = false;
+            if (mesher.hasNewFacet()) {
+                mesher.renderIntoOpen3D(*o3d_mesh);
+                o3d_mesh->vertex_colors_.clear();
+                o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
+                o3d_mesh->ComputeVertexNormals();
+                o3d_mesh->ComputeTriangleNormals();
+                visualizer.UpdateGeometry(o3d_mesh);
+                mesher.clearNewFacetFlag();
+
+                // Optional: add small delay to make visualization more visible
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
         
         visualizer.UpdateRender();
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
     visualizer.DestroyVisualizerWindow();
@@ -283,11 +285,14 @@ int main(int argc, char **argv)
     // Create shared data structures and synchronization primitives
     std::mutex o3d_mesh_mutex;
     std::atomic<bool> should_exit(false);
+    std::condition_variable vis_cv;
+    mesher.setVisualizationSync(&o3d_mesh_mutex, &vis_cv);
 
     // Create visualization thread
     std::thread vis_thread(visualizationThread, 
         std::ref(mesher), 
         std::ref(o3d_mesh_mutex), 
+        std::ref(vis_cv),
         std::ref(should_exit)
     );
 
@@ -316,6 +321,15 @@ int main(int argc, char **argv)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Set slow visualization flag when at batch 8
+        if (batch_index == 8) {
+            mesher.setSlowVisualization(true);  // Add this method to Mesher
+        } else {
+            mesher.setSlowVisualization(false);
+        }
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Expand the ballcenters octree
         // std::cout << "Vertices size: " << vertices.size() << std::endl;
         std::cout << "Expanding octree ball centers" << std::endl;
@@ -329,17 +343,17 @@ int main(int argc, char **argv)
         {
             octree_vertices.checkSizeAndexpand(vertex);
         }
-
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        {
-            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-            mesher.batchReconstruct(vertices);
-        }
- 
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Reconstruct the mesh
+        mesher.batchReconstruct(vertices);
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
         mesher.print_stats();
         
-        std::cout << "Press enter to continue" << std::endl;
-        std::cin.get();
+        //std::cout << "Press enter to continue" << std::endl;
+        //std::cin.get();
 
         //FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
         
@@ -358,6 +372,12 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
+
+    // Open3D save ply
+    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    mesher.renderIntoOpen3D(*o3d_mesh);
+    open3d::io::WriteTriangleMeshToPLY("_final.ply", *o3d_mesh, false, false, false, false, false, true);
+    std::cout << "Mesh saved in" << "_final.ply" << std::endl;
 
     return EXIT_SUCCESS;
 }

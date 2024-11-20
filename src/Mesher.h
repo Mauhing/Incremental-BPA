@@ -443,9 +443,29 @@ class Mesher
         void removeSingular();
 
 
+
+    private: // For Open3D rendering
+        bool m_slow_visualization;
+        std::mutex* visualization_mutex;
+        std::condition_variable* visualization_cv;
+        bool new_facet_added;
+
     public: // Open3D rendering
         void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh);
 
+        void setVisualizationSync(std::mutex* mutex, std::condition_variable* cv) {
+            visualization_mutex = mutex;
+            visualization_cv = cv;
+        }
+
+        bool hasNewFacet() const { return new_facet_added; }
+        void clearNewFacetFlag() { new_facet_added = false; }
+        void setSlowVisualization(bool slow) {
+            m_slow_visualization = slow;
+        }
+
+    
+        
 
     public: // Sanity check
         void SanityCheckOrientation() const; 

@@ -46,7 +46,10 @@ const double PI = 3.1415926535;
 
 using namespace std;
 
-Mesher::Mesher()
+Mesher::Mesher():
+    visualization_mutex(nullptr),
+    visualization_cv(nullptr),
+    new_facet_added(false) 
 {
     m_octree_vertices = NULL;
     m_iterator_vertices = NULL;
@@ -59,6 +62,10 @@ Mesher::Mesher()
 
 Mesher::Mesher(OctreeVertices* octree, OctreeIteratorVertices* iterator,
                OctreeBallCenters* octree_ball_centers, OctreeIteratorBallCenters* octree_ball_centers_iterator)
+               :
+    visualization_mutex(nullptr),
+    visualization_cv(nullptr),
+    new_facet_added(false) 
 {
     m_octree_vertices = octree;
     m_iterator_vertices = iterator;
@@ -836,19 +843,47 @@ Vertex* Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 
 void Mesher::addFacet(Facet* f)
 {
-    addVertex( f->vertex(0) );
-    addVertex( f->vertex(1) );
-    addVertex( f->vertex(2) );
+    if (visualization_mutex && visualization_cv)
+    {
+        std::unique_lock<std::mutex> lock(*visualization_mutex);
+        addVertex( f->vertex(0) );
+        addVertex( f->vertex(1) );
+        addVertex( f->vertex(2) );
 
-    m_facets.push_back(f);
-    m_nfacets++;
-    
-    //Update the ball centers octree.
-    Point temp_ball_center = f->getBallCenter();
-    BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
-    f->setBallCenterPtr(ball_center);
+        m_facets.push_back(f);
+        m_nfacets++;
+        
+        //Update the ball centers octree.
+        Point temp_ball_center = f->getBallCenter();
+        BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
+        f->setBallCenterPtr(ball_center);
 
+        new_facet_added = true;
+        visualization_cv->notify_one();
 
+        // Add delay if slow visualization is enabled
+        if (m_slow_visualization) {
+            // Release mutex before sleep to allow visualization updates
+            lock.unlock();
+            std::cout << "Press enter to continue" << std::endl;
+            std::cin.get();
+            lock.lock();
+        }
+    }
+    else
+    {
+        addVertex( f->vertex(0) );
+        addVertex( f->vertex(1) );
+        addVertex( f->vertex(2) );
+
+        m_facets.push_back(f);
+        m_nfacets++;
+        
+        //Update the ball centers octree.
+        Point temp_ball_center = f->getBallCenter();
+        BallCenter* ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
+        f->setBallCenterPtr(ball_center);
+    }
 }
 
 
@@ -1560,10 +1595,13 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Remove the collision facets
-    this->removeFacets(collision_facets); // This function is very wrong
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    {
+        std::lock_guard<std::mutex> lock(*visualization_mutex);
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Remove the collision facets
+        this->removeFacets(collision_facets); // This function is very wrong
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    }
 
     this->print_stats();
 
@@ -1606,10 +1644,13 @@ void Mesher::batchReconstruct(std::list<Vertex>& vertices)
     this->fillHoles();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Remove singular vertices
-    this->removeSingular();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    {   
+        std::lock_guard<std::mutex> lock(*visualization_mutex);
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Remove singular vertices
+        this->removeSingular();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    }
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
