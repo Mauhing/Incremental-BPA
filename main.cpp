@@ -293,10 +293,11 @@ int main(int argc, char **argv)
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
 
     // Open3D save ply
-    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-    mesher.renderIntoOpen3D(*o3d_mesh);
-    open3d::io::WriteTriangleMeshToPLY("_final.ply", *o3d_mesh, false, false, false, false, false, true);
-    std::cout << "Mesh saved in" << "_final.ply" << std::endl;
+    //auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    //mesher.renderIntoOpen3D(*o3d_mesh);
+    //open3d::io::WriteTriangleMeshToPLY("_final.ply", *o3d_mesh, false, false, false, false, false, true);
+    //std::cout << "Mesh saved in" << "_final.ply" << std::endl;
+    
 
     return EXIT_SUCCESS;
 }
