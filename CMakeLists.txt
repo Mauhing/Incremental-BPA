@@ -50,16 +50,13 @@ find_package(Open3D REQUIRED)
 # Print Open3D include directories for debugging
 message(STATUS "Open3D include dirs: ${Open3D_INCLUDE_DIRS}")
 
+
 # Add your source files
+file(GLOB_RECURSE SRC_FILES "src/*.cpp")
+
 add_executable(ballpivoting 
     main.cpp
-    src/Edge.cpp
-    src/Facet.cpp
-    src/FileIO.cpp
-    src/Mesher.cpp
-    src/Point.cpp
-    src/Vertex.cpp
-    src/BallCenter.cpp
+    ${SRC_FILES}
 )
 
 # Add compile definitions for debug mode
@@ -77,7 +74,6 @@ endif()
 # Move this BEFORE add_subdirectory(src)
 target_include_directories(ballpivoting PRIVATE 
     ${Open3D_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/include/open3d
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 

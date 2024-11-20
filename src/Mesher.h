@@ -46,7 +46,7 @@
 #include "Edge.h"
 #include "utilities.h"
 #include "types.h"
-#include <Open3D.h>
+#include <open3d/Open3D.h>
 
 /**
  * @class Mesher
