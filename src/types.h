@@ -57,9 +57,15 @@ typedef std::list<Facet*>::iterator Facet_star_iterator;
 typedef std::map<double, Vertex*> Neighbor_star_map;
 typedef Neighbor_star_map::iterator Neighbor_iterator;
 
-#include "unordered_set"
+#include <unordered_set>
 typedef std::unordered_set<Vertex*> Vertex_UnOrdSet;
 typedef std::unordered_set<Point*> Point_UnOrdSet;
+typedef std::unordered_set<Facet*> Facet_UnOrdSet;
+typedef std::unordered_set<Edge*> Edge_UnOrdSet;
+
+#include <vector>
+typedef std::vector<Edge*> Edge_Ptr_Vec;
+typedef std::vector<Vertex*> Vertex_Ptr_Vec;
 
 #include "Octree.h"
 typedef TOctree<Vertex> OctreeVertices;

@@ -268,7 +268,7 @@ class Mesher
          * @param center center of the facet circumsphere if it exists
          * @return third vertex if any was found, NULL otherwise
          */
-        Vertex* tryTriangleSeed(Vertex *v1,Vertex *v2, Point &center) const;
+        //Vertex* tryTriangleSeed(Vertex *v1,Vertex *v2, Point &center) const;
         
 
         /** @brief test if a facet can be built from three vertices
@@ -440,7 +440,7 @@ class Mesher
         void batchReconstruct(std::list<Vertex>& vertices);
 
     public: // Boundaries computation
-        void removeSingular();
+        void removeFanFanSingular();
 
 
 
@@ -451,7 +451,7 @@ class Mesher
         bool new_facet_added;
 
     public: // Open3D rendering
-        void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh);
+        void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh) const;
 
         void setVisualizationSync(std::mutex* mutex, std::condition_variable* cv) {
             visualization_mutex = mutex;
@@ -464,8 +464,43 @@ class Mesher
             m_slow_visualization = slow;
         }
 
+    public: // Detect and remove Disk-Fan singular Fan
+        void removeDiskFanSingular();
+
+        void clearFreshFacets()
+        {
+            m_fresh_facets.clear();
+        }
     
+    private: // Check non-manifold vertices
+        //std::map<Vertex *, std::list<Facet_set>> getDiskSingularVertexAndItsGroupFacets(Facet *f); 
+
+        struct VertexDiskFanInfo
+        {
+            Vertex *disk_fan_vertex;
+            std::list<Facet_set> disk_facets;
+            std::list<Facet_set> fan_facets;
+
+            VertexDiskFanInfo() : disk_fan_vertex(nullptr) {}
+        };
+
+        VertexDiskFanInfo getDiskFan(Vertex *v) const; 
+ 
+        std::pair<bool, Facet_set> extractConnectedFacets(Vertex *v, const Facet_set &facets) const;
         
+        void removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet);
+
+        Facet_UnOrdSet m_fresh_facets;
+
+        void addFreshFacet(Facet *facet)
+        {
+            m_fresh_facets.insert(facet);
+        }
+
+        void removeFreshFacet(Facet *facet)
+        {
+            m_fresh_facets.erase(facet);
+        }
 
     public: // Sanity check
         void SanityCheckOrientation() const; 

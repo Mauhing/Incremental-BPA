@@ -95,7 +95,7 @@ bool Edge::addAdjacentFacet(Facet* facet)
     if(m_facet1 == NULL)
     {
         m_facet1 = facet;
-        updateOrientation();
+        updateOrientation(); // TODO: check if this is necessary
         setType(EdgeType::FRONT);
         return true;
     }
@@ -120,7 +120,7 @@ bool Edge::removeAdjacentFacet(Facet* facet)
     {
         //m_facet1 = NULL;
         m_facet1 = m_facet2;
-        m_facet2 = NULL;
+        m_facet2 = NULL; // TODO: Do we need to update the orientation?
         setType(EdgeType::FRONT);
         return true;
     }
@@ -209,4 +209,26 @@ Vertex* Edge::getOppositeVertex() const
             return opp;
     }
     return NULL;
+}
+
+Facet* Edge::anotherFacet(Facet *f)
+{
+    if (f == m_facet1)
+        return m_facet2;
+    return m_facet1;
+}
+
+unsigned int Edge::getNumAdjacentFacets() const
+{
+    if (m_facet1 == NULL && m_facet2 == NULL)
+        return 0;
+    if (m_facet1 != NULL && m_facet2 == NULL)
+        return 1;
+    if (m_facet1 != NULL && m_facet2 != NULL)
+        return 2;
+    #ifdef _DEBUG
+    std::cerr << "m_facet2 is not NULL and m_facet1 is NULL" << std::endl;
+    std::cerr << "This is violating the function assumption" << std::endl;
+    std::exit(EXIT_FAILURE);
+    #endif
 }

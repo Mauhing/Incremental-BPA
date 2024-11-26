@@ -141,7 +141,11 @@ class Edge
      */
     //void setType(int type);
     
-    void setType(EdgeType type);
+    void setType(EdgeType type); 
+
+    Facet* anotherFacet(Facet *f);
+
+    unsigned int getNumAdjacentFacets() const;
 };
 
 #endif

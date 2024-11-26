@@ -184,6 +184,21 @@ int main(int argc, char **argv)
     octree_ball_centers_iterator.debug_checkAllNodesPoints();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Remove singular vertices
+    mesher.removeFanFanSingular();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Remove disk singular vertices
+    mesher.removeDiskFanSingular();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Clear fresh facets
+    mesher.clearFreshFacets();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
     mesher.clearOrphanVertices();
@@ -292,12 +307,19 @@ int main(int argc, char **argv)
     }
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
 
-    // Open3D save ply
-    //auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-    //mesher.renderIntoOpen3D(*o3d_mesh);
-    //open3d::io::WriteTriangleMeshToPLY("_final.ply", *o3d_mesh, false, false, false, false, false, true);
-    //std::cout << "Mesh saved in" << "_final.ply" << std::endl;
     
+    // Open3D save ply
+    bool o3d_save_ply = true;
+
+    if (o3d_save_ply) {
+        auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+        mesher.renderIntoOpen3D(*o3d_mesh);
+        open3d::io::WriteTriangleMeshToPLY("new_final.ply", *o3d_mesh, false, false, false, false, false, true);
+        std::cout << "Mesh saved in" << "new_final.ply" << std::endl;
+    }
+    else {
+        std::cout << "O3d ply file not saved" << std::endl;
+    }   
 
     return EXIT_SUCCESS;
 }

@@ -191,3 +191,39 @@ void Facet::clearNewBoundaryEdges() {
 void Facet::setBallCenterPtr(BallCenter* ball_center_ptr) {
     m_ball_center_ptr = ball_center_ptr;
 }
+
+Vertex* Facet::nextVertex(const Vertex *v) const
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (m_vertex[i] == v)
+            return m_vertex[(i + 1) % 3];
+    }
+    #ifdef _DEBUG
+    std::cerr << "Vertex not found in facet" << std::endl;
+    std::exit(EXIT_FAILURE);
+    #endif
+}
+
+Vertex* Facet::previousVertex(const Vertex *v) const
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (m_vertex[i] == v)
+            return m_vertex[(i + 2) % 3];
+    }
+    #ifdef _DEBUG
+    std::cerr << "Vertex not found in facet" << std::endl;
+    std::exit(EXIT_FAILURE);
+    #endif
+}
+
+bool Facet::hasEdge(Edge *e)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (m_vertex[i]->getLinkingEdge(m_vertex[(i + 1) % 3]) == e)
+            return true;
+    }
+    return false;
+}

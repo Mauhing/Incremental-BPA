@@ -44,7 +44,20 @@
 
 const double PI = 3.1415926535;
 
-using namespace std;
+//using namespace std;
+
+
+template <typename K>
+static bool isInSet(const K &element, const std::set<K> &mySet)
+{
+    return mySet.find(element) != mySet.end();
+}
+
+template <typename K>
+static bool isNotInSet(const K &element, const std::set<K> &mySet)
+{
+    return mySet.find(element) == mySet.end();
+}
 
 Mesher::Mesher() : visualization_mutex(nullptr),
                    visualization_cv(nullptr),
@@ -822,6 +835,7 @@ void Mesher::addFacet(Facet *f)
         addVertex(f->vertex(2));
 
         m_facets.push_back(f);
+        addFreshFacet(f);
         m_nfacets++;
 
         // Update the ball centers octree.
@@ -839,7 +853,7 @@ void Mesher::addFacet(Facet *f)
             lock.unlock();
             // std::cout << "Press enter to continue" << std::endl;
             // std::cin.get();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             lock.lock();
         }
     }
@@ -850,6 +864,7 @@ void Mesher::addFacet(Facet *f)
         addVertex(f->vertex(2));
 
         m_facets.push_back(f);
+        addFreshFacet(f);
         m_nfacets++;
 
         // Update the ball centers octree.
@@ -857,6 +872,203 @@ void Mesher::addFacet(Facet *f)
         BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
         f->setBallCenterPtr(ball_center);
     }
+}
+
+std::pair<bool, Facet_set> Mesher::extractConnectedFacets(Vertex *v, const Facet_set &facets) const
+{
+    #ifdef _DEBUG
+    if (v->getType() == Vertex::ORPHAN)
+    {
+        std::cerr << "\033[1;31mThe vertex is type ORPHAN\033[0m" << std::endl;
+        std::cerr << "Vertex: " << v << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
+
+    Facet *f = *(facets.begin());
+
+    // Check if the facet is a disk facet.
+    bool is_disk_facet_set = false;
+    Facet_set connected_facets;
+    Facet *starting_facet = f;
+    connected_facets.insert(starting_facet);
+    
+    // 1. Following orientation
+    Facet *current_facet = starting_facet;
+    while (true)
+    {
+        // The problem is the code in this scope.
+        Vertex *next_v = current_facet->nextVertex(v);        
+        Edge* e = v->getLinkingEdge(next_v); 
+        Facet *next_facet = e->anotherFacet(current_facet); 
+
+        #ifdef _DEBUG
+        if (next_facet != nullptr && isNotInSet(next_facet, facets))
+        {
+            std::cerr << "\033[1;31mError: Neighbor facet is not in the set of facets\033[0m" << std::endl;
+            std::cerr << "Error coming from extractConnectedFacets: Following orientation" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        #endif
+        if (next_facet == nullptr)
+        {
+            // Case: Fan
+            break;
+        }
+        if (next_facet == starting_facet)
+        {
+            // Case: Circle
+            #ifdef _DEBUG
+            if (connected_facets.size() < 3)
+            {
+                std::cerr << "\033[1;31mError: Connected facets size is less than 3\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            #endif
+            is_disk_facet_set = true;
+            break;
+        }
+        connected_facets.insert(next_facet);
+        current_facet = next_facet;
+    }
+    
+    if (is_disk_facet_set)
+    {
+        return std::make_pair(is_disk_facet_set, connected_facets);
+    }
+    
+    // 2. Opposite orientation
+    current_facet = starting_facet;
+    while (true)
+    {
+        // The problem is the code in this scope.
+        Vertex *prev_v = starting_facet->previousVertex(v);        
+        Edge* e = v->getLinkingEdge(prev_v); 
+        Facet *prev_facet = e->anotherFacet(starting_facet); 
+
+        #ifdef _DEBUG
+        if (prev_facet != nullptr && isNotInSet(prev_facet, facets))
+        {
+            std::cerr << "\033[1;31mError: Neighbor facet is not in the set of facets\033[0m" << std::endl;
+            std::cerr << "Error coming from extractConnectedFacets: Opposite orientation" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+
+        #endif
+        if (prev_facet == nullptr)
+        {
+            // Case: Fan
+            break;
+        }
+
+        connected_facets.insert(prev_facet);
+        starting_facet = prev_facet;
+    }
+    return std::make_pair(is_disk_facet_set, connected_facets);
+}
+
+Mesher::VertexDiskFanInfo Mesher::getDiskFan(Vertex *v) const
+{
+    Facet_set neighbor_facets = v->adjacentFacets();
+    VertexDiskFanInfo vertex_disk_fan_info;
+    vertex_disk_fan_info.disk_fan_vertex = v;
+
+    while (!neighbor_facets.empty())
+    {
+        std::pair<bool, Facet_set> result = extractConnectedFacets(v, neighbor_facets);
+        bool is_disk_facet_set = result.first;
+        Facet_set detected_facets = result.second;
+
+        if (is_disk_facet_set == false)
+        {
+            vertex_disk_fan_info.fan_facets.push_back(detected_facets);
+        }
+        else
+        {
+            vertex_disk_fan_info.disk_facets.push_back(detected_facets);
+        }
+
+        for (Facet *f : detected_facets)
+        {
+            neighbor_facets.erase(f);
+        }
+    }
+    return vertex_disk_fan_info;
+}
+
+
+void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
+{
+    // Policy:
+    // No vertex get deleted. Edge with no neighbour facets are deleted.
+    // Edge with neighbour facets are set to border and their vertices are set to FRONT.
+    Vertex *vertex[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        vertex[i] = facet->getVertex(i);
+    }
+
+    // Deal with the edges first.
+    for (int i = 0; i < 3; ++i)
+    {
+        int source_idx = i;
+        int target_idx = (i + 1) % 3;
+        Edge *e = vertex[source_idx]->getLinkingEdge(vertex[target_idx]);
+
+        bool doesFacet1Exist = (e->getFacet1() != NULL);
+        bool doesFacet2Exist = (e->getFacet2() != NULL);
+        
+        bool full_edge = doesFacet1Exist && doesFacet2Exist;
+        bool half_edge = !full_edge;
+
+        if (half_edge)
+        {
+            #ifdef _DEBUG
+            if (!m_edge_front.empty())
+            {
+                std::cerr << "\033[1;31mEdge front is not empty\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            #endif
+            // actually, only one of the contains has the edge.
+            // but we remove it from both since we do not know which one it is.
+            m_border_edges.remove(e); 
+            delete e;
+        }
+        else
+        {
+            // full edge.
+            e->removeAdjacentFacet(facet);
+            e->setType(Edge::BORDER);
+            m_border_edges.push_back(e);
+        } 
+    }
+    
+    // Deal with the vertices.
+    for (Vertex *v : vertex)
+    {
+        if (v == nm_vertex)
+        {
+            continue; 
+        }
+        if (v->adjacentFacets().size() == 1)
+        {
+            // Orphan vertex.
+            //v->setType(Vertex::ORPHAN);
+            exileVertex(v);
+            continue;
+        }
+        if (v->adjacentFacets().size() > 1)
+        {
+            // Inner vertex.
+            v->setType(Vertex::FRONT);
+            continue;
+        }
+    }
+    
+    m_facets.remove(facet);
+    m_nfacets--;
+    delete facet;
 }
 
 void Mesher::addVertex(Vertex *v)
@@ -1256,17 +1468,16 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
         // Remove the vertex from the mesh.
         m_vertices.remove(v);
         // Retrieve the index of the vertex.
+        #ifdef _DEBUG
         if (v->index() != -1)
         {
             std::cerr << "Error:Orphan Vertex index is not -1!" << std::endl;
             std::exit(EXIT_FAILURE);
         }
+        #endif
         // Delete the vertex.
         delete v;
     }
-
-    // Clear the temporary list to free the memory.
-    temporary_orphan_vertices.clear();
 }
 
 void Mesher::exileVertex(Vertex *vertex)
@@ -1313,11 +1524,13 @@ void Mesher::removeFacet(Facet *facet)
             e = NULL;
             continue;
         }
+        #ifdef _DEBUG
         if (doesFacet1Exist == false && doesFacet2Exist == false)
         {
             std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
             std::exit(EXIT_FAILURE);
         }
+        #endif
     }
 
     // Deal with the vertices.
@@ -1354,6 +1567,7 @@ void Mesher::removeFacets(std::unordered_set<Facet *> &facets)
     {
         removeFacet(facet);
         m_facets.remove(facet);
+        m_fresh_facets.erase(facet); // It erase if exists
         m_nfacets--;
     }
 }
@@ -1484,7 +1698,7 @@ void Mesher::clearOrphanVertices()
                                           { this->removeOrphanAndUpdate(node); });
 }
 
-void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh &O3d_mesh)
+void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh &O3d_mesh) const
 {
     // Resize the vertices and triangles
     // O3d_mesh.vertices_.resize(m_vertices.size());
@@ -1585,13 +1799,13 @@ void Mesher::batchReconstruct(std::list<Vertex> &vertices)
     }
     m_border_edges.clear();
 
-#ifdef _DEBUG
-    if (m_edge_front.size() == 0)
-    {
-        std::cerr << "Error: No front edges found after further reconstruction" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-#endif
+    #ifdef _DEBUG
+        if (m_edge_front.size() == 0)
+        {
+            std::cerr << "\033[1;31mError: No front edges found after further reconstruction\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    #endif
 
     unsigned int depth = m_octree_vertices->getDepth();
     m_iterator_vertices->setDepth(depth);
@@ -1608,7 +1822,17 @@ void Mesher::batchReconstruct(std::list<Vertex> &vertices)
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove singular vertices
-        this->removeSingular();
+        this->removeFanFanSingular();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Remove disk singular vertices
+        this->removeDiskFanSingular();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // 
+        this->clearFreshFacets();
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     }
 
@@ -1618,7 +1842,7 @@ void Mesher::batchReconstruct(std::list<Vertex> &vertices)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
-void Mesher::removeSingular()
+void Mesher::removeFanFanSingular()
 {
 // If edgefront is not empty, return error
 #ifdef _DEBUG
@@ -1675,5 +1899,66 @@ void Mesher::removeSingular()
         // remove the singular facets
         this->removeFacets(singular_facets);
     }
-    std::cout << "If you are seeing this, message this means that the function has not finished implementing" << std::endl;
 }
+
+void Mesher::removeDiskFanSingular()
+{
+    // All boundary vertices are relevant
+    std::unordered_set<Vertex *> boundary_vertices;
+    for (Edge *e : m_border_edges) {
+        boundary_vertices.insert(e->getSource());
+        boundary_vertices.insert(e->getTarget());
+    }
+
+    // Find all relevant vertices  
+    std::unordered_map<Vertex *, unsigned int> fresh_vertices_counter;
+    for (Facet *f : m_fresh_facets) {
+        for (int i = 0; i < 3; i++) {
+            if (boundary_vertices.find(f->getVertex(i)) == boundary_vertices.end()) {
+                continue;
+            }
+            // the key does not exist, then insert it with 1
+            if (fresh_vertices_counter.find(f->getVertex(i)) == fresh_vertices_counter.end()) {
+                fresh_vertices_counter[f->getVertex(i)] = 1;
+            }
+            else {
+                fresh_vertices_counter[f->getVertex(i)]++;
+            }
+        }
+    }
+
+    
+
+    // Get all the disk fan vertices
+    std::list<VertexDiskFanInfo> disk_fan_vertices; 
+    for (auto &[v, count] : fresh_vertices_counter) {
+        if (count > 1) { 
+            VertexDiskFanInfo vertex_disk_fan_info = this->getDiskFan(v);
+            disk_fan_vertices.push_back(vertex_disk_fan_info);
+        }
+    }
+
+    // Remove the redundant facets
+    for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices) {
+        Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
+        if (vertex_disk_fan_info.disk_facets.size() == 0) {
+            continue;
+        }
+        if (vertex_disk_fan_info.disk_facets.size() == 1) {
+            for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets) {
+                for (Facet *facet : fan_facets) {
+                    this->removeRedundantDiskFanFacet(nm_vertex, facet);
+                }
+            }
+        }
+
+        #ifdef _DEBUG
+            if (vertex_disk_fan_info.disk_facets.size() >= 2) {
+                std::cerr << "Disk facet set size: " << vertex_disk_fan_info.disk_facets.size() << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        #endif
+    }
+
+}
+

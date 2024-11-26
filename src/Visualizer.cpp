@@ -73,8 +73,6 @@ void Visualizer::visualizationThread(
                 o3d_mesh->ComputeTriangleNormals();
                 visualizer.UpdateGeometry(o3d_mesh);
                 mesher.clearNewFacetFlag();
-
-                // Optional: add small delay to make visualization more visible
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }

@@ -23,13 +23,6 @@
 #include <iostream>
 
 
-//Vertex::Vertex() : Point(), m_nx(0.0), m_ny(0.0), m_nz(0.0)
-//{
-//    //m_nx=m_ny=m_nz=0.0;
-//    m_index = -1;
-//    setType(Vertex::ORPHAN);
-//    m_octreeNodeLeaf = NULL;
-//}
 
 Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
                 : Point(x,y,z), m_nx(nx), m_ny(ny), m_nz(nz)
@@ -48,7 +41,7 @@ Vertex::~Vertex()
     m_index = -1;
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
-    m_type = Vertex::ORPHAN; //0
+    setType(Vertex::ORPHAN); //0
     m_octreeNodeLeaf = NULL;
 
 }
@@ -226,6 +219,11 @@ void Vertex::setType(Vertex::VertexType type)
 
 void Vertex::updateType()
 {
+    /*
+    First, check if the vertex is an orphan.
+    Second, check if the vertex is on the boundary.
+    Third, if not, the vertex is an inner vertex.
+    */
     if(m_adjacentEdges.empty())
     {
         //m_type = 0;

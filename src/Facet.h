@@ -123,7 +123,15 @@ class Facet
 
         static std::set<Edge*> getRecordedNewBoundaryEdges();
 
+    public:
 
+        Vertex* nextVertex(const Vertex *v) const;
+        
+        Vertex* previousVertex(const Vertex *v) const;
+
+        bool hasEdge(Edge *e);        
+
+        
 };
 
 #endif
