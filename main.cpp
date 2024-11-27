@@ -177,6 +177,26 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Create shared data structures and synchronization primitives
+    std::cout << "Main Thread ID: " << std::this_thread::get_id() << std::endl;
+
+    std::mutex o3d_mesh_mutex;
+    std::atomic<bool> should_exit(false);
+    std::condition_variable vis_cv;
+    mesher.setVisualizationSync(&o3d_mesh_mutex, &vis_cv);
+
+    // Create visualization thread
+    std::thread vis_thread(Visualizer::visualizationThread, 
+        std::ref(mesher), 
+        std::ref(o3d_mesh_mutex), 
+        std::ref(vis_cv),
+        std::ref(should_exit)
+    );
+
+    std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Sanity check
     std::cout << "Sanity checking all nodes points" << std::endl;
     std::cout << "Ball centers" << std::endl;
@@ -215,22 +235,7 @@ int main(int argc, char **argv)
     //    return EXIT_FAILURE;
     //}
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Create shared data structures and synchronization primitives
-    std::mutex o3d_mesh_mutex;
-    std::atomic<bool> should_exit(false);
-    std::condition_variable vis_cv;
-    mesher.setVisualizationSync(&o3d_mesh_mutex, &vis_cv);
 
-    // Create visualization thread
-    std::thread vis_thread(Visualizer::visualizationThread, 
-        std::ref(mesher), 
-        std::ref(o3d_mesh_mutex), 
-        std::ref(vis_cv),
-        std::ref(should_exit)
-    );
-
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Sanity check: save border edges
     // #ifdef _DEBUG
@@ -309,7 +314,7 @@ int main(int argc, char **argv)
 
     
     // Open3D save ply
-    bool o3d_save_ply = true;
+    bool o3d_save_ply = false;
 
     if (o3d_save_ply) {
         auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();

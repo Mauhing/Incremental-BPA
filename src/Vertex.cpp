@@ -313,3 +313,8 @@ const Facet_set& Vertex::adjacentFacets() const
     return m_adjacentFacets;
 }
 
+void Vertex::clearAdjacentEdgesAndFacets()
+{
+    m_adjacentEdges.clear();
+    m_adjacentFacets.clear();
+}

@@ -60,20 +60,32 @@ void Visualizer::visualizationThread(
 
         // Wait for new facet with timeout
         {
-            std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
-            vis_cv.wait_for(lock, 
-                std::chrono::milliseconds(16),  // Short timeout for responsiveness
-                [&mesher]{ return mesher.hasNewFacet(); });
+            //std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
+            //vis_cv.wait_for(lock, 
+            //    std::chrono::milliseconds(16),  // Short timeout for responsiveness
+            //    [&mesher]{ return mesher.hasNewFacet(); });
 
-            if (mesher.hasNewFacet()) {
-                mesher.renderIntoOpen3D(*o3d_mesh);
-                o3d_mesh->vertex_colors_.clear();
-                o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
-                o3d_mesh->ComputeVertexNormals();
-                o3d_mesh->ComputeTriangleNormals();
-                visualizer.UpdateGeometry(o3d_mesh);
-                mesher.clearNewFacetFlag();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //if (mesher.hasNewFacet()) {
+            //    mesher.renderIntoOpen3D(*o3d_mesh);
+            //    o3d_mesh->vertex_colors_.clear();
+            //    o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
+            //    o3d_mesh->ComputeVertexNormals();
+            //    o3d_mesh->ComputeTriangleNormals();
+            //    visualizer.UpdateGeometry(o3d_mesh);
+            //    mesher.clearNewFacetFlag();
+            //    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //}
+            std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
+            if (lock.try_lock()) {  // Only proceed if we got the lock
+                if (mesher.hasNewFacet()) {
+                    mesher.renderIntoOpen3D(*o3d_mesh);
+                    o3d_mesh->vertex_colors_.clear();
+                    o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
+                    o3d_mesh->ComputeVertexNormals();
+                    o3d_mesh->ComputeTriangleNormals();
+                    visualizer.UpdateGeometry(o3d_mesh);
+                    mesher.clearNewFacetFlag();
+                }
             }
         }
         

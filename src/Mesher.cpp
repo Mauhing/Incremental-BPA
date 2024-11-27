@@ -178,7 +178,8 @@ void Mesher::reconstruct()
 }
 
 void Mesher::reconstruct(const std::list<double> &radii)
-{
+{ 
+
     std::cout << "single threaded reconstruction" << std::endl;
     for (double radius : radii)
     {
@@ -1049,12 +1050,20 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
     {
         if (v == nm_vertex)
         {
+            v->setType(Vertex::INNER);
             continue; 
         }
         if (v->adjacentFacets().size() == 1)
         {
             // Orphan vertex.
             //v->setType(Vertex::ORPHAN);
+            #ifdef _DEBUG
+            if (v->getType() != Vertex::FRONT)
+            {
+                std::cerr << "\033[1;31mError: Vertex is not front\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            #endif
             exileVertex(v);
             continue;
         }
@@ -1483,10 +1492,12 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
 void Mesher::exileVertex(Vertex *vertex)
 {
     m_recycle_vertices_idx.insert(vertex->index());
+    m_vertices.remove(vertex);
 
+    // clear the vertex
     vertex->setType(Vertex::VertexType::ORPHAN);
     vertex->setIndex(-1);
-    m_vertices.remove(vertex);
+    vertex->clearAdjacentEdgesAndFacets();
 }
 
 void Mesher::removeFacet(Facet *facet)
@@ -1818,23 +1829,21 @@ void Mesher::batchReconstruct(std::list<Vertex> &vertices)
     this->fillHoles();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    {
-        std::lock_guard<std::mutex> lock(*visualization_mutex);
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Remove singular vertices
-        this->removeFanFanSingular();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Remove disk singular vertices
-        this->removeDiskFanSingular();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // 
-        this->clearFreshFacets();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    }
+    
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Remove singular vertices
+    this->removeFanFanSingular();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Remove disk singular vertices
+    this->removeDiskFanSingular();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // 
+    this->clearFreshFacets();
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
@@ -1887,7 +1896,7 @@ void Mesher::removeFanFanSingular()
         }
 
         // collect the facets that are adjacent to the singular vertices
-        std::unordered_set<Facet *> singular_facets;
+        std::set<Facet *> singular_facets;
         for (Vertex *v : singular_vertices)
         {
             for (Facet *f : v->adjacentFacets())
@@ -1897,24 +1906,28 @@ void Mesher::removeFanFanSingular()
         }
 
         // remove the singular facets
-        this->removeFacets(singular_facets);
+        {
+            std::lock_guard<std::mutex> lock(*visualization_mutex);
+            this->removeFacets(singular_facets);
+        }
     }
 }
 
 void Mesher::removeDiskFanSingular()
 {
     // All boundary vertices are relevant
-    std::unordered_set<Vertex *> boundary_vertices;
+    std::set<Vertex *> boundary_vertices;
     for (Edge *e : m_border_edges) {
         boundary_vertices.insert(e->getSource());
         boundary_vertices.insert(e->getTarget());
     }
 
     // Find all relevant vertices  
-    std::unordered_map<Vertex *, unsigned int> fresh_vertices_counter;
+    std::map<Vertex *, unsigned int> fresh_vertices_counter;
     for (Facet *f : m_fresh_facets) {
         for (int i = 0; i < 3; i++) {
             if (boundary_vertices.find(f->getVertex(i)) == boundary_vertices.end()) {
+                // not a boundary vertex, skip
                 continue;
             }
             // the key does not exist, then insert it with 1
@@ -1927,8 +1940,6 @@ void Mesher::removeDiskFanSingular()
         }
     }
 
-    
-
     // Get all the disk fan vertices
     std::list<VertexDiskFanInfo> disk_fan_vertices; 
     for (auto &[v, count] : fresh_vertices_counter) {
@@ -1937,27 +1948,36 @@ void Mesher::removeDiskFanSingular()
             disk_fan_vertices.push_back(vertex_disk_fan_info);
         }
     }
-
-    // Remove the redundant facets
+    
     for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices) {
-        Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
-        if (vertex_disk_fan_info.disk_facets.size() == 0) {
-            continue;
-        }
         if (vertex_disk_fan_info.disk_facets.size() == 1) {
-            for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets) {
-                for (Facet *facet : fan_facets) {
-                    this->removeRedundantDiskFanFacet(nm_vertex, facet);
+            std::cout << "Disk fan vertex: " << vertex_disk_fan_info.disk_fan_vertex->index() << std::endl;
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(*visualization_mutex);
+        // Remove the redundant facets
+        for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices) {
+            Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
+            if (vertex_disk_fan_info.disk_facets.size() == 0) {
+                continue;
+            }
+            if (vertex_disk_fan_info.disk_facets.size() == 1) {
+                for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets) {
+                    for (Facet *facet : fan_facets) {
+                        this->removeRedundantDiskFanFacet(nm_vertex, facet);
+                    }
                 }
             }
-        }
 
-        #ifdef _DEBUG
-            if (vertex_disk_fan_info.disk_facets.size() >= 2) {
-                std::cerr << "Disk facet set size: " << vertex_disk_fan_info.disk_facets.size() << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        #endif
+            #ifdef _DEBUG
+                if (vertex_disk_fan_info.disk_facets.size() >= 2) {
+                    std::cerr << "Disk facet set size: " << vertex_disk_fan_info.disk_facets.size() << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+            #endif
+        }
     }
 
 }

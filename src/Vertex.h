@@ -204,15 +204,7 @@ class Vertex : public Point
     public : // added by mauhing
         const Facet_set& adjacentFacets() const;
 
+        void clearAdjacentEdgesAndFacets();
+
 };
-
-//class MyVertex:public Vertex
-//{
-//    public:
-//        MyVertex(double x, double y, double z, double nx, double ny, double nz);
-//        ~MyVertex();
-//        public:
-//        virtual bool isCompatibleWithAndHandnessCheck(const Vertex &v1, const Vertex &v2, bool &changeHandness) const; 
-//};
-
 #endif

@@ -442,8 +442,6 @@ class Mesher
     public: // Boundaries computation
         void removeFanFanSingular();
 
-
-
     private: // For Open3D rendering
         bool m_slow_visualization;
         std::mutex* visualization_mutex;
