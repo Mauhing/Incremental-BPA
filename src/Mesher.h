@@ -48,6 +48,36 @@
 #include "types.h"
 #include <open3d/Open3D.h>
 
+struct ColorVertex
+{
+    Vertex *vertex;
+    Eigen::Vector3d color;
+    // constructor
+    ColorVertex(Vertex *vertex, const Eigen::Vector3d &color) : vertex(vertex), color(color) {}
+    // copy constructor
+    ColorVertex(const ColorVertex& other) : vertex(other.vertex), color(other.color) {}
+};
+
+struct ColorEdge
+{
+    Edge *edge;
+    Eigen::Vector3d color;
+    // constructor
+    ColorEdge(Edge *edge, const Eigen::Vector3d &color) : edge(edge), color(color) {}
+    // copy constructor
+    ColorEdge(const ColorEdge& other) : edge(other.edge), color(other.color) {}
+};
+
+struct ColorFacet
+{
+    Facet *facet;
+    Eigen::Vector3d color;
+    // constructor
+    ColorFacet(Facet *facet, const Eigen::Vector3d &color) : facet(facet), color(color) {}
+    // copy constructor
+    ColorFacet(const ColorFacet& other) : facet(other.facet), color(other.color) {}
+};
+
 /**
  * @class Mesher
  * @brief Performs the triangulation of the input points
@@ -447,9 +477,12 @@ class Mesher
         std::mutex* visualization_mutex;
         std::condition_variable* visualization_cv;
         bool new_facet_added;
+        
 
     public: // Open3D rendering
-        void renderIntoOpen3D(open3d::geometry::TriangleMesh& mesh) const;
+        std::vector<ColorFacet> getFacetsToRender() const;
+        std::vector<ColorEdge> getEdgesToRender() const;
+        std::vector<ColorVertex> getVerticesToRender() const;
 
         void setVisualizationSync(std::mutex* mutex, std::condition_variable* cv) {
             visualization_mutex = mutex;
@@ -500,8 +533,39 @@ class Mesher
             m_fresh_facets.erase(facet);
         }
 
+
     public: // Sanity check
         void SanityCheckOrientation() const; 
+    
+    private: // debug rendering
+    
+        Vertex_star_list m_debug_render_vertices;
+        Edge_star_list m_debug_render_edges;
+        Facet_star_list m_debug_render_facets;
+
+    public: // debug rendering 
+        void addDebugRenderVertex(Vertex *vertex)
+        {
+            m_debug_render_vertices.push_back(vertex);
+        }
+
+        void addDebugRenderEdge(Edge *edge)
+        {
+            m_debug_render_edges.push_back(edge);
+        }
+
+        void addDebugRenderFacet(Facet *facet)
+        {
+            m_debug_render_facets.push_back(facet);
+        }
+        
+        void clearDebugRender()
+        {
+            m_debug_render_vertices.clear();
+            m_debug_render_edges.clear();
+            m_debug_render_facets.clear();
+        }
+        
 };
 
 #endif

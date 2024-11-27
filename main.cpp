@@ -296,6 +296,8 @@ int main(int argc, char **argv)
 
         //FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
         
+        // sleep for 100ms
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // wait for terminal input
@@ -317,8 +319,9 @@ int main(int argc, char **argv)
     bool o3d_save_ply = false;
 
     if (o3d_save_ply) {
-        auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-        mesher.renderIntoOpen3D(*o3d_mesh);
+        std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+        std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
+        Visualizer::renderFacets(color_facets, o3d_mesh);
         open3d::io::WriteTriangleMeshToPLY("new_final.ply", *o3d_mesh, false, false, false, false, false, true);
         std::cout << "Mesh saved in" << "new_final.ply" << std::endl;
     }

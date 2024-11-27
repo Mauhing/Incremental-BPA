@@ -14,6 +14,10 @@ namespace Visualizer
         std::condition_variable& vis_cv,
         std::atomic<bool>& should_exit
     );
+
+    void renderFacets(const std::vector<ColorFacet> &facets, std::shared_ptr<open3d::geometry::TriangleMesh>& mesh);
+    void renderEdges(const std::vector<ColorEdge> &edges, std::shared_ptr<open3d::geometry::LineSet>& line);
+    void renderVertices(const std::vector<ColorVertex> &vertices, std::shared_ptr<open3d::geometry::PointCloud>& point);
 }
 
 #endif // VISUALIZER_H

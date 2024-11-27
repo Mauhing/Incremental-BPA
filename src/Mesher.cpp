@@ -1709,66 +1709,37 @@ void Mesher::clearOrphanVertices()
                                           { this->removeOrphanAndUpdate(node); });
 }
 
-void Mesher::renderIntoOpen3D(open3d::geometry::TriangleMesh &O3d_mesh) const
+std::vector<ColorVertex> Mesher::getVerticesToRender() const
 {
-    // Resize the vertices and triangles
-    // O3d_mesh.vertices_.resize(m_vertices.size());
-    // O3d_mesh.triangles_.resize(m_facets.size());
+    // 1. dubug vertices
+    std::vector<ColorVertex> color_vertices;
+    color_vertices.reserve(m_debug_render_vertices.size());
+    Eigen::Vector3d green_color(0.0, 1.0, 0.0);
 
-    // unsigned int i = 0;
-    // for (auto facet : m_facets)
-    //{
-    //     unsigned int idx0 = facet->getVertex(0)->index();
-    //     unsigned int idx1 = facet->getVertex(1)->index();
-    //     unsigned int idx2 = facet->getVertex(2)->index();
-    //     O3d_mesh.triangles_[i] = Eigen::Vector3i(idx0, idx1, idx2);
-    //
-    //     O3d_mesh.vertices_[idx0] = Eigen::Vector3d(facet->getVertex(0)->x(), facet->getVertex(0)->y(), facet->getVertex(0)->z());
-    //     O3d_mesh.vertices_[idx1] = Eigen::Vector3d(facet->getVertex(1)->x(), facet->getVertex(1)->y(), facet->getVertex(1)->z());
-    //     O3d_mesh.vertices_[idx2] = Eigen::Vector3d(facet->getVertex(2)->x(), facet->getVertex(2)->y(), facet->getVertex(2)->z());
+    for (auto vertex : m_debug_render_vertices) {
+        color_vertices.push_back(ColorVertex(vertex, green_color));
+    }
+    return color_vertices;
+}
 
-    //    i++;
-    //}
+std::vector<ColorFacet> Mesher::getFacetsToRender() const
+{
+    std::vector<ColorFacet> color_facets;
+    color_facets.reserve(m_facets.size() + m_debug_render_facets.size());
 
-    // Clear existing mesh data
-    O3d_mesh.vertices_.clear();
-    O3d_mesh.triangles_.clear();
-
-    // Create a map of vertices to their new indices
-    std::unordered_map<Vertex *, int> vertex_to_index; // Changed to int
-    int current_index = 0;                             // Changed to int
-
-    // First pass: collect unique vertices and assign new indices
-    for (auto facet : m_facets)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            Vertex *v = facet->getVertex(i);
-            if (vertex_to_index.find(v) == vertex_to_index.end())
-            {
-                vertex_to_index[v] = current_index++;
-                O3d_mesh.vertices_.push_back(
-                    Eigen::Vector3d(v->x(), v->y(), v->z()));
-            }
-        }
+    // 1. m_facets
+    Eigen::Vector3d golden_color(1.0, 0.84375, 0.0);
+    for (auto facet : m_facets) {
+        color_facets.push_back(ColorFacet(facet, golden_color));
+    }
+    
+    // 2. m_debug_facets
+    Eigen::Vector3d blue_color(0.0, 0.0, 1.0);
+    for (auto facet : m_debug_render_facets) {
+        color_facets.push_back(ColorFacet(facet, blue_color));
     }
 
-    // Second pass: create triangles using the new indices
-    for (auto facet : m_facets)
-    {
-        O3d_mesh.triangles_.push_back(
-            Eigen::Vector3i(
-                vertex_to_index[facet->getVertex(0)],
-                vertex_to_index[facet->getVertex(1)],
-                vertex_to_index[facet->getVertex(2)]));
-    }
-
-// Debug output
-#ifndef _DEBUG
-// std::cout << "Mesher: Converted " << vertex_to_index.size()
-//           << " vertices and " << m_facets.size()
-//           << " triangles to Open3D mesh" << std::endl;
-#endif
+    return color_facets;
 }
 
 void Mesher::batchReconstruct(std::list<Vertex> &vertices)
@@ -1981,4 +1952,3 @@ void Mesher::removeDiskFanSingular()
     }
 
 }
-
