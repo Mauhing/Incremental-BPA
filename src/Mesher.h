@@ -539,9 +539,9 @@ class Mesher
     
     private: // debug rendering
     
-        Vertex_star_list m_debug_render_vertices;
-        Edge_star_list m_debug_render_edges;
-        Facet_star_list m_debug_render_facets;
+        mutable Vertex_star_list m_debug_render_vertices;
+        mutable Edge_star_list m_debug_render_edges;
+        mutable Facet_star_list m_debug_render_facets;
 
     public: // debug rendering 
         void addDebugRenderVertex(Vertex *vertex)

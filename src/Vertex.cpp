@@ -267,9 +267,12 @@ Vertex* Vertex::findBorder(Vertex* test)
         //if((*ei)->getType() != 0)
         if((*ei)->getType() != Edge::BORDER)
         {
+            // This could be the case when source is disk-fan vertex.
             ++ei;
             continue;
         }
+
+        // Try source first.
         Vertex *v = (*ei)->getSource();
 
         if(v==this)
@@ -299,6 +302,7 @@ Vertex* Vertex::findBorder(Vertex* test)
         }
         return(v);
     }
+    // It can return nullptr.
     return candidate;
 }
 

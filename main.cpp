@@ -166,16 +166,7 @@ int main(int argc, char **argv)
               << "s." << std::endl;
     mesher.print_stats();
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Fill holes
-    std::cout << "Filling holes..." << std::endl;
-    std::time(&start);
-    mesher.fillHoles();
-    std::time(&end);
-    std::cout << "Filling holes took " << difftime(end, start) << "s." << std::endl;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
+    
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Create shared data structures and synchronization primitives
     std::cout << "Main Thread ID: " << std::this_thread::get_id() << std::endl;
@@ -195,6 +186,17 @@ int main(int argc, char **argv)
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Fill holes
+    std::cout << "Filling holes..." << std::endl;
+    std::time(&start);
+    mesher.fillHoles();
+    std::time(&end);
+    std::cout << "Filling holes took " << difftime(end, start) << "s." << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Sanity check
@@ -261,11 +263,12 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Set slow visualization flag when at batch 8
-        if (batch_index == 8) {
-            mesher.setSlowVisualization(true);  // Add this method to Mesher
-        } else {
-            mesher.setSlowVisualization(false);
-        }
+        //if (batch_index == 8) {
+        //    mesher.setSlowVisualization(true);  // Add this method to Mesher
+        //} else {
+        //    mesher.setSlowVisualization(false);
+        //}
+        mesher.setSlowVisualization(false);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

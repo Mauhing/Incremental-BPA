@@ -87,7 +87,8 @@ void Visualizer::visualizationThread(
             //}
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
             if (lock.try_lock()) {  // Only proceed if we got the lock
-                if (mesher.hasNewFacet()) 
+                //if (mesher.hasNewFacet()) 
+                if (true) 
                 {
                     //std::cout << "Update mesh: Thread " << std::this_thread::get_id() <<  std::endl;
                     // print system time 
@@ -96,11 +97,12 @@ void Visualizer::visualizationThread(
                     //std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
                     std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
                     renderFacets(color_facets, o3d_mesh);
-                    o3d_mesh->ComputeVertexNormals();
-                    o3d_mesh->ComputeTriangleNormals();
+                    //o3d_mesh->ComputeVertexNormals();
+                    //o3d_mesh->ComputeTriangleNormals();
                     visualizer.UpdateGeometry(o3d_mesh);
                     mesher.clearNewFacetFlag();
                 }
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         }
         
@@ -112,11 +114,10 @@ void Visualizer::visualizationThread(
 
 void Visualizer::renderFacets(const std::vector<ColorFacet> &color_facets, std::shared_ptr<open3d::geometry::TriangleMesh>& O3d_mesh)
  {
-    //auto O3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-
     // Clear existing mesh data
     O3d_mesh->vertices_.clear();
     O3d_mesh->triangles_.clear();
+    O3d_mesh->vertex_colors_.clear();
 
     // Create a map of vertices to their new indices
     std::unordered_map<Vertex *, int> vertex_to_index; // Changed to int
@@ -124,7 +125,6 @@ void Visualizer::renderFacets(const std::vector<ColorFacet> &color_facets, std::
 
     // First pass: collect unique vertices and assign new indices
     // color is golden
-    const Eigen::Vector3d golden_color(1.0, 0.7, 0.0);
     for (auto color_facet : color_facets)
     {
         for (int i = 0; i < 3; i++)
@@ -136,6 +136,10 @@ void Visualizer::renderFacets(const std::vector<ColorFacet> &color_facets, std::
                 O3d_mesh->vertices_.push_back(
                     Eigen::Vector3d(v->x(), v->y(), v->z()));
                 O3d_mesh->vertex_colors_.push_back(color_facet.color);
+            }
+            else
+            {
+                O3d_mesh->vertex_colors_[vertex_to_index[v]] = color_facet.color;
             }
         }
     }

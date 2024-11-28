@@ -1136,9 +1136,11 @@ void Mesher::fillHoles()
         // hence the following check
         if ((*ei)->getType() != Edge::BORDER)
         {
+            // This means that a hole has been filled by previous boundary edges.
             ei = m_border_edges.erase(ei);
             continue;
         }
+
         Vertex *src = (*ei)->getSource();
         Vertex *tgt = (*ei)->getTarget();
 
@@ -1728,9 +1730,9 @@ std::vector<ColorFacet> Mesher::getFacetsToRender() const
     color_facets.reserve(m_facets.size() + m_debug_render_facets.size());
 
     // 1. m_facets
-    Eigen::Vector3d golden_color(1.0, 0.84375, 0.0);
+    Eigen::Vector3d color(0.5, 0.5, 0.5); // it is gray
     for (auto facet : m_facets) {
-        color_facets.push_back(ColorFacet(facet, golden_color));
+        color_facets.push_back(ColorFacet(facet, color));
     }
     
     // 2. m_debug_facets
@@ -1921,7 +1923,12 @@ void Mesher::removeDiskFanSingular()
     }
     
     for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices) {
-        if (vertex_disk_fan_info.disk_facets.size() == 1) {
+        if (vertex_disk_fan_info.disk_facets.size() > 0) {
+            for (Facet_set &facet_set : vertex_disk_fan_info.disk_facets) {
+                for (Facet *facet : facet_set) {
+                    m_debug_render_facets.push_back(facet);
+                }
+            }
             std::cout << "Disk fan vertex: " << vertex_disk_fan_info.disk_fan_vertex->index() << std::endl;
         }
     }
