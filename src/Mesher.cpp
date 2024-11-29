@@ -41,6 +41,7 @@
 #include <sstream>
 #include <memory>
 #include <algorithm>
+#include "Visualizer.h"
 
 const double PI = 3.1415926535;
 
@@ -1159,7 +1160,7 @@ void Mesher::fillHoles()
         computeBallCenterUsingOrderOfVertices(*tgt, *src, *v, center);
 
         // The new facet should be from target to source to mimic the half-edge data structure.
-        Facet *f = new Facet(tgt, src, v, center);
+        Facet *f = new Facet(tgt, src, v, center); // TODO: Racing condition because Edge is actually changing the vertex type.
         addFacet(f);
         ei = m_border_edges.erase(ei);
     }
@@ -1958,4 +1959,38 @@ void Mesher::removeDiskFanSingular()
         }
     }
 
+}
+
+
+void Mesher::mesh_integrityCheck() const
+{
+    // make a share object of o3d_mesh
+    std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+
+    std::vector<ColorFacet> color_facets = this->getFacetsToRender();
+
+    Visualizer::renderFacets(color_facets, o3d_mesh);
+
+    // check o3d_mesh properties
+    // is it edge manifold?
+    bool allow_boundary_edges = true;
+    bool is_edge_manifold = o3d_mesh->IsEdgeManifold(allow_boundary_edges);
+    if (!is_edge_manifold) {
+        //get non-manifold edges
+        std::vector<Eigen::Vector2i> non_manifold_edges = o3d_mesh->GetNonManifoldEdges(allow_boundary_edges);
+        std::cerr << "Error: The mesh is not edge manifold" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    // is it vertex manifold?
+    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
+    if (!is_vertex_manifold) {
+        std::cerr << "Error: The mesh is not vertex manifold" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    // is it orientable?
+    bool is_orientable = o3d_mesh->IsOrientable();
+    if (!is_orientable) {
+        std::cerr << "Error: The mesh is not orientable" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 }

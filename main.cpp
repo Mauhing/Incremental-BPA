@@ -292,6 +292,11 @@ int main(int argc, char **argv)
         mesher.batchReconstruct(vertices);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // Check the integrity of the mesh
+        mesher.mesh_integrityCheck();
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
         mesher.print_stats();
         
         //std::cout << "Press enter to continue" << std::endl;

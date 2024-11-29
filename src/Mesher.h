@@ -536,6 +536,8 @@ class Mesher
 
     public: // Sanity check
         void SanityCheckOrientation() const; 
+
+        void mesh_integrityCheck() const;
     
     private: // debug rendering
     
