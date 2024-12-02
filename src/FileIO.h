@@ -86,6 +86,8 @@ class FileIO
         
         static bool savePointsDebug(const char* filename, const Point_UnOrdSet &vertices_inside_balls);
 
+        static std::tuple<Point, double, unsigned int> originAndDepth(const string &batch_data, double min_radius);
+
     private :
 
         /** @brief save all vertices contained in a node

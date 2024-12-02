@@ -123,7 +123,7 @@ class TOctreeNode
          * @param origin
          * @param depth
          */
-        TOctreeNode(Point & origin, double size,  unsigned int depth);
+        TOctreeNode(const Point & origin, double size,  unsigned int depth);
         
         /**
          * @brief Destructor
@@ -331,7 +331,7 @@ TOctreeNode<T>::TOctreeNode()
 }
 
 template<class T>
-TOctreeNode<T>::TOctreeNode(Point& origin, double size, unsigned int depth)
+TOctreeNode<T>::TOctreeNode(const Point& origin, double size, unsigned int depth)
 {
     for(int i = 0 ; i <8 ; i++)
         m_child[i] = NULL;

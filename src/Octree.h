@@ -57,7 +57,7 @@ class TOctree
          * @param size  size of the loose bounding box
          * @param depth depth of the octree
          */
-        TOctree(Point &origin, double size, unsigned int depth);
+        TOctree(const Point &origin, double size, unsigned int depth);
 
         /**
          * @brief Destructor
@@ -124,7 +124,7 @@ class TOctree
          * @param origin origin of the octree
          * @param size side size
          **/
-        void initialize(Point & origin, double size);
+        void initialize(const Point & origin, double size);
         
         /**
          * @brief Adding a point to the octree
@@ -293,7 +293,7 @@ TOctree<T>::TOctree(unsigned int depth)
 
 
 template<class T>
-TOctree<T>::TOctree(Point& origin, double size, unsigned int depth)
+TOctree<T>::TOctree(const Point& origin, double size, unsigned int depth)
 {
     m_size = size;
     m_root_depth = depth;
@@ -325,7 +325,7 @@ TOctree<T>::~TOctree()
 
 
 template<class T>
-void TOctree<T>::initialize(Point& origin, double size)
+void TOctree<T>::initialize(const Point& origin, double size)
 {
     m_size = size;
     m_origin = origin; 

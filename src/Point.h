@@ -64,9 +64,7 @@ class Point
         };
 
         friend std::ostream& operator << (std::ostream& out, const Point& v);
-
-        unsigned int getDebugCounter() const;
-        
+ 
     private :
         
         /** @brief x coordinate*/

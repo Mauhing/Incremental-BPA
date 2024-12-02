@@ -53,14 +53,14 @@ class Facet
          * @param ball_center center of the empty interior
          * ball incident to the three vertices
          */
-        Facet(Vertex* v1, Vertex* v2, Vertex* v3, Point &ball_center);
+        Facet(Vertex* v1, Vertex* v2, Vertex* v3, const Point &ball_center);
 
         /** @brief constructor from an edge and a vertex
          * prerequisite edge has at most one adjacent facet
          * @param edge edge (2 vertices to create the facet)
          * @param vertex third vertex to create the facet
          */
-        Facet(Edge *edge, Vertex* vertex);
+        Facet(Edge *edge, Vertex* vertex) = delete;
 
         /** @brief constructor from an edge and a vertex
          * prerequisite edge has at most one adjacent facet
@@ -69,7 +69,7 @@ class Facet
          * @param ball_center center of the empty interior ball
          * incident to the three vertices
          */
-        Facet(Edge *edge, Vertex* vertex, Point &ball_center);
+        Facet(Edge *edge, Vertex* vertex, const Point &ball_center);
 
         /** @brief destructor*/
         ~Facet();

@@ -461,13 +461,27 @@ class Mesher
 
         void print_stats(); 
         
-        Facet_set computeCollisionFacets(std::list<Vertex>& vertices);
+        Facet_set computeCollisionFacets(const std::list<Vertex> &vertices);
 
         void clearOrphanVertices();
 
         void exileVertex(Vertex* vertex);
 
-        void batchReconstruct(std::list<Vertex>& vertices);
+        void batchReconstruct(const std::list<Vertex>& vertices);
+
+        void addPointsToOctreeVertices(const std::list<Vertex> &vertices);
+
+        void expandOctree(const std::list<Vertex> &vertices);
+
+        void checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices);
+
+    private: // create facets
+        Facet* createFacet(Vertex* v1, Vertex* v2, Vertex* v3, const Point& center);
+
+        Facet* createFacet(Edge* edge, Vertex* vertex, const Point& center);
+
+    private:
+        void resetBoundaryEdges();
 
     public: // Boundaries computation
         void removeFanFanSingular();

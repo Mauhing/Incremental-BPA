@@ -97,77 +97,43 @@ int main(int argc, char **argv)
     std::cout << "batch_data size: " << batch_data.size() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Octree creation
     time_t start, end;
     std::time(&start);
 
+    Point origin;
+    double size;
+    unsigned int depth;
+    std::tie(origin, size, depth) = FileIO::originAndDepth(batch_data[0], radius);
+
     OctreeVertices octree_vertices;
-    if (radius > 0)
-    {
-        // ok = FileIO::readAndSortPoints(infile.c_str(),octree,radius);
-        ok = FileIO::readFromBatchAndSortPoints(batch_data[0], octree_vertices, radius);
-    }
-    if (!ok)
-    {
-        std::cerr << "Pb opening the file; exiting." << std::endl;
-        return EXIT_FAILURE;
-    }
-    std::time(&end);
-
-    octree_vertices.printOctreeStat();
-    std::cout << "Reading and sorting points in this octree took "
-              << difftime(end, start) << " s." << std::endl;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Set the vertices iterator
-    std::cout << "****** Reconstructing with radii " << std::flush;
-    std::list<double>::const_iterator ri = options.radii.begin();
-    while (ri != options.radii.end())
-    {
-        std::cout << *ri << "; ";
-        ++ri;
-    }
-    std::cout << "******" << std::endl;
+    octree_vertices.setDepth(depth);
+    octree_vertices.initialize(origin, size);
 
     OctreeIteratorVertices iterator_vertices(&octree_vertices);
-
-    if (radius > 0)
+        iterator_vertices.setR(radius);
         iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Create the ball centers octree and its iterator
-    // OctreeBallCenters octree_ball_centers = octree_vertices.copy_skeleton<BallCenter>();
-    OctreeBallCenters octree_ball_centers;
-    octree_ball_centers.setDepth(octree_vertices.getDepth());
-    Point origin = octree_vertices.getOrigin();
-    octree_ball_centers.initialize(origin, octree_vertices.getSize());
-
-    OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
-
-    if (radius > 0)
-        octree_ball_centers_iterator.setR(radius);
+    iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Bootstrapping reconstruction
-    std::time(&start);
+    // Create the ball centers octree and its iterator
+    OctreeBallCenters octree_ball_centers;
+    octree_ball_centers.setDepth(octree_vertices.getDepth());
+    octree_ball_centers.initialize(octree_vertices.getOrigin(), octree_vertices.getSize());
+
+    OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
+        octree_ball_centers_iterator.setR(radius);
+        octree_ball_centers_iterator.setR(radius);
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    octree_ball_centers_iterator.setR(radius);
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // Define the mesher
     Mesher mesher(&octree_vertices, &iterator_vertices,
                   &octree_ball_centers,
                   &octree_ball_centers_iterator);
 
-    std::cout << "Reconstructing the mesh" << std::endl;
-    mesher.reconstruct(options.radii);
-    std::time(&end);
-    std::cout << "Finish reconstruction" << std::endl;
-    std::cout << "Reconstructing the mesh took " << difftime(end, start)
-              << "s." << std::endl;
-    mesher.print_stats();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Create shared data structures and synchronization primitives
     std::cout << "Main Thread ID: " << std::this_thread::get_id() << std::endl;
 
@@ -176,7 +142,6 @@ int main(int argc, char **argv)
     std::condition_variable vis_cv;
     mesher.setVisualizationSync(&o3d_mesh_mutex, &vis_cv);
 
-    // Create visualization thread
     std::thread vis_thread(Visualizer::visualizationThread, 
         std::ref(mesher), 
         std::ref(o3d_mesh_mutex), 
@@ -185,68 +150,10 @@ int main(int argc, char **argv)
     );
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Fill holes
-    std::cout << "Filling holes..." << std::endl;
-    std::time(&start);
-    mesher.fillHoles();
-    std::time(&end);
-    std::cout << "Filling holes took " << difftime(end, start) << "s." << std::endl;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Sanity check
-    std::cout << "Sanity checking all nodes points" << std::endl;
-    std::cout << "Ball centers" << std::endl;
-    std::cout << "Number of ball centers: " << octree_ball_centers_iterator.debug_checkTotalNumberOfElements() << std::endl;
-    octree_ball_centers_iterator.debug_checkAllNodesPoints();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Remove singular vertices
-    mesher.removeFanFanSingular();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Remove disk singular vertices
-    mesher.removeDiskFanSingular();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Clear fresh facets
-    mesher.clearFreshFacets();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Clear orphan vertices
-    mesher.clearOrphanVertices();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // #ifdef _DEBUG
-    // std::cout << "Sanity check: check orientation" << std::endl;
-    // mesher.SanityCheckOrientation();
-    // #endif
-
-    //if (!FileIO::saveMeshDebug("_cumulative0.txt", mesher))
-    //{
-    //    std::cerr << "Pb saving the mesh; exiting." << std::endl;
-    //    return EXIT_FAILURE;
-    //}
-
-
-
-    // Sanity check: save border edges
-    // #ifdef _DEBUG
-    // std::cout << "Sanity check: save border edges after trimming" << std::endl;
-    // Edge_star_list border_edges = mesher.getBorderEdges();
-    // FileIO::saveLinesetDebug("_border_edges.txt", border_edges);
-    // #endif
-
-    for (size_t batch_index = 1; batch_index < batch_data.size(); batch_index++)
+    // enter looping phase
+    for (size_t batch_index = 0; batch_index < batch_data.size(); batch_index++)
     {
         if (should_exit) {  // Check if visualization window was closed
             break;
@@ -256,7 +163,7 @@ int main(int argc, char **argv)
         std::cout << "Processing batch " << batch_index << std::endl;
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Get the next batch
+        // Load batch of point cloud
         std::cout << "Remove overlape vertices in next batch" << std::endl;
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -271,38 +178,7 @@ int main(int argc, char **argv)
         mesher.setSlowVisualization(false);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Expand the ballcenters octree
-        // std::cout << "Vertices size: " << vertices.size() << std::endl;
-        std::cout << "Expanding octree ball centers" << std::endl;
-        for (auto &vertex : vertices)
-        {
-            BallCenter ball_center(vertex, nullptr);
-            octree_ball_centers.checkSizeAndexpand(ball_center);
-        }
-        std::cout << "Expanding octree vertices" << std::endl;
-        for (auto &vertex : vertices)
-        {
-            octree_vertices.checkSizeAndexpand(vertex);
-        }
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Reconstruct the mesh
         mesher.batchReconstruct(vertices);
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Check the integrity of the mesh
-        mesher.mesh_integrityCheck();
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        mesher.print_stats();
-        
-        //std::cout << "Press enter to continue" << std::endl;
-        //std::cin.get();
-
-        //FileIO::saveMeshDebug(("_cumulative" + std::to_string(batch_index) + ".txt").c_str(), mesher);
         
         // sleep for 100ms
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -321,7 +197,6 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
-
     
     // Open3D save ply
     bool o3d_save_ply = false;

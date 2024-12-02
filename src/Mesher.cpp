@@ -73,19 +73,20 @@ Mesher::Mesher() : visualization_mutex(nullptr),
     m_octree_ball_centers_iterator = NULL;
 }
 
-Mesher::Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator,
+Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator_vertices,
                OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator)
     : visualization_mutex(nullptr),
       visualization_cv(nullptr),
       new_facet_added(false)
 {
-    m_octree_vertices = octree;
-    m_iterator_vertices = iterator;
-    m_ball_radius = iterator->getR();
+    m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
     m_nfacets = 0;
     m_vertice_idx = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
+
+    m_octree_vertices = octree_vertices;
+    m_iterator_vertices = iterator_vertices;
     m_octree_ball_centers = octree_ball_centers;
     m_octree_ball_centers_iterator = octree_ball_centers_iterator;
 }
@@ -204,7 +205,7 @@ void Mesher::changeRadius(double radius)
         {
             e->setType(Edge::FRONT);
             m_edge_front.push_back(e);
-            ei = m_border_edges.erase(ei);
+            ei = m_border_edges.erase(ei); // It returns the next iterator after the erased element
             continue;
         }
         ++ei;
@@ -328,10 +329,9 @@ bool Mesher::trySeed(Vertex &v)
             }
             // <<<
             // Now, the seed triangle will take account of the handness.
-            // Facet *facet = new Facet(&v, &vtest, candidate, center);
-            Facet *facet = new Facet(v0, v1, v2, center);
+            Facet *facet = this->createFacet(v0, v1, v2, center);
+            this->addFacet(facet);
             // >>>
-            addFacet(facet);
 
             if (m_nfacets % 10000 == 0)
                 std::cout << m_nfacets << " facets. "
@@ -713,7 +713,7 @@ void Mesher::expandTriangulation()
         }
         // >>>
 
-        Facet *facet = new Facet(edge, candidate, center);
+        Facet *facet = this->createFacet(edge, candidate, center);
         addFacet(facet);
 
         Edge *e1 = candidate->getLinkingEdge(edge->getSource());
@@ -829,50 +829,31 @@ Vertex *Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 
 void Mesher::addFacet(Facet *f)
 {
-    if (visualization_mutex && visualization_cv)
+    std::unique_lock<std::mutex> lock(*visualization_mutex);
+    addVertex(f->vertex(0));
+    addVertex(f->vertex(1));
+    addVertex(f->vertex(2));
+
+    m_facets.push_back(f);
+    addFreshFacet(f);
+    m_nfacets++;
+
+    // Update the ball centers octree.
+    Point temp_ball_center = f->getBallCenter();
+    BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
+    f->setBallCenterPtr(ball_center);
+
+    new_facet_added = true;
+    visualization_cv->notify_one();
+
+    if (m_slow_visualization)
     {
-        std::unique_lock<std::mutex> lock(*visualization_mutex);
-        addVertex(f->vertex(0));
-        addVertex(f->vertex(1));
-        addVertex(f->vertex(2));
-
-        m_facets.push_back(f);
-        addFreshFacet(f);
-        m_nfacets++;
-
-        // Update the ball centers octree.
-        Point temp_ball_center = f->getBallCenter();
-        BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
-        f->setBallCenterPtr(ball_center);
-
-        new_facet_added = true;
-        visualization_cv->notify_one();
-
-        // Add delay if slow visualization is enabled
-        if (m_slow_visualization)
-        {
-            // Release mutex before sleep to allow visualization updates
-            lock.unlock();
-            // std::cout << "Press enter to continue" << std::endl;
-            // std::cin.get();
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            lock.lock();
-        }
-    }
-    else
-    {
-        addVertex(f->vertex(0));
-        addVertex(f->vertex(1));
-        addVertex(f->vertex(2));
-
-        m_facets.push_back(f);
-        addFreshFacet(f);
-        m_nfacets++;
-
-        // Update the ball centers octree.
-        Point temp_ball_center = f->getBallCenter();
-        BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
-        f->setBallCenterPtr(ball_center);
+        // Release mutex before sleep to allow visualization updates
+        lock.unlock();
+        // std::cout << "Press enter to continue" << std::endl;
+        // std::cin.get();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        lock.lock();
     }
 }
 
@@ -1158,10 +1139,11 @@ void Mesher::fillHoles()
         // computer ball center using order of vertices
         Point center;
         computeBallCenterUsingOrderOfVertices(*tgt, *src, *v, center);
-
         // The new facet should be from target to source to mimic the half-edge data structure.
-        Facet *f = new Facet(tgt, src, v, center); // TODO: Racing condition because Edge is actually changing the vertex type.
+        
+        Facet *f = this->createFacet(tgt, src, v, center);
         addFacet(f);
+
         ei = m_border_edges.erase(ei);
     }
 }
@@ -1269,7 +1251,7 @@ bool Mesher::trySeed(Vertex &v, OctreeNodeV *containment_node, double d)
                 continue;
             }
 
-            Facet *facet = new Facet(&v, &vtest, candidate, center);
+            Facet *facet = this->createFacet(&v, &vtest, candidate, center);
             addFacet(facet);
 
             e1 = v.getLinkingEdge(candidate);
@@ -1343,7 +1325,7 @@ void Mesher::expandTriangulationAroundNode(OctreeNodeV *containment_node,
             continue;
         }
 
-        Facet *facet = new Facet(edge, candidate, center);
+        Facet *facet = this->createFacet(edge, candidate, center);
         addFacet(facet);
 
         e1 = candidate->getLinkingEdge(edge->getSource());
@@ -1666,7 +1648,7 @@ void Mesher::print_stats()
     std::cout << "<<<<<<<<" << std::endl;
 }
 
-Facet_set Mesher::computeCollisionFacets(std::list<Vertex> &vertices)
+Facet_set Mesher::computeCollisionFacets(const std::list<Vertex> &vertices)
 {
     Facet_set collision_facets;
     m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
@@ -1745,12 +1727,31 @@ std::vector<ColorFacet> Mesher::getFacetsToRender() const
     return color_facets;
 }
 
-void Mesher::batchReconstruct(std::list<Vertex> &vertices)
+
+void Mesher::expandOctree(const std::list<Vertex> &vertices)
+{
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Expand the ballcenters octree
+    // std::cout << "Vertices size: " << vertices.size() << std::endl;
+    std::cout << "Expanding octree ball centers" << std::endl;
+    for (auto &vertex : vertices)
+    {
+        BallCenter ball_center(vertex, nullptr);
+        m_octree_ball_centers->checkSizeAndexpand(ball_center);
+    }
+    std::cout << "Expanding octree vertices" << std::endl;
+    for (auto &vertex : vertices)
+    {
+        m_octree_vertices->checkSizeAndexpand(vertex);
+    }
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+
+void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
 {
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Collection of collision facets
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
@@ -1760,23 +1761,18 @@ void Mesher::batchReconstruct(std::list<Vertex> &vertices)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     }
 
-    this->print_stats();
+}
 
-    // FileIO::saveMeshDebug("_state1_facets.txt", mesher);
-    // FileIO::saveLinesetDebug("_state1_border_edges.txt", mesher.getBorderEdges());
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Add the new vertices to the octree
+void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)
+{
     for (auto &vertex : vertices)
     {
-        // Remark that this function does not check the size of the octree.
         m_octree_vertices->addPoint(vertex);
     }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Further reconstruction
-    std::cout << "Further reconstructing" << std::endl;
+void Mesher::resetBoundaryEdges()
+{
     for (Edge *e : m_border_edges)
     {
         e->setType(Edge::FRONT);
@@ -1787,42 +1783,44 @@ void Mesher::batchReconstruct(std::list<Vertex> &vertices)
     #ifdef _DEBUG
         if (m_edge_front.size() == 0)
         {
-            std::cerr << "\033[1;31mError: No front edges found after further reconstruction\033[0m" << std::endl;
-            std::exit(EXIT_FAILURE);
+            std::cerr << "\033[1;31mWarning: No front edges found after further reconstruction. This is ok if this is the first batch.\033[0m" << std::endl;
         }
     #endif
+}
 
-    unsigned int depth = m_octree_vertices->getDepth();
-    m_iterator_vertices->setDepth(depth);
+void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
+{
+    // Asumming radius is already set.
 
+    // Expand the octree
+    this->expandOctree(vertices);
+    
+    // Check and remove collision facets
+    this->checkAndRemoveCollisionFacets(vertices);
+
+    // Add points to the octree
+    this->addPointsToOctreeVertices(vertices);
+
+    // Reset boundary edges to edge_front
+    this->resetBoundaryEdges();
+    
+    // Further reconstruction
     this->reconstruct();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Fill holes
     this->fillHoles();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+     
     // Remove singular vertices
     this->removeFanFanSingular();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Remove disk singular vertices
+    // Remove disk singular verticesmesher.batchReconstructNew(vertices);
     this->removeDiskFanSingular();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // 
+    // Clear fresh facets
     this->clearFreshFacets();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Clear orphan vertices
     this->clearOrphanVertices();
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
 void Mesher::removeFanFanSingular()
@@ -1993,4 +1991,16 @@ void Mesher::mesh_integrityCheck() const
         std::cerr << "Error: The mesh is not orientable" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+}
+
+Facet* Mesher::createFacet(Vertex* v1, Vertex* v2, Vertex* v3, const Point& center)
+{
+    std::lock_guard<std::mutex> lock(*visualization_mutex);
+    return new Facet(v1, v2, v3, center);
+}
+
+Facet* Mesher::createFacet(Edge* edge, Vertex* vertex, const Point& center)
+{
+    std::lock_guard<std::mutex> lock(*visualization_mutex);
+    return new Facet(edge, vertex, center);
 }

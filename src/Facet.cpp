@@ -22,7 +22,7 @@
 // Initialize the static member.
 std::set<Edge*> Facet::sb_recordedNewBoundaryEdges;
 
-Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
+Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, const Point &ball_center)
 {
     m_vertex[0] = v0;
     m_vertex[1] = v1;
@@ -59,41 +59,7 @@ Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, Point &ball_center)
     }
 }
 
-Facet::Facet(Edge* edge, Vertex* vertex)
-{
-    Vertex *src = edge->getSource();
-    Vertex *tgt = edge->getTarget();
-
-    m_vertex[0] = src;
-    m_vertex[1] = vertex;
-    m_vertex[2] = tgt;
-
-
-    edge->addAdjacentFacet(this);
-
-
-    for(int i = 0; i < 2; i++)
-    {
-        Edge *e = m_vertex[i]->getLinkingEdge(m_vertex[i+1]);
-        if(e == NULL)
-        {
-            e = new Edge(m_vertex[i], m_vertex[i+1]);
-        }
-        e->addAdjacentFacet(this);
-    }
-
-    for(int i= 0; i < 3; i++)
-    {
-        m_vertex[i]->addAdjacentFacet(this);
-        m_vertex[i]->updateType();
-
-    }
-    #ifdef _DEBUG
-    std::cout << "m_ball_center in Facet constructor: " << m_ball_center << std::endl;
-    #endif
-}
-
-Facet::Facet(Edge* edge, Vertex* vertex, Point &ball_center)
+Facet::Facet(Edge* edge, Vertex* vertex, const Point &ball_center)
 {
     Vertex *src = edge->getSource();
     Vertex *tgt = edge->getTarget();

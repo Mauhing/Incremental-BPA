@@ -394,6 +394,72 @@ bool FileIO::readFromBatchAndSortPoints(const string &batch_data, OctreeVertices
     return true;
 }
 
+std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const string &batch_data, double min_radius)
+{
+    double x, y, z, nx, ny, nz;
+    istringstream batch_data_in(batch_data);
+    batch_data_in >> x >> y >> z >> nx >> ny >> nz;
+
+    list<Vertex> input_vertices;
+    input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
+
+    // >>> initialize bounding box
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    xmin = xmax = x;
+    ymin = ymax = y;
+    zmin = zmax = z;
+    // <<<
+
+    // >>> read the rest of the file and find the bounding box
+    while (batch_data_in >> x >> y >> z >> nx >> ny >> nz)
+    {
+        input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
+
+        xmin = x < xmin ? x : xmin;
+        xmax = x > xmax ? x : xmax;
+        ymin = y < ymin ? y : ymin;
+        ymax = y > ymax ? y : ymax;
+        zmin = z < zmin ? z : zmin;
+        zmax = z > zmax ? z : zmax;
+    }
+    // <<<
+    std::cout << input_vertices.size() << " points read" << std::endl;
+
+
+    double lx = xmax - xmin;
+    double ly = ymax - ymin;
+    double lz = zmax - zmin;
+
+    // Get size of one of the largest dimension
+    double size = lx > ly ? lx : ly;
+    size = size > lz ? size : lz;
+
+    size = 1.1 * size;
+    double margin;
+
+    unsigned int depth = 0;
+    if (min_radius > 0)
+    {
+        depth = (unsigned int)ceil(log2(size / (min_radius)));
+        double adapted_size = pow2(depth) * min_radius;
+        margin = 0.5 * (adapted_size - size);
+        size = adapted_size;
+    }
+    else
+    {
+        std::cerr << "Warning: min_radius has to bigger than 0" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // The orgin of the octree is the lower left corner (2D) of the bounding box
+    double ox = xmin - margin;
+    double oy = ymin - margin;
+    double oz = zmin - margin;
+    Point origin(ox, oy, oz);
+
+    return std::tuple<Point, double, unsigned int>(origin, size, depth);
+}
+
 bool FileIO::saveMeshDebug(const char* filename, Mesher& mesher)
 {
     return saveMeshDebug(filename, mesher.getFacets());
