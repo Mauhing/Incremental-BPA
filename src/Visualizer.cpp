@@ -7,13 +7,13 @@
 void Visualizer::visualizationThread(
     Mesher& mesher,
     std::mutex& o3d_mesh_mutex,
-    std::condition_variable& vis_cv,
+    std::condition_variable& integrity_check_cv,
     std::atomic<bool>& should_exit
 ) 
 {
     // Create a visualizer object
     open3d::visualization::Visualizer visualizer;
-    visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 1600, 900);
+    visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 800, 450);
     visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.GetRenderOption().point_size_ = 5.0;
 

@@ -47,6 +47,7 @@
 #include "utilities.h"
 #include "types.h"
 #include <open3d/Open3D.h>
+#include <functional>
 
 struct ColorVertex
 {
@@ -56,7 +57,22 @@ struct ColorVertex
     ColorVertex(Vertex *vertex, const Eigen::Vector3d &color) : vertex(vertex), color(color) {}
     // copy constructor
     ColorVertex(const ColorVertex& other) : vertex(other.vertex), color(other.color) {}
+
+    bool operator==(const ColorVertex& other) const {
+        // Compare relevant members of ColorVertex
+        // Example (adjust according to your actual members):
+        return color == other.color && vertex == other.vertex;
+    }
 };
+
+namespace std {
+    template <>
+    struct hash<ColorVertex> {
+        std::size_t operator()(const ColorVertex& cv) const {
+            return std::hash<Vertex*>()(cv.vertex); // Hash based only on the vertex pointer
+        }
+    };
+}
 
 struct ColorEdge
 {
@@ -66,7 +82,22 @@ struct ColorEdge
     ColorEdge(Edge *edge, const Eigen::Vector3d &color) : edge(edge), color(color) {}
     // copy constructor
     ColorEdge(const ColorEdge& other) : edge(other.edge), color(other.color) {}
+
+    bool operator==(const ColorEdge& other) const {
+        // Compare relevant members of ColorFacet
+        // Example (adjust according to your actual members):
+        return color == other.color && edge == other.edge;
+    }
 };
+
+namespace std {
+    template <>
+    struct hash<ColorEdge> {
+        std::size_t operator()(const ColorEdge& ce) const {
+            return std::hash<Edge*>()(ce.edge); // Hash based only on the edge pointer
+        }
+    };
+}
 
 struct ColorFacet
 {
@@ -76,7 +107,23 @@ struct ColorFacet
     ColorFacet(Facet *facet, const Eigen::Vector3d &color) : facet(facet), color(color) {}
     // copy constructor
     ColorFacet(const ColorFacet& other) : facet(other.facet), color(other.color) {}
+
+    bool operator==(const ColorFacet& other) const {
+        // Compare relevant members of ColorFacet
+        // Example (adjust according to your actual members):
+        return color == other.color && facet == other.facet;
+}
 };
+
+namespace std {
+    template <>
+    struct hash<ColorFacet> {
+        std::size_t operator()(const ColorFacet& cf) const {
+            return std::hash<Facet*>()(cf.facet); // Hash based only on the facet pointer
+        }
+    };
+}
+
 
 /**
  * @class Mesher

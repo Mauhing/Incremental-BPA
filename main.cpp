@@ -139,13 +139,13 @@ int main(int argc, char **argv)
 
     std::mutex o3d_mesh_mutex;
     std::atomic<bool> should_exit(false);
-    std::condition_variable vis_cv;
-    mesher.setVisualizationSync(&o3d_mesh_mutex, &vis_cv);
+    std::condition_variable integrity_check_cv;
+    mesher.setVisualizationSync(&o3d_mesh_mutex, &integrity_check_cv);
 
     std::thread vis_thread(Visualizer::visualizationThread, 
         std::ref(mesher), 
         std::ref(o3d_mesh_mutex), 
-        std::ref(vis_cv),
+        std::ref(integrity_check_cv),
         std::ref(should_exit)
     );
 
@@ -179,6 +179,8 @@ int main(int argc, char **argv)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         mesher.batchReconstruct(vertices);
+
+        mesher.mesh_integrityCheck();
         
         // sleep for 100ms
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

@@ -24,8 +24,18 @@ else()
     message(STATUS "Building in Release mode")
 endif()
 
-# Enable all warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror=conversion")
+# Enable all warnings and checks for unused code
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror=conversion -Wunused -Wunused-function -Wunused-variable")
+
+# For even more thorough checks, you can add:
+if(BUILD_DEBUG)
+    # Check GCC version before adding -fanalyzer
+    if(CMAKE_COMPILER_IS_GNUCXX)
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fanalyzer")
+        endif()
+    endif()
+endif()
 
 # Option to use Clang
 option(USE_CLANG "build application with clang" OFF)

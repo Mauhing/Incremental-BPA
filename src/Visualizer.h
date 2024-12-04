@@ -18,6 +18,8 @@ namespace Visualizer
     void renderFacets(const std::vector<ColorFacet> &facets, std::shared_ptr<open3d::geometry::TriangleMesh>& mesh);
     void renderEdges(const std::vector<ColorEdge> &edges, std::shared_ptr<open3d::geometry::LineSet>& line);
     void renderVertices(const std::vector<ColorVertex> &vertices, std::shared_ptr<open3d::geometry::PointCloud>& point);
+
+    void renderO3dEdges(const std::vector<Eigen::Vector2i> &edges, std::shared_ptr<open3d::geometry::LineSet>& line);
 }
 
 #endif // VISUALIZER_H

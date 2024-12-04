@@ -1709,21 +1709,30 @@ std::vector<ColorVertex> Mesher::getVerticesToRender() const
 
 std::vector<ColorFacet> Mesher::getFacetsToRender() const
 {
-    std::vector<ColorFacet> color_facets;
-    color_facets.reserve(m_facets.size() + m_debug_render_facets.size());
+    std::unordered_set<ColorFacet> facets_to_render;
 
     // 1. m_facets
-    Eigen::Vector3d color(0.5, 0.5, 0.5); // it is gray
+    Eigen::Vector3d gray_color(0.7, 0.7, 0.7); // it is gray
     for (auto facet : m_facets) {
-        color_facets.push_back(ColorFacet(facet, color));
+        facets_to_render.insert(ColorFacet(facet, gray_color));
     }
     
     // 2. m_debug_facets
     Eigen::Vector3d blue_color(0.0, 0.0, 1.0);
     for (auto facet : m_debug_render_facets) {
-        color_facets.push_back(ColorFacet(facet, blue_color));
+      // Erase any existing ColorFacet with this facet pointer, regardless of color
+      for (auto it = facets_to_render.begin(); it != facets_to_render.end();) {
+          if (it->facet == facet) {
+              it = facets_to_render.erase(it);
+          } else {
+              ++it;
+          }
+      }
+      // Insert with blue color
+      facets_to_render.insert(ColorFacet(facet, blue_color));
     }
 
+    std::vector<ColorFacet> color_facets(facets_to_render.begin(), facets_to_render.end());
     return color_facets;
 }
 
@@ -1969,6 +1978,12 @@ void Mesher::mesh_integrityCheck() const
 
     Visualizer::renderFacets(color_facets, o3d_mesh);
 
+    // is it vertex manifold?
+    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
+    if (!is_vertex_manifold) {
+        std::cerr << "Error: The mesh is not vertex manifold" << std::endl;
+        //std::exit(EXIT_FAILURE);
+    }
     // check o3d_mesh properties
     // is it edge manifold?
     bool allow_boundary_edges = true;
@@ -1976,20 +1991,21 @@ void Mesher::mesh_integrityCheck() const
     if (!is_edge_manifold) {
         //get non-manifold edges
         std::vector<Eigen::Vector2i> non_manifold_edges = o3d_mesh->GetNonManifoldEdges(allow_boundary_edges);
+        // print non-manifold edges 
+        std::cout << "Non-manifold edges: " << non_manifold_edges.size() << std::endl;
+        // print top 10 non-manifold edges
+        for (size_t i = 0; i < non_manifold_edges.size(); i++) {
+            std::cout << "Non-manifold edge " << i << ": " << non_manifold_edges[i][0] << " " << non_manifold_edges[i][1] << std::endl;
+        }
         std::cerr << "Error: The mesh is not edge manifold" << std::endl;
-        std::exit(EXIT_FAILURE);
+        //std::exit(EXIT_FAILURE);
     }
-    // is it vertex manifold?
-    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
-    if (!is_vertex_manifold) {
-        std::cerr << "Error: The mesh is not vertex manifold" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
+
     // is it orientable?
     bool is_orientable = o3d_mesh->IsOrientable();
     if (!is_orientable) {
         std::cerr << "Error: The mesh is not orientable" << std::endl;
-        std::exit(EXIT_FAILURE);
+        //std::exit(EXIT_FAILURE);
     }
 }
 
