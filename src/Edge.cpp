@@ -139,6 +139,12 @@ bool Edge::removeAdjacentFacet(Facet* facet)
 void Edge::updateOrientation()
 {
     Vertex *opp = getOppositeVertex();
+    #ifdef _DEBUG
+    if (opp == nullptr) {
+        std::cerr << "Edge::updateOrientation() - Opposite vertex is null" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
 
     double vx, vy, vz;
 
