@@ -14,8 +14,27 @@ void Visualizer::visualizationThread(
     // Create a visualizer object
     open3d::visualization::Visualizer visualizer;
     visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 800, 450);
-    visualizer.GetRenderOption().mesh_show_back_face_ = true;
-    visualizer.GetRenderOption().point_size_ = 5.0;
+
+
+    auto device = open3d::core::Device("CUDA:0");  // Use first CUDA device
+    // Check if the requested device is available
+    if (device.IsAvailable()) {
+        std::cout << "\033[32mUsing GPU device: " << device.ToString() << "\033[0m" << std::endl;
+    } else {
+        std::cout << "\033[32mGPU not available, falling back to CPU\033[0m" << std::endl;
+        device = open3d::core::Device("CPU:0");
+    }
+
+    //visualizer.GetRenderOption().mesh_show_back_face_ = true;
+    //visualizer.GetRenderOption().point_size_ = 5.0;
+
+    // Enable GPU rendering options
+    auto& render_option = visualizer.GetRenderOption();
+    render_option.mesh_show_back_face_ = true;
+    render_option.point_size_ = 5.0;
+    render_option.light_on_ = true;
+    render_option.mesh_shade_option_ = open3d::visualization::RenderOption::MeshShadeOption::FlatShade;
+
 
     // Store the color we want to maintain
     const Eigen::Vector3d golden_color(1.0, 0.7, 0.0);
@@ -41,14 +60,14 @@ void Visualizer::visualizationThread(
     line_segment->points_.push_back(Eigen::Vector3d(5, 3, 0));
     line_segment->lines_.push_back(Eigen::Vector2i(0, 1));
     line_segment->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0)); // Red color
-    visualizer.GetRenderOption().line_width_ = 500.0; // Make lines thicker
+    visualizer.GetRenderOption().line_width_ = 500.0;// This does not work 
     visualizer.AddGeometry(line_segment);
 
     // Set default viewpoint
-    visualizer.GetViewControl().SetFront({0, 0, -1});
-    visualizer.GetViewControl().SetLookat({0, 0, 0});
-    visualizer.GetViewControl().SetUp({0, 1, 0});
-    visualizer.GetViewControl().SetZoom(0.7);
+    //visualizer.GetViewControl().SetFront({0, 0, -1});
+    //visualizer.GetViewControl().SetLookat({0, 0, 0});
+    //visualizer.GetViewControl().SetUp({0, 1, 0});
+    //visualizer.GetViewControl().SetZoom(0.7);
 
     //bool first_frame = true;
 

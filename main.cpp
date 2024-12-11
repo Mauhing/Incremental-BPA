@@ -180,10 +180,12 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        mesher.mesh_integrityCheck();
+        #ifdef _DEBUG
+            mesher.mesh_integrityCheck();
+        #endif
         
         // sleep for 100ms
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // wait for terminal input

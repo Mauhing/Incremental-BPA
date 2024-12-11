@@ -991,12 +991,22 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
         vertex[i] = facet->getVertex(i);
     }
 
+
+    std::set<Edge*> edgesTouchingNmVertex; 
+    
     // Deal with the edges first.
     for (int i = 0; i < 3; ++i)
     {
         int source_idx = i;
         int target_idx = (i + 1) % 3;
-        Edge *e = vertex[source_idx]->getLinkingEdge(vertex[target_idx]);
+        Vertex *source_vertex = vertex[source_idx];
+        Vertex *target_vertex = vertex[target_idx];
+        Edge *e = source_vertex->getLinkingEdge(target_vertex);
+
+        if (nm_vertex == source_vertex || nm_vertex == target_vertex)
+        {
+            edgesTouchingNmVertex.insert(e);
+        }
 
         bool doesFacet1Exist = (e->getFacet1() != NULL);
         bool doesFacet2Exist = (e->getFacet2() != NULL);
@@ -1016,6 +1026,8 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
             // actually, only one of the contains has the edge.
             // but we remove it from both since we do not know which one it is.
             m_border_edges.remove(e); 
+            source_vertex->removeAdjacentEdge(e);
+            target_vertex->removeAdjacentEdge(e);
             delete e;
         }
         else
@@ -1033,6 +1045,7 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
         if (v == nm_vertex)
         {
             v->setType(Vertex::INNER);
+            v->removeAdjacentFacet(facet);
             continue; 
         }
         if (v->adjacentFacets().size() == 1)
@@ -1053,6 +1066,7 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
         {
             // Inner vertex.
             v->setType(Vertex::FRONT);
+            v->removeAdjacentFacet(facet);
             continue;
         }
     }
@@ -1491,6 +1505,10 @@ void Mesher::removeFacet(Facet *facet)
     for (int i = 0; i < 3; ++i)
     {
         vertex[i] = facet->getVertex(i);
+        if (vertex[i] == nullptr) {
+            std::cerr << "Error: Invalid vertex pointer at index " << i << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     // Deal with the edges first.
@@ -1553,6 +1571,7 @@ void Mesher::removeFacets(std::set<Facet *> &facets)
     {
         removeFacet(facet);
         m_facets.remove(facet);
+        m_fresh_facets.erase(facet); // It erase if exists
         m_nfacets--;
     }
 }
@@ -1817,8 +1836,10 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     this->reconstruct();
 
     // Fill holes
-    this->fillHoles();
-     
+    //this->fillHoles();
+
+    std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
+    
     // Remove singular vertices
     this->removeFanFanSingular();
     
@@ -1830,6 +1851,8 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     // Clear orphan vertices
     this->clearOrphanVertices();
+
+
 }
 
 void Mesher::removeFanFanSingular()
@@ -1883,6 +1906,16 @@ void Mesher::removeFanFanSingular()
             for (Facet *f : v->adjacentFacets())
             {
                 singular_facets.insert(f);
+
+                Vertex *v0 = f->getVertex(0);
+                Vertex *v1 = f->getVertex(1);
+                Vertex *v2 = f->getVertex(2);
+                #ifdef _DEBUG
+                    if (v0 == nullptr || v1 == nullptr || v2 == nullptr) {
+                        std::cerr << "Error: Invalid vertex pointer" << std::endl;
+                        std::exit(EXIT_FAILURE);
+                    }
+                #endif
             }
         }
 
