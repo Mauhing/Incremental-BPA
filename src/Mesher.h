@@ -531,7 +531,7 @@ class Mesher
         void resetBoundaryEdges();
 
     public: // Boundaries computation
-        void removeFanFanSingular();
+        bool removeFanFanSingular();
 
     private: // For Open3D rendering
         bool m_slow_visualization;
@@ -557,7 +557,7 @@ class Mesher
         }
 
     public: // Detect and remove Disk-Fan singular Fan
-        void removeDiskFanSingular();
+        bool removeDiskFanSingular();
 
         void clearFreshFacets()
         {

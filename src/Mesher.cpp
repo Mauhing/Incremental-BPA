@@ -1839,12 +1839,19 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     //this->fillHoles();
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
+
+    while (true) {
+        // Remove singular vertices
+        
+        bool found_fan_fan_vertex = this->removeFanFanSingular();
     
-    // Remove singular vertices
-    this->removeFanFanSingular();
-    
-    // Remove disk singular verticesmesher.batchReconstructNew(vertices);
-    this->removeDiskFanSingular();
+        // Remove disk singular verticesmesher.batchReconstructNew(vertices);
+        bool found_disk_fan_vertex = this->removeDiskFanSingular();
+
+        if (!found_fan_fan_vertex && !found_disk_fan_vertex) {
+            break;
+        }
+    }
     
     // Clear fresh facets
     this->clearFreshFacets();
@@ -1852,10 +1859,9 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Clear orphan vertices
     this->clearOrphanVertices();
 
-
 }
 
-void Mesher::removeFanFanSingular()
+bool Mesher::removeFanFanSingular()
 {
 // If edgefront is not empty, return error
 #ifdef _DEBUG
@@ -1865,6 +1871,8 @@ void Mesher::removeFanFanSingular()
         std::exit(EXIT_FAILURE);
     }
 #endif
+
+    bool found_fan_fan_vertex = false;
 
     while (true)
     {
@@ -1896,7 +1904,8 @@ void Mesher::removeFanFanSingular()
         }
         else
         {
-            std::cout << "Singular vertices found: " << singular_vertices.size() << std::endl;
+            std::cout << "Fan Fan vertices found: " << singular_vertices.size() << std::endl;
+            found_fan_fan_vertex = true;
         }
 
         // collect the facets that are adjacent to the singular vertices
@@ -1906,16 +1915,6 @@ void Mesher::removeFanFanSingular()
             for (Facet *f : v->adjacentFacets())
             {
                 singular_facets.insert(f);
-
-                Vertex *v0 = f->getVertex(0);
-                Vertex *v1 = f->getVertex(1);
-                Vertex *v2 = f->getVertex(2);
-                #ifdef _DEBUG
-                    if (v0 == nullptr || v1 == nullptr || v2 == nullptr) {
-                        std::cerr << "Error: Invalid vertex pointer" << std::endl;
-                        std::exit(EXIT_FAILURE);
-                    }
-                #endif
             }
         }
 
@@ -1925,10 +1924,14 @@ void Mesher::removeFanFanSingular()
             this->removeFacets(singular_facets);
         }
     }
+    return found_fan_fan_vertex;
 }
 
-void Mesher::removeDiskFanSingular()
+bool Mesher::removeDiskFanSingular()
 {
+
+    bool found_disk_fan_vertex = false;
+
     // All boundary vertices are relevant
     std::set<Vertex *> boundary_vertices;
     for (Edge *e : m_border_edges) {
@@ -1963,6 +1966,7 @@ void Mesher::removeDiskFanSingular()
         }
     }
     
+    // Add defug print
     for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices) {
         if (vertex_disk_fan_info.disk_facets.size() > 0) {
             for (Facet_set &facet_set : vertex_disk_fan_info.disk_facets) {
@@ -1984,6 +1988,7 @@ void Mesher::removeDiskFanSingular()
             }
             if (vertex_disk_fan_info.disk_facets.size() == 1) {
                 for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets) {
+                    found_disk_fan_vertex = true;
                     for (Facet *facet : fan_facets) {
                         this->removeRedundantDiskFanFacet(nm_vertex, facet);
                     }
@@ -1999,6 +2004,7 @@ void Mesher::removeDiskFanSingular()
         }
     }
 
+    return found_disk_fan_vertex;
 }
 
 
@@ -2015,8 +2021,9 @@ void Mesher::mesh_integrityCheck() const
     bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
     if (!is_vertex_manifold) {
         std::cerr << "Error: The mesh is not vertex manifold" << std::endl;
-        //std::exit(EXIT_FAILURE);
+        std::exit(EXIT_FAILURE);
     }
+
     // check o3d_mesh properties
     // is it edge manifold?
     bool allow_boundary_edges = true;
@@ -2031,14 +2038,14 @@ void Mesher::mesh_integrityCheck() const
             std::cout << "Non-manifold edge " << i << ": " << non_manifold_edges[i][0] << " " << non_manifold_edges[i][1] << std::endl;
         }
         std::cerr << "Error: The mesh is not edge manifold" << std::endl;
-        //std::exit(EXIT_FAILURE);
+        std::exit(EXIT_FAILURE);
     }
 
     // is it orientable?
     bool is_orientable = o3d_mesh->IsOrientable();
     if (!is_orientable) {
         std::cerr << "Error: The mesh is not orientable" << std::endl;
-        //std::exit(EXIT_FAILURE);
+        std::exit(EXIT_FAILURE);
     }
 }
 

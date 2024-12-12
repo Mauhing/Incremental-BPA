@@ -63,6 +63,11 @@ void Visualizer::visualizationThread(
     visualizer.GetRenderOption().line_width_ = 500.0;// This does not work 
     visualizer.AddGeometry(line_segment);
 
+    
+    // add debug vertices
+    auto debug_point = std::make_shared<open3d::geometry::PointCloud>();
+    visualizer.AddGeometry(debug_point);
+
     // Set default viewpoint
     //visualizer.GetViewControl().SetFront({0, 0, -1});
     //visualizer.GetViewControl().SetLookat({0, 0, 0});
@@ -118,7 +123,23 @@ void Visualizer::visualizationThread(
                     renderFacets(color_facets, o3d_mesh);
                     //o3d_mesh->ComputeVertexNormals();
                     //o3d_mesh->ComputeTriangleNormals();
+
+                    // add debug vertices
+                    // is it vertex manifold?
+                    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
+                    if (!is_vertex_manifold) {
+                        // get the non-manifold vertices
+                        debug_point->points_.clear();
+                        debug_point->colors_.clear();
+                        std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
+                        // put the non-manifold vertices in debug_point
+                        for (int i = 0; i < non_manifold_vertices.size(); i++) {
+                            debug_point->points_.push_back(o3d_mesh->vertices_[non_manifold_vertices[i]]);
+                            debug_point->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
+                        }
+                    }
                     visualizer.UpdateGeometry(o3d_mesh);
+                    visualizer.UpdateGeometry(debug_point);
                     mesher.clearNewFacetFlag();
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
