@@ -1714,22 +1714,6 @@ void Mesher::clearOrphanVertices()
 }
 
 
-
-std::vector<ColorFacet> Mesher::getFacetsToRender() const
-{
-    std::unordered_set<ColorFacet> facets_to_render;
-
-    // 1. m_facets
-    Eigen::Vector3d gray_color(0.7, 0.7, 0.7); // it is gray
-    for (auto facet : m_facets) {
-        facets_to_render.insert(ColorFacet(facet, gray_color));
-    }
-    
-    std::vector<ColorFacet> color_facets(facets_to_render.begin(), facets_to_render.end());
-    return color_facets;
-}
-
-
 void Mesher::expandOctree(const std::list<Vertex> &vertices)
 {
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1769,7 +1753,10 @@ void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)
 {
     for (auto &vertex : vertices)
     {
-        m_octree_vertices->addPoint(vertex);
+        Vertex *vertex_ptr = m_octree_vertices->addPoint(vertex);
+        //#ifdef _DEBUG
+        //    addDebugRenderVertex(vertex_ptr, Eigen::Vector3d(0, 1, 0));
+        //#endif
     }
 }
 
@@ -1834,12 +1821,17 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Clear fresh facets
     this->clearFreshFacets();
 
-    // Clear better debug render facets
-    this->clearBetterDebugRender();
+    // Clear debug render facets
+    this->clearDebugRender();
 
     // Clear orphan vertices
     this->clearOrphanVertices();
 
+    //{
+    //    std::lock_guard<std::mutex> lock(*visualization_mutex);
+    //    std::cout << "Press enter to continue" << std::endl;
+    //    std::cin.get();
+    //}
 }
 
 bool Mesher::removeFanFanSingular()
@@ -1991,9 +1983,7 @@ void Mesher::mesh_integrityCheck() const
     // make a share object of o3d_mesh
     std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
 
-    std::vector<ColorFacet> color_facets = this->getFacetsToRender();
-
-    Visualizer::renderFacets(color_facets, o3d_mesh);
+    Visualizer::renderMainMesh(this->getFacets(), o3d_mesh);
 
     // is it vertex manifold?
     bool is_vertex_manifold = o3d_mesh->IsVertexManifold();

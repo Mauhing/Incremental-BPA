@@ -533,9 +533,6 @@ T* TOctreeNode<T>::addPoint(const T &t)
     T* t_ptr = new T(t);
     m_points.insert(t_ptr);
     m_npts++;
-    #ifdef _DEBUG
-        addBetterDebugRenderVertex(t_ptr, Eigen::Vector3d(0, 1, 0));
-    #endif
     return t_ptr;
 }
 

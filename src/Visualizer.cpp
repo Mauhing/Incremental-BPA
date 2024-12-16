@@ -46,11 +46,7 @@ void Visualizer::visualizationThread(
     // Add initial mesh data
     {
         std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-
-        std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
-        renderFacets(color_facets, o3d_mesh);
-        //o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), Eigen::Vector3d(1.0, 0.7, 0.0));
-        //o3d_mesh->ComputeTriangleNormals();
+        renderMainMesh(mesher.getFacets(), o3d_mesh);
     }
     visualizer.AddGeometry(o3d_mesh);
 
@@ -119,8 +115,10 @@ void Visualizer::visualizationThread(
                     //auto now = std::clock();
                     //std::cout << "CPU time: " << static_cast<double>(now) / CLOCKS_PER_SEC << " seconds" << std::endl;
                     //std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
-                    std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
-                    renderFacets(color_facets, o3d_mesh);
+
+                    renderMainMesh(mesher.getFacets(), o3d_mesh);
+
+                    // Shader
                     //o3d_mesh->ComputeVertexNormals();
                     //o3d_mesh->ComputeTriangleNormals();
 
@@ -152,7 +150,35 @@ void Visualizer::visualizationThread(
     visualizer.DestroyVisualizerWindow();
 }
 
-void Visualizer::renderFacets(const std::vector<ColorFacet> &color_facets, std::shared_ptr<open3d::geometry::TriangleMesh>& O3d_mesh)
+void Visualizer::renderMainMesh(const Facet_star_list& facets, std::shared_ptr<open3d::geometry::TriangleMesh>& O3d_mesh)
+{
+    // Clear existing mesh data
+    O3d_mesh->vertices_.clear();
+    O3d_mesh->triangles_.clear();
+    O3d_mesh->vertex_colors_.clear();
+
+    // Create a map of vertices to their new indices
+    std::unordered_map<Vertex *, int> vertex_to_index; // Changed to int
+    int current_index = 0;                             // Changed to int
+
+    for (auto facet : facets) {
+        for (int i = 0; i < 3; i++) {
+            Vertex *v = facet->getVertex(i);
+            if (vertex_to_index.find(v) == vertex_to_index.end()) {
+                vertex_to_index[v] = current_index++;
+                O3d_mesh->vertices_.push_back(Eigen::Vector3d(v->x(), v->y(), v->z()));
+                O3d_mesh->vertex_colors_.push_back(Eigen::Vector3d(0.5, 0.5, 0.5));
+            }
+        }
+    }
+    
+    // create triangles
+    for (auto facet : facets) {
+        O3d_mesh->triangles_.push_back(Eigen::Vector3i(vertex_to_index[facet->getVertex(0)], vertex_to_index[facet->getVertex(1)], vertex_to_index[facet->getVertex(2)]));
+    }
+}
+
+void Visualizer::renderDebugFacets(const std::vector<ColorFacet> &color_facets, std::shared_ptr<open3d::geometry::TriangleMesh>& O3d_mesh)
  {
     // Clear existing mesh data
     O3d_mesh->vertices_.clear();
@@ -196,7 +222,7 @@ void Visualizer::renderFacets(const std::vector<ColorFacet> &color_facets, std::
 
 }
 
-void Visualizer::renderEdges(const std::vector<ColorEdge> &color_edges, std::shared_ptr<open3d::geometry::LineSet>& O3d_line)
+void Visualizer::renderDebugEdges(const std::vector<ColorEdge> &color_edges, std::shared_ptr<open3d::geometry::LineSet>& O3d_line)
 {
     O3d_line->points_.clear();
     O3d_line->lines_.clear();
@@ -224,7 +250,7 @@ void Visualizer::renderEdges(const std::vector<ColorEdge> &color_edges, std::sha
     }
 }
 
-void Visualizer::renderVertices(const std::vector<ColorVertex> &color_vertices, std::shared_ptr<open3d::geometry::PointCloud>& O3d_point)
+void Visualizer::renderDebugVertices(const std::vector<ColorVertex> &color_vertices, std::shared_ptr<open3d::geometry::PointCloud>& O3d_point)
 {
     //auto O3d_point = std::make_shared<open3d::geometry::PointCloud>();
     O3d_point->points_.clear();

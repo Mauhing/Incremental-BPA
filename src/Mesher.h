@@ -541,9 +541,6 @@ class Mesher
         
 
     public: // Open3D rendering
-        std::vector<ColorFacet> getFacetsToRender() const;
-        std::vector<ColorEdge> getEdgesToRender() const;
-        std::vector<ColorVertex> getVerticesToRender() const;
 
         void setVisualizationSync(std::mutex* mutex, std::condition_variable* cv) {
             visualization_mutex = mutex;

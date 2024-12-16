@@ -207,8 +207,7 @@ int main(int argc, char **argv)
 
     if (o3d_save_ply) {
         std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-        std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
-        Visualizer::renderFacets(color_facets, o3d_mesh);
+        Visualizer::renderMainMesh(mesher.getFacets(), o3d_mesh);
         open3d::io::WriteTriangleMeshToPLY("new_final.ply", *o3d_mesh, false, false, false, false, false, true);
         std::cout << "Mesh saved in" << "new_final.ply" << std::endl;
     }
