@@ -1843,10 +1843,14 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     while (true) {
         // Remove singular vertices
         
+        std::cout << "Removing fan fan singular vertices" << std::endl;
         bool found_fan_fan_vertex = this->removeFanFanSingular();
-    
+        std::cout << "Finished removing fan fan singular vertices" << std::endl;
+ 
         // Remove disk singular verticesmesher.batchReconstructNew(vertices);
+        std::cout << "Removing disk fan singular vertices" << std::endl;
         bool found_disk_fan_vertex = this->removeDiskFanSingular();
+        std::cout << "Finished removing disk fan singular vertices" << std::endl;
 
         if (!found_fan_fan_vertex && !found_disk_fan_vertex) {
             break;
@@ -1854,7 +1858,12 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     }
     
     // Clear fresh facets
+    // Print total new fresh facets
+    std::cout << "\033[32mTotal new fresh facets: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
     this->clearFreshFacets();
+
+    // Clear debug render facets
+    this->clearDebugRender();
 
     // Clear orphan vertices
     this->clearOrphanVertices();
@@ -1922,6 +1931,24 @@ bool Mesher::removeFanFanSingular()
         {
             std::lock_guard<std::mutex> lock(*visualization_mutex);
             this->removeFacets(singular_facets);
+
+            for (auto* facet : m_facets) {
+                Vertex* v1 = facet->getVertex(0);
+                Vertex* v2 = facet->getVertex(1);
+                Vertex* v3 = facet->getVertex(2);
+                if (v1 == nullptr || v2 == nullptr || v3 == nullptr) {
+                    std::cout << "Facet address: " << facet << std::endl;
+                }
+            }
+
+            for (auto* facet : m_debug_render_facets) {
+                Vertex* v1 = facet->getVertex(0);
+                Vertex* v2 = facet->getVertex(1);
+                Vertex* v3 = facet->getVertex(2);
+                if (v1 == nullptr || v2 == nullptr || v3 == nullptr) {
+                    std::cout << "Debug render facet address: " << facet << std::endl;
+                }
+            }
         }
     }
     return found_fan_fan_vertex;

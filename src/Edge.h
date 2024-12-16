@@ -52,7 +52,6 @@ class Edge
     /** @brief second adjacent facet*/
     Facet *m_facet2;
 
-
     /** @brief edge type (0: border, 1: front edge, 2: inner edge)*/
     EdgeType m_type;
     //int m_type;

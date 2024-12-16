@@ -77,7 +77,7 @@ void Visualizer::visualizationThread(
     //bool first_frame = true;
 
     // add coordinate axes
-    auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(5.0);
+    auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
     visualizer.AddGeometry(coordinate_axes);
 
     // add debug facets, line, point
@@ -133,7 +133,7 @@ void Visualizer::visualizationThread(
                         debug_point->colors_.clear();
                         std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
                         // put the non-manifold vertices in debug_point
-                        for (int i = 0; i < non_manifold_vertices.size(); i++) {
+                        for (size_t i = 0; i < non_manifold_vertices.size(); i++) {
                             debug_point->points_.push_back(o3d_mesh->vertices_[non_manifold_vertices[i]]);
                             debug_point->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
                         }
