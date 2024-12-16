@@ -600,34 +600,34 @@ class Mesher
 
         void mesh_integrityCheck() const;
     
+
     private: // debug rendering
-    
-        mutable Vertex_star_list m_debug_render_vertices;
-        mutable Edge_star_list m_debug_render_edges;
-        mutable Facet_star_list m_debug_render_facets;
+        mutable std::vector<ColorFacet> m_debug_render_facets;
+        mutable std::vector<ColorEdge> m_debug_render_edges;
+        mutable std::vector<ColorVertex> m_debug_render_vertices;
 
-    public: // debug rendering 
-        void addDebugRenderVertex(Vertex *vertex)
+        void addDebugRenderFacet(Facet *facet, const Eigen::Vector3d &color)
         {
-            m_debug_render_vertices.push_back(vertex);
+            m_debug_render_facets.push_back(ColorFacet(facet, color));
         }
 
-        void addDebugRenderEdge(Edge *edge)
+        void addDebugRenderEdge(Edge *edge, const Eigen::Vector3d &color)
         {
-            m_debug_render_edges.push_back(edge);
+            m_debug_render_edges.push_back(ColorEdge(edge, color));
         }
 
-        void addDebugRenderFacet(Facet *facet)
+        void addDebugRenderVertex(Vertex *vertex, const Eigen::Vector3d &color)
         {
-            m_debug_render_facets.push_back(facet);
+            m_debug_render_vertices.push_back(ColorVertex(vertex, color));
         }
-        
+
         void clearDebugRender()
         {
-            m_debug_render_vertices.clear();
-            m_debug_render_edges.clear();
             m_debug_render_facets.clear();
+            m_debug_render_edges.clear();
+            m_debug_render_vertices.clear();
         }
+
         
 };
 

@@ -1713,18 +1713,7 @@ void Mesher::clearOrphanVertices()
                                           { this->removeOrphanAndUpdate(node); });
 }
 
-std::vector<ColorVertex> Mesher::getVerticesToRender() const
-{
-    // 1. dubug vertices
-    std::vector<ColorVertex> color_vertices;
-    color_vertices.reserve(m_debug_render_vertices.size());
-    Eigen::Vector3d green_color(0.0, 1.0, 0.0);
 
-    for (auto vertex : m_debug_render_vertices) {
-        color_vertices.push_back(ColorVertex(vertex, green_color));
-    }
-    return color_vertices;
-}
 
 std::vector<ColorFacet> Mesher::getFacetsToRender() const
 {
@@ -1736,21 +1725,6 @@ std::vector<ColorFacet> Mesher::getFacetsToRender() const
         facets_to_render.insert(ColorFacet(facet, gray_color));
     }
     
-    // 2. m_debug_facets
-    Eigen::Vector3d blue_color(0.0, 0.0, 1.0);
-    for (auto facet : m_debug_render_facets) {
-      // Erase any existing ColorFacet with this facet pointer, regardless of color
-      for (auto it = facets_to_render.begin(); it != facets_to_render.end();) {
-          if (it->facet == facet) {
-              it = facets_to_render.erase(it);
-          } else {
-              ++it;
-          }
-      }
-      // Insert with blue color
-      facets_to_render.insert(ColorFacet(facet, blue_color));
-    }
-
     std::vector<ColorFacet> color_facets(facets_to_render.begin(), facets_to_render.end());
     return color_facets;
 }
@@ -1858,12 +1832,10 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     }
     
     // Clear fresh facets
-    // Print total new fresh facets
-    std::cout << "\033[32mTotal new fresh facets: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
     this->clearFreshFacets();
 
-    // Clear debug render facets
-    this->clearDebugRender();
+    // Clear better debug render facets
+    this->clearBetterDebugRender();
 
     // Clear orphan vertices
     this->clearOrphanVertices();
@@ -1940,15 +1912,6 @@ bool Mesher::removeFanFanSingular()
                     std::cout << "Facet address: " << facet << std::endl;
                 }
             }
-
-            for (auto* facet : m_debug_render_facets) {
-                Vertex* v1 = facet->getVertex(0);
-                Vertex* v2 = facet->getVertex(1);
-                Vertex* v3 = facet->getVertex(2);
-                if (v1 == nullptr || v2 == nullptr || v3 == nullptr) {
-                    std::cout << "Debug render facet address: " << facet << std::endl;
-                }
-            }
         }
     }
     return found_fan_fan_vertex;
@@ -1990,18 +1953,6 @@ bool Mesher::removeDiskFanSingular()
         if (count > 1) { 
             VertexDiskFanInfo vertex_disk_fan_info = this->getDiskFan(v);
             disk_fan_vertices.push_back(vertex_disk_fan_info);
-        }
-    }
-    
-    // Add defug print
-    for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices) {
-        if (vertex_disk_fan_info.disk_facets.size() > 0) {
-            for (Facet_set &facet_set : vertex_disk_fan_info.disk_facets) {
-                for (Facet *facet : facet_set) {
-                    m_debug_render_facets.push_back(facet);
-                }
-            }
-            std::cout << "Disk fan vertex: " << vertex_disk_fan_info.disk_fan_vertex->index() << std::endl;
         }
     }
 
