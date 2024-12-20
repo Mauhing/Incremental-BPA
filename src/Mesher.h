@@ -177,6 +177,8 @@ class Mesher
         
         std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
+        std::vector<Vertex*> m_fresh_vertices;
+
     public : //constructor-destructor
 
         /** @brief default constructor*/
@@ -291,6 +293,10 @@ class Mesher
          * @return end iterator of the facets
          */
         Facet_star_list::const_iterator facets_end() const;
+
+        const std::vector<Vertex*>& getFreshVertices() const;
+
+        void clearFreshVertices();
 
     public: // reset octree and octree iterator
             
@@ -625,6 +631,18 @@ class Mesher
             m_debug_render_vertices.clear();
         }
 
+        public:
+            const std::vector<ColorFacet>& getDebugRenderFacets() const {
+                return m_debug_render_facets;
+            }   
+
+            const std::vector<ColorEdge>& getDebugRenderEdges() const {
+                return m_debug_render_edges;
+            }
+
+            const std::vector<ColorVertex>& getDebugRenderVertices() const {
+                return m_debug_render_vertices;
+            }
         
 };
 

@@ -1754,10 +1754,21 @@ void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)
     for (auto &vertex : vertices)
     {
         Vertex *vertex_ptr = m_octree_vertices->addPoint(vertex);
+        m_fresh_vertices.push_back(vertex_ptr);
         //#ifdef _DEBUG
         //    addDebugRenderVertex(vertex_ptr, Eigen::Vector3d(0, 1, 0));
         //#endif
     }
+}
+
+const std::vector<Vertex*>& Mesher::getFreshVertices() const
+{
+    return m_fresh_vertices;
+}
+
+void Mesher::clearFreshVertices()
+{
+    m_fresh_vertices.clear();
 }
 
 void Mesher::resetBoundaryEdges()
@@ -1804,14 +1815,9 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     while (true) {
         // Remove singular vertices
         
-        std::cout << "Removing fan fan singular vertices" << std::endl;
         bool found_fan_fan_vertex = this->removeFanFanSingular();
-        std::cout << "Finished removing fan fan singular vertices" << std::endl;
  
-        // Remove disk singular verticesmesher.batchReconstructNew(vertices);
-        std::cout << "Removing disk fan singular vertices" << std::endl;
         bool found_disk_fan_vertex = this->removeDiskFanSingular();
-        std::cout << "Finished removing disk fan singular vertices" << std::endl;
 
         if (!found_fan_fan_vertex && !found_disk_fan_vertex) {
             break;
@@ -1820,6 +1826,9 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     
     // Clear fresh facets
     this->clearFreshFacets();
+
+    // Clear fresh vertices
+    this->clearFreshVertices();
 
     // Clear debug render facets
     this->clearDebugRender();

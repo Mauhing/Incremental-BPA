@@ -41,8 +41,6 @@ void Visualizer::visualizationThread(
 
     // Create a shared pointer to store the mesh
     auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-    auto o3d_line = std::make_shared<open3d::geometry::LineSet>();
-    auto o3d_point = std::make_shared<open3d::geometry::PointCloud>();
     // Add initial mesh data
     {
         std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
@@ -50,18 +48,13 @@ void Visualizer::visualizationThread(
     }
     visualizer.AddGeometry(o3d_mesh);
 
-    // Add a dummy line segment
-    auto line_segment = std::make_shared<open3d::geometry::LineSet>();
-    line_segment->points_.push_back(Eigen::Vector3d(0, 3, 0));
-    line_segment->points_.push_back(Eigen::Vector3d(5, 3, 0));
-    line_segment->lines_.push_back(Eigen::Vector2i(0, 1));
-    line_segment->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0)); // Red color
-    visualizer.GetRenderOption().line_width_ = 500.0;// This does not work 
-    visualizer.AddGeometry(line_segment);
-
-    
-    // add debug vertices
+ 
+    // add debug vertices, debug facets, debug edges
+    auto debug_facet = std::make_shared<open3d::geometry::TriangleMesh>();
+    auto debug_edge = std::make_shared<open3d::geometry::LineSet>();
     auto debug_point = std::make_shared<open3d::geometry::PointCloud>();
+    visualizer.AddGeometry(debug_facet);
+    visualizer.AddGeometry(debug_edge);
     visualizer.AddGeometry(debug_point);
 
     // Set default viewpoint
@@ -75,11 +68,6 @@ void Visualizer::visualizationThread(
     // add coordinate axes
     auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
     visualizer.AddGeometry(coordinate_axes);
-
-    // add debug facets, line, point
-    //auto debug_facets = std::make_shared<open3d::geometry::TriangleMesh>();
-    //auto debug_line = std::make_shared<open3d::geometry::LineSet>();
-    //auto debug_point = std::make_shared<open3d::geometry::PointCloud>();
 
     // Visualization loop
     while (!should_exit) {
@@ -115,8 +103,8 @@ void Visualizer::visualizationThread(
                     //auto now = std::clock();
                     //std::cout << "CPU time: " << static_cast<double>(now) / CLOCKS_PER_SEC << " seconds" << std::endl;
                     //std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
-
                     renderMainMesh(mesher.getFacets(), o3d_mesh);
+                    renderFreshVertices(mesher.getFreshVertices(), debug_point);
 
                     // Shader
                     //o3d_mesh->ComputeVertexNormals();
@@ -124,18 +112,18 @@ void Visualizer::visualizationThread(
 
                     // add debug vertices
                     // is it vertex manifold?
-                    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
-                    if (!is_vertex_manifold) {
-                        // get the non-manifold vertices
-                        debug_point->points_.clear();
-                        debug_point->colors_.clear();
-                        std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
-                        // put the non-manifold vertices in debug_point
-                        for (size_t i = 0; i < non_manifold_vertices.size(); i++) {
-                            debug_point->points_.push_back(o3d_mesh->vertices_[non_manifold_vertices[i]]);
-                            debug_point->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
-                        }
-                    }
+                    //bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
+                    //if (!is_vertex_manifold) {
+                    //    // get the non-manifold vertices
+                    //    debug_point->points_.clear();
+                    //    debug_point->colors_.clear();
+                    //    std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
+                    //    // put the non-manifold vertices in debug_point
+                    //    for (size_t i = 0; i < non_manifold_vertices.size(); i++) {
+                    //        debug_point->points_.push_back(o3d_mesh->vertices_[non_manifold_vertices[i]]);
+                    //        debug_point->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
+                    //    }
+                    //}
                     visualizer.UpdateGeometry(o3d_mesh);
                     visualizer.UpdateGeometry(debug_point);
                     mesher.clearNewFacetFlag();
@@ -252,7 +240,6 @@ void Visualizer::renderDebugEdges(const std::vector<ColorEdge> &color_edges, std
 
 void Visualizer::renderDebugVertices(const std::vector<ColorVertex> &color_vertices, std::shared_ptr<open3d::geometry::PointCloud>& O3d_point)
 {
-    //auto O3d_point = std::make_shared<open3d::geometry::PointCloud>();
     O3d_point->points_.clear();
     O3d_point->colors_.clear();
 
@@ -260,5 +247,17 @@ void Visualizer::renderDebugVertices(const std::vector<ColorVertex> &color_verti
     {
         O3d_point->points_.push_back(Eigen::Vector3d(color_vertex.vertex->x(), color_vertex.vertex->y(), color_vertex.vertex->z()));
         O3d_point->colors_.push_back(color_vertex.color);
+    }
+}
+
+void Visualizer::renderFreshVertices(const std::vector<Vertex*> &vertices, std::shared_ptr<open3d::geometry::PointCloud>& O3d_point)
+{
+    O3d_point->points_.clear();
+    O3d_point->colors_.clear();
+
+    for (auto vertex : vertices)
+    {
+        O3d_point->points_.push_back(Eigen::Vector3d(vertex->x(), vertex->y(), vertex->z()));
+        O3d_point->colors_.push_back(Eigen::Vector3d(0, 1, 0));
     }
 }
