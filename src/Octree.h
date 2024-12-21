@@ -231,9 +231,16 @@ class TOctree
         void updateNodeLoc(TOctreeNode<T>* node, unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
 
     #ifdef _DEBUG
+<<<<<<< HEAD
     public:
         template<typename U>
         TOctree<U> debugCopySkeleton() const;
+=======
+        public:
+            template<typename U>
+            TOctree<U> debugCopySkeleton() const;
+    #endif
+>>>>>>> 87fb1ea21f3d4bf76dff259cbd7c64dfc51aff50
 
         /**
          * @brief print the mean number of points per non
