@@ -45,14 +45,6 @@
 
 const double PI = 3.1415926535;
 
-//using namespace std;
-
-
-template <typename K>
-static bool isInSet(const K &element, const std::set<K> &mySet)
-{
-    return mySet.find(element) != mySet.end();
-}
 
 template <typename K>
 static bool isNotInSet(const K &element, const std::set<K> &mySet)
@@ -61,7 +53,6 @@ static bool isNotInSet(const K &element, const std::set<K> &mySet)
 }
 
 Mesher::Mesher() : visualization_mutex(nullptr),
-                   visualization_cv(nullptr),
                    new_facet_added(false)
 {
     m_octree_vertices = NULL;
@@ -76,7 +67,6 @@ Mesher::Mesher() : visualization_mutex(nullptr),
 Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator_vertices,
                OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator)
     : visualization_mutex(nullptr),
-      visualization_cv(nullptr),
       new_facet_added(false)
 {
     m_ball_radius = iterator_vertices->getR();
@@ -122,16 +112,6 @@ void Mesher::setBallRadius(double r)
     m_sq_ball_radius = r * r;
 }
 
-double Mesher::getBallRadius() const
-{
-    return m_ball_radius;
-}
-
-double Mesher::getSquareBallRadius() const
-{
-    return m_sq_ball_radius;
-}
-
 unsigned int Mesher::nVertices() const
 {
     return static_cast<unsigned int>(m_vertices.size());
@@ -140,11 +120,6 @@ unsigned int Mesher::nVertices() const
 unsigned int Mesher::nFacets() const
 {
     return m_nfacets;
-}
-
-unsigned int Mesher::nFrontEdges() const
-{
-    return (unsigned int)m_edge_front.size();
 }
 
 unsigned int Mesher::nBorderEdges() const
@@ -215,11 +190,6 @@ void Mesher::changeRadius(double radius)
               << " border edges." << std::endl;
 }
 
-void Mesher::resetOctree(OctreeVertices *octree, OctreeIteratorVertices *iterator)
-{
-    m_octree_vertices = octree;
-    m_iterator_vertices = iterator;
-}
 
 bool Mesher::findSeedTriangle()
 {
@@ -554,14 +524,6 @@ void Mesher::computeNormal(const Vertex &v1, const Vertex &v2, const Vertex &v3,
     }
 }
 
-void Mesher::computeNormalUsingOrderOfVertices(const Vertex &v1, const Vertex &v2, const Vertex &v3,
-                                               double &nx, double &ny, double &nz) const
-{
-    cross_product(v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
-                  v3.x() - v1.x(), v3.y() - v1.y(), v3.z() - v1.z(),
-                  nx, ny, nz);
-    normalize(nx, ny, nz);
-}
 
 ReconstructionType Mesher::computeReconstructionType(
     const Edge *eSource,
@@ -844,7 +806,6 @@ void Mesher::addFacet(Facet *f)
     f->setBallCenterPtr(ball_center);
 
     new_facet_added = true;
-    visualization_cv->notify_one();
 
     if (m_slow_visualization)
     {
@@ -1289,14 +1250,6 @@ bool Mesher::trySeed(Vertex &v, OctreeNodeV *containment_node, double d)
     return false;
 }
 
-void Mesher::reconstructAroundNode(OctreeNodeV *containment_node, double d)
-{
-    if (!m_edge_front.empty())
-        expandTriangulationAroundNode(containment_node, d);
-
-    bool found = false;
-    findSeedTriangle(containment_node, containment_node, d, found);
-}
 
 void Mesher::expandTriangulationAroundNode(OctreeNodeV *containment_node,
                                            double d)
@@ -1427,30 +1380,6 @@ void Mesher::collectBorderEdges(OctreeNodeV *containment_node,
             }
         }
     }
-}
-
-std::set<Facet *> &Mesher::getBoundaryFacets() const
-{
-    std::set<Facet *> *boundary_facets = new std::set<Facet *>();
-    // auto boundary_facets = std::make_unique<std::set<Facet*>>(); // Smart pointer to manage the memory, please use #include <memory>
-    for (const auto &edge : m_border_edges)
-    {
-        Vertex *v1 = edge->getSource();
-        Vertex *v2 = edge->getTarget();
-
-        Facet_set facets_set1 = v1->adjacentFacets();
-        Facet_set facets_set2 = v2->adjacentFacets();
-        for (const auto &facet : facets_set1)
-        {
-            boundary_facets->insert(facet);
-        }
-        for (const auto &facet : facets_set2)
-        {
-            boundary_facets->insert(facet);
-        }
-    }
-    std::cout << "Address of boundary_facets in getBoundaryFacets: " << boundary_facets << std::endl;
-    return *boundary_facets;
 }
 
 void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
@@ -1592,11 +1521,6 @@ const std::list<Facet *> &Mesher::getFacets() const
     return m_facets;
 }
 
-Edge_star_list Mesher::getBorderEdges() const
-{
-    return m_border_edges;
-}
-
 bool sameOrientation(int i, Facet *query_facet)
 {
 
@@ -1639,7 +1563,7 @@ bool sameOrientation(int i, Facet *query_facet)
     }
 }
 
-void Mesher::SanityCheckOrientation() const
+void Mesher::debugCheckOrientation() const
 {
     for (auto facet : m_facets)
     {
@@ -1658,7 +1582,7 @@ void Mesher::SanityCheckOrientation() const
     }
 }
 
-void Mesher::print_stats()
+void Mesher::debugPrintStats()
 {
     std::cout << ">>>>>>>>" << std::endl;
     std::cout << "Reconstructed mesh: " << this->nVertices()

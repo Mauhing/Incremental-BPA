@@ -180,13 +180,6 @@ bool Edge::hasVertex(Vertex *vertex) const
     return false;
 }
 
-bool Edge::isInnerEdge() const
-{
-    if(m_facet2 == NULL)
-        return false;
-    return true;
-}
-
 
 Edge::EdgeType Edge::getType() const
 {
@@ -224,7 +217,8 @@ Facet* Edge::anotherFacet(Facet *f)
     return m_facet1;
 }
 
-unsigned int Edge::getNumAdjacentFacets() const
+#ifdef _DEBUG
+unsigned int Edge::debugGetNumAdjacentFacets() const
 {
     if (m_facet1 == NULL && m_facet2 == NULL)
         return 0;
@@ -238,3 +232,4 @@ unsigned int Edge::getNumAdjacentFacets() const
     std::exit(EXIT_FAILURE);
     #endif
 }
+#endif

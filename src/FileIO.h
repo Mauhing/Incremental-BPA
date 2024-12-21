@@ -58,33 +58,11 @@ class FileIO
         //added by mauhing
         static std::vector<std::string> readIntoFileBatch(const char *filename);
 
-        //added by mauhing
-        static bool readFromBatchAndSortPoints(const string &batch_data, OctreeVertices &octree, double min_radius);
-
-        /** @brief save points from an octree to a file
-         * @param filename name of the file to save to
-         * @param octree octree to save the points from
-         * @return false if something went wrong
-         */
-        static bool savePoints(const char* filename, OctreeVertices &octree);
-
-
-        /** @brief save triangulation
-         * @param filename name of the file to save to
-         * @param mesher name of the mesher to save vertices and facets from
-         * @return false if something went wrong
-         */
-        static bool saveMesh(const char* filename, Mesher &mesher);
 
         static bool saveMeshDebug(const char* filename, Mesher &mesher);
 
         static bool saveMeshDebug(const char* filename, const std::list<Facet*> &facets);
 
-        static bool saveLinesetDebug(const char* filename, const Edge_star_list &border_edges);
-
-        static bool saveBallCenters(const char* filename, const Point_UnOrdSet &ball_centers, const double &radius);
-        
-        static bool savePointsDebug(const char* filename, const Point_UnOrdSet &vertices_inside_balls);
 
         static std::tuple<Point, double, unsigned int> originAndDepth(const string &batch_data, double min_radius);
 
@@ -106,6 +84,23 @@ class FileIO
     public:
         static void setBaseOutputFilename(const std::string &filename);
 
+    #ifdef _DEBUG
+    public: // debug
+        /** @brief save triangulation
+         * @param filename name of the file to save to
+         * @param mesher name of the mesher to save vertices and facets from
+         * @return false if something went wrong
+         */
+        static bool debugSavePLY(const char* filename, Mesher &mesher);
+        
+        static bool debugSaveLineset(const char* filename, const Edge_star_list &border_edges);
+
+        static bool debugSavePoints(const char* filename, OctreeVertices& octree);
+
+        static bool debugSaveBallCenters(const char* filename, const Point_UnOrdSet &ball_centers, const double &radius);
+
+        static bool debugSavePoints(const char* filename, const Point_UnOrdSet &vertices_inside_balls);
+    #endif
 };
 
 

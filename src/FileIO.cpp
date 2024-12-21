@@ -37,115 +37,8 @@ FileIO::~FileIO()
 
 std::string FileIO::baseOutputFilename;
 
-bool FileIO::readAndSortPoints(const char* filename, OctreeVertices& octree,
-                               double min_radius)
-{
-    ifstream in;
-    in.open(filename);
-
-    if(!in)
-    {
-        std::cerr<<"File "<<filename<<" could not be opened"<<std::endl;
-        return false;
-    }
-
-    string firstline;
-
-    getline(in, firstline);
-
-    istringstream line_in(firstline);
-    string word;
-    int nword = 0;
-    while (line_in>> word)
-        nword++;
-
-    if(nword == 3)
-    {
-        std::cerr<< "Only three doubles per line: unoriented points?"
-           <<"This program needs oriented points!"<<endl;
-        return false;
-    }
-
-    if( nword != 6)
-    {
-        std::cerr<<"each point must be given by 6 values (position + normal) :"
-            <<"x y z nx ny nz"<<endl;
-        return false;
-    }
-
-    in.clear() ;
-    in.seekg(0, ios::beg);
-
-    double x,y,z,nx,ny,nz;
-    in >> x >> y >> z >> nx >> ny >> nz;
-
-    list<Vertex> input_vertices;
-    input_vertices.push_back(Vertex(x,y,z,nx,ny,nz));
-
-    // >>> initialize bounding box
-    double xmin, ymin, zmin, xmax, ymax, zmax;
-    xmin = xmax = x;
-    ymin = ymax = y;
-    zmin = zmax = z;
-    // <<<
-
-    // >>> read the rest of the file and find the bounding box
-    while( in >> x >> y >> z >> nx >> ny >> nz)
-    {
-        input_vertices.push_back(Vertex(x,y,z,nx,ny,nz));
-
-        xmin = x < xmin ? x : xmin;
-        xmax = x > xmax ? x : xmax;
-        ymin = y < ymin ? y : ymin;
-        ymax = y > ymax ? y : ymax;
-        zmin = z < zmin ? z : zmin;
-        zmax = z > zmax ? z : zmax;
-    }
-    in.close();
-    // <<<
-
-    std::cout<<input_vertices.size()<<" points read"<<std::endl;
-
-    double lx = xmax - xmin;
-    double ly = ymax - ymin;
-    double lz = zmax - zmin;
-
-    // Get size of one of the largest dimension
-    double size = lx > ly ? lx : ly;
-    size = size > lz ? size : lz;
-
-    size = 1.1 * size;
-    double margin;
-
-
-    if(min_radius > 0)
-    {
-        unsigned int depth = (unsigned int)ceil( log2( size / (min_radius) ));
-        double adapted_size = pow2(depth) * min_radius;
-        margin = 0.5 * (adapted_size - size);
-        size = adapted_size;
-        octree.setDepth(depth);
-    }
-    else
-    {
-        margin = 0.05 * size;
-    }
-
-    // The orgin of the octree is the lower left corner (2D) of the bounding box
-    double ox = xmin - margin;
-    double oy = ymin - margin;
-    double oz = zmin - margin;
-    Point origin(ox,oy,oz);
-
-    // a root node is created in the function initialize.
-    octree.initialize(origin, size);
-
-    octree.addPoints(input_vertices.begin(), input_vertices.end());
-
-    return true;
-}
-
-bool FileIO::savePoints(const char* filename, OctreeVertices& octree)
+#ifdef _DEBUG
+bool FileIO::debugSavePoints(const char* filename, OctreeVertices& octree)
 {
     ofstream out;
     out.open(filename);
@@ -161,11 +54,9 @@ bool FileIO::savePoints(const char* filename, OctreeVertices& octree)
 
     return true;
 }
+#endif
 
-
-
-
-bool FileIO::saveMesh(const char* output_filename, Mesher& mesher)
+bool FileIO::debugSavePLY(const char* output_filename, Mesher& mesher)
 {
     std::string filename = baseOutputFilename + output_filename;
 
@@ -316,82 +207,6 @@ std::vector<string> FileIO::readIntoFileBatch(const char *filenames)
 
     whole_data.close();
     return batch_data;
-}
-
-//add by mauhing
-bool FileIO::readFromBatchAndSortPoints(const string &batch_data, OctreeVertices &octree, double min_radius)
-{
-    // batch data has format:
-    // x y z nx ny nz
-    // x y z nx ny nz
-    // ...
-
-    double x, y, z, nx, ny, nz;
-    istringstream batch_data_in(batch_data);
-    batch_data_in >> x >> y >> z >> nx >> ny >> nz;
-
-    list<Vertex> input_vertices;
-    input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
-
-    // >>> initialize bounding box
-    double xmin, ymin, zmin, xmax, ymax, zmax;
-    xmin = xmax = x;
-    ymin = ymax = y;
-    zmin = zmax = z;
-    // <<<
-
-    // >>> read the rest of the file and find the bounding box
-    while (batch_data_in >> x >> y >> z >> nx >> ny >> nz)
-    {
-        input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
-
-        xmin = x < xmin ? x : xmin;
-        xmax = x > xmax ? x : xmax;
-        ymin = y < ymin ? y : ymin;
-        ymax = y > ymax ? y : ymax;
-        zmin = z < zmin ? z : zmin;
-        zmax = z > zmax ? z : zmax;
-    }
-    // <<<
-    std::cout << input_vertices.size() << " points read" << std::endl;
-
-
-    double lx = xmax - xmin;
-    double ly = ymax - ymin;
-    double lz = zmax - zmin;
-
-    // Get size of one of the largest dimension
-    double size = lx > ly ? lx : ly;
-    size = size > lz ? size : lz;
-
-    size = 1.1 * size;
-    double margin;
-
-    if (min_radius > 0)
-    {
-        unsigned int depth = (unsigned int)ceil(log2(size / (min_radius)));
-        double adapted_size = pow2(depth) * min_radius;
-        margin = 0.5 * (adapted_size - size);
-        size = adapted_size;
-        octree.setDepth(depth);
-    }
-    else
-    {
-        margin = 0.05 * size;
-    }
-
-    // The orgin of the octree is the lower left corner (2D) of the bounding box
-    double ox = xmin - margin;
-    double oy = ymin - margin;
-    double oz = zmin - margin;
-    Point origin(ox, oy, oz);
-
-    // a root node is created in the function initialize.
-    octree.initialize(origin, size);
-
-    octree.addPoints(input_vertices.begin(), input_vertices.end());
-
-    return true;
 }
 
 std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const string &batch_data, double min_radius)
@@ -572,7 +387,8 @@ std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
     return input_vertices;
 }
 
-bool FileIO::saveLinesetDebug(const char* output_filename, const Edge_star_list &border_edges)
+#ifdef _DEBUG
+bool FileIO::debugSaveLineset(const char* output_filename, const Edge_star_list &border_edges)
 {
     std::string filename = baseOutputFilename + output_filename;
 
@@ -595,8 +411,9 @@ bool FileIO::saveLinesetDebug(const char* output_filename, const Edge_star_list 
     out.close(); // close the file
     return true;
 }
+#endif
 
-bool FileIO::saveBallCenters(const char* output_filename, const Point_UnOrdSet &ball_centers, const double &radius)
+bool FileIO::debugSaveBallCenters(const char* output_filename, const Point_UnOrdSet &ball_centers, const double &radius)
 {
     std::string filename = baseOutputFilename + output_filename;
 
@@ -626,7 +443,7 @@ bool FileIO::saveBallCenters(const char* output_filename, const Point_UnOrdSet &
     return true;
 }
 
-bool FileIO::savePointsDebug(const char* output_filename, const Point_UnOrdSet &points)
+bool FileIO::debugSavePoints(const char* output_filename, const Point_UnOrdSet &points)
 {
     std::string filename = baseOutputFilename + output_filename;
 

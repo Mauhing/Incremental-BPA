@@ -260,10 +260,6 @@ class Mesher
          */
         unsigned int nFacets() const;
 
-        /** @brief get the number of edges in the advancing front
-         * @return number of front edges
-         */
-        unsigned int nFrontEdges() const;
 
         /** @brief get number of border edges
          * @return number of border edges
@@ -297,32 +293,7 @@ class Mesher
         const std::vector<Vertex*>& getFreshVertices() const;
 
         void clearFreshVertices();
-
-    public: // reset octree and octree iterator
-            
-        /** @brief reset the octree and the octree iterator
-        * @param octree octree containing the points to mesh
-        * @param iterator iterator over the octree
-        */
-        void resetOctree(OctreeVertices *octree, OctreeIteratorVertices *iterator);
-
-        /** @brief find all boundary edges and mark it as front edges
-         */
-        //void allBoundaryEdgesToFrontEdges();
-
-    public:
-        std::set<Facet*>& getBoundaryFacets() const;
-        
-
-    protected :
-
-        /** @brief reconstruct confined to a band around an inside of a node
-         * @param node confinement node
-         * @param d band width
-         */
-        void  reconstructAroundNode(OctreeNodeV *node, double d);
-
-
+ 
     private : //auxilliary methods for performing the triangulation
 
         /** @brief find a seed triangle
@@ -423,8 +394,6 @@ class Mesher
         void computeNormal(const Vertex &v1, const Vertex &v2, const Vertex &v3,
                            double &nx, double &ny, double &nz) const;
 
-        void computeNormalUsingOrderOfVertices(const Vertex &v1, const Vertex &v2, const Vertex &v3,
-                           double &nx, double &ny, double &nz) const;
 
         /** @brief find a candidate vertex for creating a face
          * @return either the candidate vertex if any or NULL
@@ -510,9 +479,7 @@ class Mesher
 
         const std::list<Facet*>& getFacets() const;
          
-        Edge_star_list getBorderEdges() const;
-
-        void print_stats(); 
+        void debugPrintStats(); 
         
         Facet_set computeCollisionFacets(const std::list<Vertex> &vertices);
 
@@ -542,18 +509,14 @@ class Mesher
     private: // For Open3D rendering
         bool m_slow_visualization;
         std::mutex* visualization_mutex;
-        std::condition_variable* visualization_cv;
-        bool new_facet_added;
-        
+        bool new_facet_added; 
 
     public: // Open3D rendering
 
-        void setVisualizationSync(std::mutex* mutex, std::condition_variable* cv) {
+        void setVisualizationSync(std::mutex* mutex) {
             visualization_mutex = mutex;
-            visualization_cv = cv;
         }
 
-        bool hasNewFacet() const { return new_facet_added; }
         void clearNewFacetFlag() { new_facet_added = false; }
         void setSlowVisualization(bool slow) {
             m_slow_visualization = slow;
@@ -598,12 +561,7 @@ class Mesher
         }
 
 
-    public: // Sanity check
-        void SanityCheckOrientation() const; 
-
-        void mesh_integrityCheck() const;
     
-
     private: // debug rendering
         mutable std::vector<ColorFacet> m_debug_render_facets;
         mutable std::vector<ColorEdge> m_debug_render_edges;
@@ -643,7 +601,13 @@ class Mesher
             const std::vector<ColorVertex>& getDebugRenderVertices() const {
                 return m_debug_render_vertices;
             }
-        
+
+    #ifdef _DEBUG
+    public: // Sanity check
+        void debugCheckOrientation() const; 
+
+        void mesh_integrityCheck() const;
+    #endif
 };
 
 #endif

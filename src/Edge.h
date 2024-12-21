@@ -124,10 +124,6 @@ class Edge
     */
    bool hasVertex(Vertex *vertex) const;
 
-   /** @brief test if an edge is an inner edge or a front/border edge
-    * @return 0 the edge is a front/border edge 1 if the edge is an inner edge
-    */
-   bool isInnerEdge() const;
 
    /** @brief return edge type
     * @return type of the edge (0,1,2)
@@ -143,8 +139,11 @@ class Edge
     void setType(EdgeType type); 
 
     Facet* anotherFacet(Facet *f);
-
-    unsigned int getNumAdjacentFacets() const;
+ 
+    #ifdef _DEBUG
+    public : // use for debug
+      unsigned int debugGetNumAdjacentFacets() const;
+    #endif
 };
 
 #endif

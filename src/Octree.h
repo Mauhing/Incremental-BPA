@@ -232,9 +232,11 @@ class TOctree
 
 
 
-    public:
-        template<typename U>
-        TOctree<U> copy_skeleton() const;
+    #ifdef _DEBUG
+        public:
+            template<typename U>
+            TOctree<U> debugCopySkeleton() const;
+    #endif
 
     private: // helper functions to make another function shorter
         void expandAllNodeLoc(unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
@@ -692,7 +694,7 @@ void TOctree<T>::printOctreeStat()
 
 template<class T>
 template<typename U>
-TOctree<U> TOctree<T>::copy_skeleton() const
+TOctree<U> TOctree<T>::debugCopySkeleton() const
 {
     TOctree<U> new_octree;
     new_octree.setDepth(m_root_depth); 

@@ -98,16 +98,6 @@ Facet::~Facet()
     }
 }
 
-void Facet::insertNewBoundaryEdge(Edge* edge)
-{
-    sb_recordedNewBoundaryEdges.insert(edge);
-}
-
-void Facet::removeNewBoundaryEdge(Edge* edge)
-{
-    sb_recordedNewBoundaryEdges.erase(edge);
-}
-
 Vertex* Facet::vertex(unsigned int i) const
 {
     unsigned int index = i %3;
@@ -120,22 +110,12 @@ Vertex* Facet::getVertex(unsigned int i)
     return m_vertex[index];
 }
 
-Edge* Facet::edge(unsigned int i) const
-{
-    unsigned int i1 = (i+1) %3;
-    unsigned int i2 = (i+2) %3;
-    return m_vertex[i1]->getLinkingEdge(m_vertex[i2]);
-}
-
 const Point& Facet::getBallCenter() const
 {
     return m_ball_center;
 }
 
-void Facet::setBallCenter(Point& point)
-{
-    m_ball_center = point;
-}
+
 
 bool Facet::hasVertex(Vertex* v)
 {
@@ -143,15 +123,6 @@ bool Facet::hasVertex(Vertex* v)
         return true;
     else
         return false;
-}
-
-std::set<Edge*> Facet::getRecordedNewBoundaryEdges()
-{
-    return sb_recordedNewBoundaryEdges;
-}
-
-void Facet::clearNewBoundaryEdges() {
-    sb_recordedNewBoundaryEdges.clear();
 }
 
 void Facet::setBallCenterPtr(BallCenter* ball_center_ptr) {
@@ -182,14 +153,4 @@ Vertex* Facet::previousVertex(const Vertex *v) const
     std::cerr << "Vertex not found in facet" << std::endl;
     std::exit(EXIT_FAILURE);
     #endif
-}
-
-bool Facet::hasEdge(Edge *e)
-{
-    for (int i = 0; i < 3; i++)
-    {
-        if (m_vertex[i]->getLinkingEdge(m_vertex[(i + 1) % 3]) == e)
-            return true;
-    }
-    return false;
 }
