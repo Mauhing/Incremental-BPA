@@ -555,15 +555,6 @@ class Mesher
             m_fresh_facets.insert(facet);
         }
 
-<<<<<<< HEAD
-=======
-        void removeFreshFacet(Facet *facet)
-        {
-            m_fresh_facets.erase(facet);
-        }
-
-
->>>>>>> 87fb1ea21f3d4bf76dff259cbd7c64dfc51aff50
     
     private: // debug rendering
         mutable std::vector<ColorFacet> m_debug_render_facets;
