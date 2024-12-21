@@ -11,7 +11,6 @@ namespace Visualizer
     void visualizationThread(
         Mesher& mesher,
         std::mutex& o3d_mesh_mutex,
-        std::condition_variable& vis_cv,
         std::atomic<bool>& should_exit
     );
 

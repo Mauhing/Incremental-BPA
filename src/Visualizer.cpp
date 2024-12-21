@@ -7,7 +7,6 @@
 void Visualizer::visualizationThread(
     Mesher& mesher,
     std::mutex& o3d_mesh_mutex,
-    std::condition_variable& integrity_check_cv,
     std::atomic<bool>& should_exit
 ) 
 {
@@ -78,31 +77,11 @@ void Visualizer::visualizationThread(
 
         // Wait for new facet with timeout
         {
-            //std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
-            //vis_cv.wait_for(lock, 
-            //    std::chrono::milliseconds(16),  // Short timeout for responsiveness
-            //    [&mesher]{ return mesher.hasNewFacet(); });
-
-            //if (mesher.hasNewFacet()) {
-            //    mesher.renderIntoOpen3D(*o3d_mesh);
-            //    o3d_mesh->vertex_colors_.clear();
-            //    o3d_mesh->vertex_colors_.resize(o3d_mesh->vertices_.size(), golden_color);
-            //    o3d_mesh->ComputeVertexNormals();
-            //    o3d_mesh->ComputeTriangleNormals();
-            //    visualizer.UpdateGeometry(o3d_mesh);
-            //    mesher.clearNewFacetFlag();
-            //    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            //}
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
             if (lock.try_lock()) {  // Only proceed if we got the lock
                 //if (mesher.hasNewFacet()) 
                 if (true) 
                 {
-                    //std::cout << "Update mesh: Thread " << std::this_thread::get_id() <<  std::endl;
-                    // print system time 
-                    //auto now = std::clock();
-                    //std::cout << "CPU time: " << static_cast<double>(now) / CLOCKS_PER_SEC << " seconds" << std::endl;
-                    //std::vector<ColorFacet> color_facets = mesher.getFacetsToRender();
                     renderMainMesh(mesher.getFacets(), o3d_mesh);
                     renderFreshVertices(mesher.getFreshVertices(), debug_point);
 
@@ -110,7 +89,6 @@ void Visualizer::visualizationThread(
                     //o3d_mesh->ComputeVertexNormals();
                     //o3d_mesh->ComputeTriangleNormals();
 
-                    // add debug vertices
                     // is it vertex manifold?
                     //bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
                     //if (!is_vertex_manifold) {

@@ -142,11 +142,6 @@ class TOctree
         template<class Iterator>
         unsigned int addPoints(Iterator begin, Iterator end);
         
-        /**
-         * @brief print the mean number of points per non
-         * empty cell at each level
-         */
-        void printOctreeStat();
        
         /**
          * @brief get all nodes at given depth
@@ -230,16 +225,22 @@ class TOctree
          */
         //std::vector<unsigned int> m_nb_non_empty_cells;
 
-
-
-    public:
-        template<typename U>
-        TOctree<U> copy_skeleton() const;
-
     private: // helper functions to make another function shorter
         void expandAllNodeLoc(unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
 
         void updateNodeLoc(TOctreeNode<T>* node, unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
+
+    #ifdef _DEBUG
+    public:
+        template<typename U>
+        TOctree<U> debugCopySkeleton() const;
+
+        /**
+         * @brief print the mean number of points per non
+         * empty cell at each level
+         */
+        void debugPrintStats();
+    #endif
         
 };
 
@@ -649,8 +650,9 @@ void TOctree<T>::getNodes(unsigned int depth,
     }
 }
 
+#ifdef _DEBUG
 template<class T>
-void TOctree<T>::printOctreeStat()
+void TOctree<T>::debugPrintStats()
 {
     std::cout<<"OctreeVertices statistics"<<std::endl;
     std::cout<<"OctreeVertices with depth "<<this->getDepth()<<" created."<<std::endl;
@@ -692,7 +694,7 @@ void TOctree<T>::printOctreeStat()
 
 template<class T>
 template<typename U>
-TOctree<U> TOctree<T>::copy_skeleton() const
+TOctree<U> TOctree<T>::debugCopySkeleton() const
 {
     TOctree<U> new_octree;
     new_octree.setDepth(m_root_depth); 
@@ -713,5 +715,5 @@ TOctree<T>::TOctree(const TOctree<T>& other) {
     Point origin = other.getOrigin();
     this->initialize(origin, other.getSize()); 
 }
-
+#endif
 #endif
