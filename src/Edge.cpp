@@ -5,7 +5,7 @@
  * @brief implementation of the edge methods declared in Edge.h
  *
  * @copyright This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published 
+ * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <cstdlib>
@@ -27,13 +27,22 @@
 
 using namespace std;
 
-std::ostream& operator<<(std::ostream& os, const Edge::EdgeType& type)
+std::ostream &operator<<(std::ostream &os, const Edge::EdgeType &type)
 {
-    switch(type) {
-        case Edge::BORDER: os << "BORDER"; break;
-        case Edge::FRONT: os << "FRONT"; break;
-        case Edge::INNER: os << "INNER"; break;
-        default: os << "UNKNOWN"; break;
+    switch (type)
+    {
+    case Edge::BORDER:
+        os << "BORDER";
+        break;
+    case Edge::FRONT:
+        os << "FRONT";
+        break;
+    case Edge::INNER:
+        os << "INNER";
+        break;
+    default:
+        os << "UNKNOWN";
+        break;
     }
     return os;
 }
@@ -46,7 +55,7 @@ Edge::Edge()
     m_facet2 = NULL;
 }
 
-Edge::Edge(Vertex* src, Vertex* tgt)
+Edge::Edge(Vertex *src, Vertex *tgt)
 {
     m_src = src;
     m_tgt = tgt;
@@ -59,40 +68,39 @@ Edge::Edge(Vertex* src, Vertex* tgt)
 
 Edge::~Edge()
 {
-    //std::cout << "Edge destructor called" << std::endl;
+    // std::cout << "Edge destructor called" << std::endl;
     m_src = NULL;
     m_tgt = NULL;
     m_facet1 = NULL;
     m_facet2 = NULL;
 }
 
-Vertex* Edge::getSource() const
+Vertex *Edge::getSource() const
 {
     return m_src;
 }
 
-Vertex* Edge::getTarget() const
+Vertex *Edge::getTarget() const
 {
     return m_tgt;
 }
 
-
-Facet* Edge::getFacet1() const
+Facet *Edge::getFacet1() const
 {
     return m_facet1;
 }
 
-Facet* Edge::getFacet2() const
+Facet *Edge::getFacet2() const
 {
     return m_facet2;
 }
 
-bool Edge::addAdjacentFacet(Facet* facet)
+bool Edge::addAdjacentFacet(Facet *facet)
 {
-    if ((m_facet1 == facet)||(m_facet2 == facet))
+    if ((m_facet1 == facet) || (m_facet2 == facet))
         return false;
 
-    if(m_facet1 == NULL)
+    if (m_facet1 == NULL)
     {
         m_facet1 = facet;
         updateOrientation(); // TODO: check if this is necessary
@@ -100,32 +108,30 @@ bool Edge::addAdjacentFacet(Facet* facet)
         return true;
     }
 
-    if(m_facet2 == NULL)
+    if (m_facet2 == NULL)
     {
         m_facet2 = facet;
         setType(EdgeType::INNER);
         return true;
     }
 
-    std::cout<<"Already two triangles"<<endl;
+    std::cout << "Already two triangles" << endl;
     return false;
-
 }
 
-
-bool Edge::removeAdjacentFacet(Facet* facet)
+bool Edge::removeAdjacentFacet(Facet *facet)
 {
 
-    if(m_facet1 == facet)
+    if (m_facet1 == facet)
     {
-        //m_facet1 = NULL;
+        // m_facet1 = NULL;
         m_facet1 = m_facet2;
         m_facet2 = NULL; // TODO: Do we need to update the orientation?
         setType(EdgeType::FRONT);
         return true;
     }
 
-    if(m_facet2 == facet)
+    if (m_facet2 == facet)
     {
         m_facet2 = NULL;
         setType(EdgeType::FRONT);
@@ -133,18 +139,18 @@ bool Edge::removeAdjacentFacet(Facet* facet)
     }
 
     return false;
-
 }
 
 void Edge::updateOrientation()
 {
     Vertex *opp = getOppositeVertex();
-    #ifdef _DEBUG
-    if (opp == nullptr) {
+#ifdef _DEBUG
+    if (opp == nullptr)
+    {
         std::cerr << "Edge::updateOrientation() - Opposite vertex is null" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    #endif
+#endif
 
     double vx, vy, vz;
 
@@ -160,57 +166,56 @@ void Edge::updateOrientation()
     nz = m_src->nz() + m_tgt->nz() + opp->nz();
     normalize(nx, ny, nz);
 
-    if(   vx * nx + vy * ny + vz * nz  < 0)
+    if (vx * nx + vy * ny + vz * nz < 0)
     {
         Vertex *temp = m_src;
         m_src = m_tgt;
         m_tgt = temp;
-        
-        #ifdef _DEBUG
+
+#ifdef _DEBUG
         std::cerr << "Edge::updateOrientation() - Edge flipped" << std::endl;
         std::exit(EXIT_FAILURE);
-        #endif
+#endif
     }
 }
 
 bool Edge::hasVertex(Vertex *vertex) const
 {
-    if((vertex == m_src) || (vertex == m_tgt))
+    if ((vertex == m_src) || (vertex == m_tgt))
         return true;
     return false;
 }
-
 
 Edge::EdgeType Edge::getType() const
 {
     return m_type;
 }
 
-//void Edge::setType(int type)
+// void Edge::setType(int type)
 //{
-//    m_type = type;
-//}
+//     m_type = type;
+// }
 
 void Edge::setType(EdgeType type)
 {
     m_type = type;
 }
 
-Vertex* Edge::getOppositeVertex() const
+Vertex *Edge::getOppositeVertex() const
 {
-    if(m_facet1 == NULL)
+    if (m_facet1 == NULL)
         return NULL;
     Vertex *opp;
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
     {
         opp = m_facet1->vertex(i);
-        if((opp != m_src) && (opp != m_tgt))
+        if ((opp != m_src) && (opp != m_tgt))
             return opp;
     }
     return NULL;
 }
 
-Facet* Edge::anotherFacet(Facet *f)
+Facet *Edge::anotherFacet(Facet *f)
 {
     if (f == m_facet1)
         return m_facet2;
@@ -226,10 +231,10 @@ unsigned int Edge::debugGetNumAdjacentFacets() const
         return 1;
     if (m_facet1 != NULL && m_facet2 != NULL)
         return 2;
-    #ifdef _DEBUG
+#ifdef _DEBUG
     std::cerr << "m_facet2 is not NULL and m_facet1 is NULL" << std::endl;
     std::cerr << "This is violating the function assumption" << std::endl;
     std::exit(EXIT_FAILURE);
-    #endif
+#endif
 }
 #endif

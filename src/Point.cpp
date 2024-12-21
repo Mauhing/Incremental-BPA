@@ -4,7 +4,7 @@
  * @author Julie Digne
  * @date 2012/10/10
  * @copyright This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published 
+ * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
@@ -12,12 +12,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Point.h"
 #include <iostream>
-
 
 Point::Point() : m_x(0.0), m_y(0.0), m_z(0.0)
 {
@@ -46,8 +45,7 @@ double Point::z() const
     return m_z;
 }
 
-
-std::ostream& operator << (std::ostream& out, const Point& v)
+std::ostream &operator<<(std::ostream &out, const Point &v)
 {
     out << v.x() << "\t" << v.y() << "\t" << v.z();
     return out;

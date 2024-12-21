@@ -111,8 +111,8 @@ int main(int argc, char **argv)
     octree_vertices.initialize(origin, size);
 
     OctreeIteratorVertices iterator_vertices(&octree_vertices);
-        iterator_vertices.setR(radius);
-        iterator_vertices.setR(radius);
+    iterator_vertices.setR(radius);
+    iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -123,8 +123,8 @@ int main(int argc, char **argv)
     octree_ball_centers.initialize(octree_vertices.getOrigin(), octree_vertices.getSize());
 
     OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
-        octree_ball_centers_iterator.setR(radius);
-        octree_ball_centers_iterator.setR(radius);
+    octree_ball_centers_iterator.setR(radius);
+    octree_ball_centers_iterator.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     octree_ball_centers_iterator.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -141,19 +141,18 @@ int main(int argc, char **argv)
     std::atomic<bool> should_exit(false);
     mesher.setVisualizationSync(&o3d_mesh_mutex);
 
-    std::thread vis_thread(Visualizer::visualizationThread, 
-        std::ref(mesher), 
-        std::ref(o3d_mesh_mutex), 
-        std::ref(should_exit)
-    );
+    std::thread vis_thread(Visualizer::visualizationThread,
+                           std::ref(mesher),
+                           std::ref(o3d_mesh_mutex),
+                           std::ref(should_exit));
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
-
 
     // enter looping phase
     for (size_t batch_index = 0; batch_index < batch_data.size(); batch_index++)
     {
-        if (should_exit) {  // Check if visualization window was closed
+        if (should_exit)
+        { // Check if visualization window was closed
             break;
         }
 
@@ -168,7 +167,7 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Set slow visualization flag when at batch 8
-        //if (batch_index == 8) {
+        // if (batch_index == 8) {
         //    mesher.setSlowVisualization(true);  // Add this method to Mesher
         //} else {
         //    mesher.setSlowVisualization(false);
@@ -178,12 +177,12 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        #ifdef _DEBUG
-            mesher.mesh_integrityCheck();
-        #endif
-        
+#ifdef _DEBUG
+        mesher.mesh_integrityCheck();
+#endif
+
         // sleep for 100ms
-        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // wait for terminal input
@@ -199,19 +198,21 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
-    
+
     // Open3D save ply
     bool o3d_save_ply = false;
 
-    if (o3d_save_ply) {
+    if (o3d_save_ply)
+    {
         std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
         Visualizer::renderMainMesh(mesher.getFacets(), o3d_mesh);
         open3d::io::WriteTriangleMeshToPLY("new_final.ply", *o3d_mesh, false, false, false, false, false, true);
         std::cout << "Mesh saved in" << "new_final.ply" << std::endl;
     }
-    else {
+    else
+    {
         std::cout << "O3d ply file not saved" << std::endl;
-    }   
+    }
 
     return EXIT_SUCCESS;
 }

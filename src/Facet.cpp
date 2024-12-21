@@ -3,7 +3,7 @@
  * @author Julie Digne
  * @date 2012-10-08
  * @copyright This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published 
+ * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Facet.h"
@@ -20,46 +20,45 @@
 #include "BallCenter.h"
 
 // Initialize the static member.
-std::set<Edge*> Facet::sb_recordedNewBoundaryEdges;
+std::set<Edge *> Facet::sb_recordedNewBoundaryEdges;
 
-Facet::Facet(Vertex* v0, Vertex* v1, Vertex* v2, const Point &ball_center)
+Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
 {
     m_vertex[0] = v0;
     m_vertex[1] = v1;
     m_vertex[2] = v2;
     m_ball_center = ball_center;
 
-
     Edge *e0 = v0->getLinkingEdge(v1);
-    if(e0 == NULL)
+    if (e0 == NULL)
     {
         // It is the Facet class own the edge object.
-        e0 = new Edge(v0,v1);
+        e0 = new Edge(v0, v1);
     }
     e0->addAdjacentFacet(this);
 
     Edge *e1 = v1->getLinkingEdge(v2);
-    if(e1 == NULL)
+    if (e1 == NULL)
     {
-        e1 = new Edge(v1,v2);
+        e1 = new Edge(v1, v2);
     }
     e1->addAdjacentFacet(this);
 
     Edge *e2 = v2->getLinkingEdge(v0);
-    if(e2 == NULL)
+    if (e2 == NULL)
     {
         e2 = new Edge(v2, v0);
     }
     e2->addAdjacentFacet(this);
 
-    for(unsigned int i = 0; i < 3; i++)
+    for (unsigned int i = 0; i < 3; i++)
     {
         m_vertex[i]->addAdjacentFacet(this);
         m_vertex[i]->updateType();
     }
 }
 
-Facet::Facet(Edge* edge, Vertex* vertex, const Point &ball_center)
+Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
 {
     Vertex *src = edge->getSource();
     Vertex *tgt = edge->getTarget();
@@ -71,17 +70,17 @@ Facet::Facet(Edge* edge, Vertex* vertex, const Point &ball_center)
 
     edge->addAdjacentFacet(this);
 
-    for(int i = 0; i < 2; ++i)
+    for (int i = 0; i < 2; ++i)
     {
-        Edge *e = m_vertex[i]->getLinkingEdge(m_vertex[i+1]);
-        if(e == NULL)
+        Edge *e = m_vertex[i]->getLinkingEdge(m_vertex[i + 1]);
+        if (e == NULL)
         {
-            e = new Edge(m_vertex[i], m_vertex[i+1]);
+            e = new Edge(m_vertex[i], m_vertex[i + 1]);
         }
         e->addAdjacentFacet(this);
     }
 
-    for(int i= 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         m_vertex[i]->addAdjacentFacet(this);
         m_vertex[i]->updateType();
@@ -89,7 +88,7 @@ Facet::Facet(Edge* edge, Vertex* vertex, const Point &ball_center)
 }
 
 Facet::~Facet()
-{ 
+{
     delete m_ball_center_ptr;
     m_ball_center_ptr = nullptr;
     for (int i = 0; i < 3; i++)
@@ -98,59 +97,58 @@ Facet::~Facet()
     }
 }
 
-Vertex* Facet::vertex(unsigned int i) const
+Vertex *Facet::vertex(unsigned int i) const
 {
-    unsigned int index = i %3;
+    unsigned int index = i % 3;
     return m_vertex[index];
 }
 
-Vertex* Facet::getVertex(unsigned int i)
+Vertex *Facet::getVertex(unsigned int i)
 {
-    unsigned int index = i %3;
+    unsigned int index = i % 3;
     return m_vertex[index];
 }
 
-const Point& Facet::getBallCenter() const
+const Point &Facet::getBallCenter() const
 {
     return m_ball_center;
 }
 
-
-
-bool Facet::hasVertex(Vertex* v)
+bool Facet::hasVertex(Vertex *v)
 {
-    if((m_vertex[0] == v)||(m_vertex[1] == v)||(m_vertex[2] == v))
+    if ((m_vertex[0] == v) || (m_vertex[1] == v) || (m_vertex[2] == v))
         return true;
     else
         return false;
 }
 
-void Facet::setBallCenterPtr(BallCenter* ball_center_ptr) {
+void Facet::setBallCenterPtr(BallCenter *ball_center_ptr)
+{
     m_ball_center_ptr = ball_center_ptr;
 }
 
-Vertex* Facet::nextVertex(const Vertex *v) const
+Vertex *Facet::nextVertex(const Vertex *v) const
 {
     for (int i = 0; i < 3; i++)
     {
         if (m_vertex[i] == v)
             return m_vertex[(i + 1) % 3];
     }
-    #ifdef _DEBUG
+#ifdef _DEBUG
     std::cerr << "Vertex not found in facet" << std::endl;
     std::exit(EXIT_FAILURE);
-    #endif
+#endif
 }
 
-Vertex* Facet::previousVertex(const Vertex *v) const
+Vertex *Facet::previousVertex(const Vertex *v) const
 {
     for (int i = 0; i < 3; i++)
     {
         if (m_vertex[i] == v)
             return m_vertex[(i + 2) % 3];
     }
-    #ifdef _DEBUG
+#ifdef _DEBUG
     std::cerr << "Vertex not found in facet" << std::endl;
     std::exit(EXIT_FAILURE);
-    #endif
+#endif
 }

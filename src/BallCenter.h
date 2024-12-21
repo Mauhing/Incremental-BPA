@@ -12,46 +12,41 @@ class Facet;
 
 using namespace std;
 
-
 /**
  * @class BallCenter
  * @brief Ball center of a facet
- * 
+ *
  */
 class BallCenter : public Point
 {
-    public:
+public:
+    friend ostream &operator<<(ostream &out, const BallCenter &v);
 
-    friend ostream& operator << (ostream& out, const BallCenter& v);
-  
-    private : //properties
-     
-        Facet* m_facet;
-        
-        TOctreeNode<BallCenter>* m_octree_node;
+private: // properties
+    Facet *m_facet;
 
-    public : //constructor+destructor
-    
-        /** @brief default constructor*/
-        BallCenter() = delete;
-        
-        /** @brief constructor from coordinates and facet*/
-        BallCenter(double x, double y, double z, Facet* facet);
-        
-        BallCenter(const Point& point, Facet* facet);
-          
-        /** @brief default destrictor*/
-        ~BallCenter();
+    TOctreeNode<BallCenter> *m_octree_node;
 
-        // copy constructor
-        BallCenter(const BallCenter& other);
-        
-    public : //accessors + modifiers
-        void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
-        
-        TOctreeNode<BallCenter>* getOctreeNodeLeaf() const;
-        
-        Facet* getFacet() const;
+public: // constructor+destructor
+    /** @brief default constructor*/
+    BallCenter() = delete;
 
+    /** @brief constructor from coordinates and facet*/
+    BallCenter(double x, double y, double z, Facet *facet);
+
+    BallCenter(const Point &point, Facet *facet);
+
+    /** @brief default destrictor*/
+    ~BallCenter();
+
+    // copy constructor
+    BallCenter(const BallCenter &other);
+
+public: // accessors + modifiers
+    void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
+
+    TOctreeNode<BallCenter> *getOctreeNodeLeaf() const;
+
+    Facet *getFacet() const;
 };
 #endif

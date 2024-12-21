@@ -3,7 +3,7 @@
  * @author Julie Digne
  * @date 2012-10-08
  * @copyright This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published 
+ * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
@@ -11,9 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 
 #ifndef FACET_H
 #define FACET_H
@@ -32,106 +31,101 @@
  */
 class Facet
 {
-    private :
-        /** @brief vertices of the facet*/
-        Vertex *m_vertex[3];
+private:
+    /** @brief vertices of the facet*/
+    Vertex *m_vertex[3];
 
-        /** @brief center of the ball that generated the facet*/
-        Point m_ball_center;
+    /** @brief center of the ball that generated the facet*/
+    Point m_ball_center;
 
-        BallCenter* m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
+    BallCenter *m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
 
-    public : //constructor+destructor
+public: // constructor+destructor
+    /** @brief constructor*/
+    Facet() = delete;
 
-        /** @brief constructor*/
-        Facet() = delete;
+    /** @brief constructor from a set of vertices
+     * @param v1 first vertex
+     * @param v2 second vertex
+     * @param v3 third vertex
+     * @param ball_center center of the empty interior
+     * ball incident to the three vertices
+     */
+    Facet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &ball_center);
 
-        /** @brief constructor from a set of vertices
-         * @param v1 first vertex
-         * @param v2 second vertex
-         * @param v3 third vertex
-         * @param ball_center center of the empty interior
-         * ball incident to the three vertices
-         */
-        Facet(Vertex* v1, Vertex* v2, Vertex* v3, const Point &ball_center);
+    /** @brief constructor from an edge and a vertex
+     * prerequisite edge has at most one adjacent facet
+     * @param edge edge (2 vertices to create the facet)
+     * @param vertex third vertex to create the facet
+     */
+    Facet(Edge *edge, Vertex *vertex) = delete;
 
-        /** @brief constructor from an edge and a vertex
-         * prerequisite edge has at most one adjacent facet
-         * @param edge edge (2 vertices to create the facet)
-         * @param vertex third vertex to create the facet
-         */
-        Facet(Edge *edge, Vertex* vertex) = delete;
+    /** @brief constructor from an edge and a vertex
+     * prerequisite edge has at most one adjacent facet
+     * @param edge edge
+     * @param vertex vertex to link to the edge
+     * @param ball_center center of the empty interior ball
+     * incident to the three vertices
+     */
+    Facet(Edge *edge, Vertex *vertex, const Point &ball_center);
 
-        /** @brief constructor from an edge and a vertex
-         * prerequisite edge has at most one adjacent facet
-         * @param edge edge
-         * @param vertex vertex to link to the edge
-         * @param ball_center center of the empty interior ball
-         * incident to the three vertices
-         */
-        Facet(Edge *edge, Vertex* vertex, const Point &ball_center);
+    /** @brief destructor*/
+    ~Facet();
 
-        /** @brief destructor*/
-        ~Facet();
+public: // accessors + modifiers
+    /** @brief get facet vertex
+     * @param index of the vertex in the facet
+     * @return corresponding facet
+     */
+    Vertex *vertex(unsigned int index) const;
 
-    public : //accessors + modifiers
+    /** @brief get edge opposite to vertex i
+     * @param index index of the edge
+     * @return edge
+     */
+    Edge *edge(unsigned int index) const;
 
-        /** @brief get facet vertex
-         * @param index of the vertex in the facet
-         * @return corresponding facet
-         */
-        Vertex* vertex(unsigned int index) const;
+    /** @brief get facet center
+     * @return ball center
+     */
+    const Point &getBallCenter() const;
 
-        /** @brief get edge opposite to vertex i
-         * @param index index of the edge
-         * @return edge
-         */
-        Edge* edge(unsigned int index) const;
+    /** @brief set Ball center
+     * @param point ball center point
+     */
+    void setBallCenter(Point &point);
 
-        /** @brief get facet center
-         * @return ball center
-         */
-        const Point& getBallCenter() const;
+    /** @brief test if contains vertex
+     * @param vertex test vertex
+     * @return true if the vertex is a vertex of the facet
+     */
+    bool hasVertex(Vertex *vertex);
 
-        /** @brief set Ball center
-         * @param point ball center point
-         */
-        void setBallCenter(Point &point);
+    /** @brief get vertex
+     * @param index index of the vertex that mode 3
+     * @return vertex
+     */
+    Vertex *getVertex(unsigned int index);
 
-        /** @brief test if contains vertex
-         * @param vertex test vertex
-         * @return true if the vertex is a vertex of the facet
-         */
-        bool hasVertex(Vertex *vertex);
+private:
+    static std::set<Edge *> sb_recordedNewBoundaryEdges;
 
-        /** @brief get vertex
-         * @param index index of the vertex that mode 3
-         * @return vertex
-         */
-        Vertex* getVertex(unsigned int index);
+public:
+    void insertNewBoundaryEdge(Edge *edge);
+    void removeNewBoundaryEdge(Edge *edge);
 
-    private :
-        static std::set<Edge*> sb_recordedNewBoundaryEdges;
-        
-    public :
-        void insertNewBoundaryEdge(Edge* edge);
-        void removeNewBoundaryEdge(Edge* edge);
+    void setBallCenterPtr(BallCenter *ball_center_ptr);
 
-        void setBallCenterPtr(BallCenter* ball_center_ptr);
+    static void clearNewBoundaryEdges();
 
-        static void clearNewBoundaryEdges();
+    static std::set<Edge *> getRecordedNewBoundaryEdges();
 
-        static std::set<Edge*> getRecordedNewBoundaryEdges();
+public:
+    Vertex *nextVertex(const Vertex *v) const;
 
-    public:
+    Vertex *previousVertex(const Vertex *v) const;
 
-        Vertex* nextVertex(const Vertex *v) const;
-        
-        Vertex* previousVertex(const Vertex *v) const;
-
-        bool hasEdge(Edge *e);        
-
-        
+    bool hasEdge(Edge *e);
 };
 
 #endif
