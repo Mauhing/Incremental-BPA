@@ -112,9 +112,6 @@ int main(int argc, char **argv)
 
     OctreeIteratorVertices iterator_vertices(&octree_vertices);
     iterator_vertices.setR(radius);
-    iterator_vertices.setR(radius);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Create the ball centers octree and its iterator
@@ -123,9 +120,6 @@ int main(int argc, char **argv)
     octree_ball_centers.initialize(octree_vertices.getOrigin(), octree_vertices.getSize());
 
     OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
-    octree_ball_centers_iterator.setR(radius);
-    octree_ball_centers_iterator.setR(radius);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     octree_ball_centers_iterator.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

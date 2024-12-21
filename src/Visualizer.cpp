@@ -92,8 +92,8 @@ void Visualizer::visualizationThread(
                     // o3d_mesh->ComputeTriangleNormals();
 
                     // is it vertex manifold?
-                    // bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
-                    // if (!is_vertex_manifold) {
+                    //bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
+                    //if (!is_vertex_manifold) {
                     //    // get the non-manifold vertices
                     //    debug_point->points_.clear();
                     //    debug_point->colors_.clear();
@@ -103,6 +103,7 @@ void Visualizer::visualizationThread(
                     //        debug_point->points_.push_back(o3d_mesh->vertices_[non_manifold_vertices[i]]);
                     //        debug_point->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
                     //    }
+                    //    std::cout << "Non-manifold vertices: " << non_manifold_vertices.size() << std::endl;
                     //}
                     visualizer.UpdateGeometry(o3d_mesh);
                     visualizer.UpdateGeometry(debug_point);
@@ -242,5 +243,14 @@ void Visualizer::renderFreshVertices(const std::vector<Vertex *> &vertices, std:
     {
         O3d_point->points_.push_back(Eigen::Vector3d(vertex->x(), vertex->y(), vertex->z()));
         O3d_point->colors_.push_back(Eigen::Vector3d(0, 1, 0));
+    }
+}
+
+void Visualizer::renderDebugVertices(const std::vector<Eigen::Vector3d> &vertices, const Eigen::Vector3d &color, std::shared_ptr<open3d::geometry::PointCloud> &point)
+{
+    for (auto vertex : vertices)
+    {
+        point->points_.push_back(vertex);
+        point->colors_.push_back(color);
     }
 }

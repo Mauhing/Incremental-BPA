@@ -148,9 +148,11 @@ void Mesher::reconstruct()
     else
     {
         // If there are only one radius. This scope will never be executed.
-        std::cout << "Expanding triangulation" << std::endl;
+        std::cout << "Edge front not empty, Expanding triangulation" << std::endl;
         expandTriangulation();
     }
+
+    findSeedTriangle(); // This is to find the seed triangle again.
 }
 
 void Mesher::reconstruct(const std::list<double> &radii)
@@ -1752,8 +1754,12 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Clear debug render facets
     this->clearDebugRender();
 
-    // Clear orphan vertices
-    this->clearOrphanVertices();
+    bool clearOrphanVertices = true;
+    if (clearOrphanVertices)
+        // Clear orphan vertices
+        this->clearOrphanVertices();
+    else
+        std::cout << "\033[31mNot clearing orphan vertices\033[0m" << std::endl;
 
     //{
     //    std::lock_guard<std::mutex> lock(*visualization_mutex);

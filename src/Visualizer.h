@@ -20,6 +20,7 @@ namespace Visualizer
     void renderDebugEdges(const std::vector<ColorEdge> &edges, std::shared_ptr<open3d::geometry::LineSet> &line);
     void renderDebugVertices(const std::vector<ColorVertex> &vertices, std::shared_ptr<open3d::geometry::PointCloud> &point);
 
+    void renderDebugVertices(const std::vector<Eigen::Vector3d> &vertices, const Eigen::Vector3d &color, std::shared_ptr<open3d::geometry::PointCloud> &point);
 }
 
 #endif // VISUALIZER_H
