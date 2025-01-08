@@ -48,6 +48,16 @@
 #include <open3d/Open3D.h>
 #include <functional>
 
+struct ColorVertex
+{
+    Vertex vertex;
+    Eigen::Vector3d color;
+    // constructor
+    ColorVertex(const Vertex &vertex, const Eigen::Vector3d &color) : vertex(vertex), color(color) {}
+    // copy constructor
+    ColorVertex(const ColorVertex &other) : vertex(other.vertex), color(other.color) {}
+};
+
 struct ColorVertexPtr
 {
     Vertex *vertex;

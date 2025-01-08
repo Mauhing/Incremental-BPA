@@ -135,10 +135,12 @@ int main(int argc, char **argv)
     std::atomic<bool> should_exit(false);
     mesher.setVisualizationSync(&o3d_mesh_mutex);
 
+    std::vector<ColorVertex> received_vertices;
     std::thread vis_thread(Visualizer::visualizationThread,
                            std::ref(mesher),
                            std::ref(o3d_mesh_mutex),
-                           std::ref(should_exit));
+                           std::ref(should_exit),
+                           std::ref(received_vertices));
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
@@ -159,6 +161,14 @@ int main(int argc, char **argv)
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+        // Add the vertices to the received_vertices
+        {
+            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+            for (const auto& v : vertices) {
+                received_vertices.emplace_back(v, Eigen::Vector3d(0.0, 0.0, 1.0)); // Blue
+            }
+        }
+
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Set slow visualization flag when at batch 8
         // if (batch_index == 8) {
@@ -170,7 +180,7 @@ int main(int argc, char **argv)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         mesher.batchReconstruct(vertices);
-
+        
 #ifdef _DEBUG
         std::cout << "Mesh integrity check" << std::endl;
         mesher.mesh_integrityCheck();

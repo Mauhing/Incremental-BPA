@@ -7,7 +7,8 @@
 void Visualizer::visualizationThread(
     Mesher &mesher,
     std::mutex &o3d_mesh_mutex,
-    std::atomic<bool> &should_exit)
+    std::atomic<bool> &should_exit,
+    std::vector<ColorVertex> &received_vertices)
 {
     // Create a visualizer object
     open3d::visualization::Visualizer visualizer;
@@ -85,7 +86,8 @@ void Visualizer::visualizationThread(
                 if (true)
                 {
                     renderMainMesh(mesher.getFacets(), o3d_mesh);
-                    renderFreshVertices(mesher.getFreshVertices(), debug_point);
+                    //renderFreshVertices(mesher.getFreshVertices(), debug_point);
+                    renderReceivedVertices(received_vertices, debug_point);
 
                     // Shader
                     // o3d_mesh->ComputeVertexNormals();
@@ -253,4 +255,15 @@ void Visualizer::renderDebugVertices(const std::vector<Eigen::Vector3d> &vertice
         point->points_.push_back(vertex);
         point->colors_.push_back(color);
     }
+}
+
+void Visualizer::renderReceivedVertices(std::vector<ColorVertex> &received_vertices, std::shared_ptr<open3d::geometry::PointCloud> &point)
+{
+    for (auto color_vertex : received_vertices)
+    {
+        point->points_.push_back(Eigen::Vector3d(color_vertex.vertex.x(), color_vertex.vertex.y(), color_vertex.vertex.z()));
+        point->colors_.push_back(color_vertex.color);
+    }
+
+    received_vertices.clear();
 }

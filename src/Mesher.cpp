@@ -1941,6 +1941,9 @@ void Mesher::mesh_integrityCheck() const
         std::cout << "Mesh is not vertex manifold" << std::endl;
         // Get all the non-manifold vertices
         std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
+
+        // Print number of non-manifold vertices
+        std::cout << "Number of non-manifold vertices: " << non_manifold_vertices.size() << std::endl;
         Vertex *vertex[non_manifold_vertices.size()];
         for (size_t i = 0; i < non_manifold_vertices.size(); i++)
         {
