@@ -1938,7 +1938,21 @@ void Mesher::mesh_integrityCheck() const
     bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
     if (!is_vertex_manifold)
     {
-        std::cerr << "Error: The mesh is not vertex manifold" << std::endl;
+        std::cout << "Mesh is not vertex manifold" << std::endl;
+        // Get all the non-manifold vertices
+        std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
+        Vertex *vertex[non_manifold_vertices.size()];
+        for (size_t i = 0; i < non_manifold_vertices.size(); i++)
+        {
+            Eigen::Vector3d v = o3d_mesh->vertices_[non_manifold_vertices[i]];
+            vertex[i] = new Vertex(v.x(), v.y(), v.z(), 0, 0, 0);
+        }
+        // I stop here  
+        
+        // delete the newly created vertex
+        for (size_t i = 0; i < non_manifold_vertices.size(); i++) {
+            delete vertex[i];
+        }
         std::exit(EXIT_FAILURE);
     }
 

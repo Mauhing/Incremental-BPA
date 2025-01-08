@@ -172,6 +172,7 @@ int main(int argc, char **argv)
         mesher.batchReconstruct(vertices);
 
 #ifdef _DEBUG
+        std::cout << "Mesh integrity check" << std::endl;
         mesher.mesh_integrityCheck();
 #endif
 

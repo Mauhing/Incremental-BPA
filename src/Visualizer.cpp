@@ -151,7 +151,7 @@ void Visualizer::renderMainMesh(const Facet_star_list &facets, std::shared_ptr<o
     }
 }
 
-void Visualizer::renderDebugFacets(const std::vector<ColorFacet> &color_facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh)
+void Visualizer::renderDebugFacets(const std::vector<ColorFacetPtr> &color_facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh)
 {
     // Clear existing mesh data
     O3d_mesh->vertices_.clear();
@@ -194,7 +194,7 @@ void Visualizer::renderDebugFacets(const std::vector<ColorFacet> &color_facets, 
     }
 }
 
-void Visualizer::renderDebugEdges(const std::vector<ColorEdge> &color_edges, std::shared_ptr<open3d::geometry::LineSet> &O3d_line)
+void Visualizer::renderDebugEdges(const std::vector<ColorEdgePtr> &color_edges, std::shared_ptr<open3d::geometry::LineSet> &O3d_line)
 {
     O3d_line->points_.clear();
     O3d_line->lines_.clear();
@@ -222,7 +222,7 @@ void Visualizer::renderDebugEdges(const std::vector<ColorEdge> &color_edges, std
     }
 }
 
-void Visualizer::renderDebugVertices(const std::vector<ColorVertex> &color_vertices, std::shared_ptr<open3d::geometry::PointCloud> &O3d_point)
+void Visualizer::renderDebugVertices(const std::vector<ColorVertexPtr> &color_vertices, std::shared_ptr<open3d::geometry::PointCloud> &O3d_point)
 {
     O3d_point->points_.clear();
     O3d_point->colors_.clear();

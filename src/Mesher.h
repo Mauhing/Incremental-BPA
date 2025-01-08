@@ -48,18 +48,18 @@
 #include <open3d/Open3D.h>
 #include <functional>
 
-struct ColorVertex
+struct ColorVertexPtr
 {
     Vertex *vertex;
     Eigen::Vector3d color;
     // constructor
-    ColorVertex(Vertex *vertex, const Eigen::Vector3d &color) : vertex(vertex), color(color) {}
+    ColorVertexPtr(Vertex *vertex, const Eigen::Vector3d &color) : vertex(vertex), color(color) {}
     // copy constructor
-    ColorVertex(const ColorVertex &other) : vertex(other.vertex), color(other.color) {}
+    ColorVertexPtr(const ColorVertexPtr &other) : vertex(other.vertex), color(other.color) {}
 
-    bool operator==(const ColorVertex &other) const
+    bool operator==(const ColorVertexPtr &other) const
     {
-        // Compare relevant members of ColorVertex
+        // Compare relevant members of ColorVertexPtr
         // Example (adjust according to your actual members):
         return color == other.color && vertex == other.vertex;
     }
@@ -68,27 +68,27 @@ struct ColorVertex
 namespace std
 {
     template <>
-    struct hash<ColorVertex>
+    struct hash<ColorVertexPtr>
     {
-        std::size_t operator()(const ColorVertex &cv) const
+        std::size_t operator()(const ColorVertexPtr &cv) const
         {
             return std::hash<Vertex *>()(cv.vertex); // Hash based only on the vertex pointer
         }
     };
 }
 
-struct ColorEdge
+struct ColorEdgePtr
 {
     Edge *edge;
     Eigen::Vector3d color;
     // constructor
-    ColorEdge(Edge *edge, const Eigen::Vector3d &color) : edge(edge), color(color) {}
+    ColorEdgePtr(Edge *edge, const Eigen::Vector3d &color) : edge(edge), color(color) {}
     // copy constructor
-    ColorEdge(const ColorEdge &other) : edge(other.edge), color(other.color) {}
+    ColorEdgePtr(const ColorEdgePtr &other) : edge(other.edge), color(other.color) {}
 
-    bool operator==(const ColorEdge &other) const
+    bool operator==(const ColorEdgePtr &other) const
     {
-        // Compare relevant members of ColorFacet
+        // Compare relevant members of ColorFacetPtr
         // Example (adjust according to your actual members):
         return color == other.color && edge == other.edge;
     }
@@ -97,27 +97,27 @@ struct ColorEdge
 namespace std
 {
     template <>
-    struct hash<ColorEdge>
+    struct hash<ColorEdgePtr>
     {
-        std::size_t operator()(const ColorEdge &ce) const
+        std::size_t operator()(const ColorEdgePtr &ce) const
         {
             return std::hash<Edge *>()(ce.edge); // Hash based only on the edge pointer
         }
     };
 }
 
-struct ColorFacet
+struct ColorFacetPtr
 {
     Facet *facet;
     Eigen::Vector3d color;
     // constructor
-    ColorFacet(Facet *facet, const Eigen::Vector3d &color) : facet(facet), color(color) {}
+    ColorFacetPtr(Facet *facet, const Eigen::Vector3d &color) : facet(facet), color(color) {}
     // copy constructor
-    ColorFacet(const ColorFacet &other) : facet(other.facet), color(other.color) {}
+    ColorFacetPtr(const ColorFacetPtr &other) : facet(other.facet), color(other.color) {}
 
-    bool operator==(const ColorFacet &other) const
+    bool operator==(const ColorFacetPtr &other) const
     {
-        // Compare relevant members of ColorFacet
+        // Compare relevant members of ColorFacetPtr
         // Example (adjust according to your actual members):
         return color == other.color && facet == other.facet;
     }
@@ -126,9 +126,9 @@ struct ColorFacet
 namespace std
 {
     template <>
-    struct hash<ColorFacet>
+    struct hash<ColorFacetPtr>
     {
-        std::size_t operator()(const ColorFacet &cf) const
+        std::size_t operator()(const ColorFacetPtr &cf) const
         {
             return std::hash<Facet *>()(cf.facet); // Hash based only on the facet pointer
         }
@@ -555,23 +555,23 @@ private: // Check non-manifold vertices
     }
 
 private: // debug rendering
-    mutable std::vector<ColorFacet> m_debug_render_facets;
-    mutable std::vector<ColorEdge> m_debug_render_edges;
-    mutable std::vector<ColorVertex> m_debug_render_vertices;
+    mutable std::vector<ColorFacetPtr> m_debug_render_facets;
+    mutable std::vector<ColorEdgePtr> m_debug_render_edges;
+    mutable std::vector<ColorVertexPtr> m_debug_render_vertices;
 
     void addDebugRenderFacet(Facet *facet, const Eigen::Vector3d &color)
     {
-        m_debug_render_facets.push_back(ColorFacet(facet, color));
+        m_debug_render_facets.push_back(ColorFacetPtr(facet, color));
     }
 
     void addDebugRenderEdge(Edge *edge, const Eigen::Vector3d &color)
     {
-        m_debug_render_edges.push_back(ColorEdge(edge, color));
+        m_debug_render_edges.push_back(ColorEdgePtr(edge, color));
     }
 
     void addDebugRenderVertex(Vertex *vertex, const Eigen::Vector3d &color)
     {
-        m_debug_render_vertices.push_back(ColorVertex(vertex, color));
+        m_debug_render_vertices.push_back(ColorVertexPtr(vertex, color));
     }
 
     void clearDebugRender()
@@ -582,17 +582,17 @@ private: // debug rendering
     }
 
 public:
-    const std::vector<ColorFacet> &getDebugRenderFacets() const
+    const std::vector<ColorFacetPtr> &getDebugRenderFacets() const
     {
         return m_debug_render_facets;
     }
 
-    const std::vector<ColorEdge> &getDebugRenderEdges() const
+    const std::vector<ColorEdgePtr> &getDebugRenderEdges() const
     {
         return m_debug_render_edges;
     }
 
-    const std::vector<ColorVertex> &getDebugRenderVertices() const
+    const std::vector<ColorVertexPtr> &getDebugRenderVertices() const
     {
         return m_debug_render_vertices;
     }

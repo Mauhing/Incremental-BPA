@@ -16,9 +16,9 @@ namespace Visualizer
     void renderMainMesh(const Facet_star_list &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
     void renderFreshVertices(const std::vector<Vertex *> &vertices, std::shared_ptr<open3d::geometry::PointCloud> &O3d_point);
 
-    void renderDebugFacets(const std::vector<ColorFacet> &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &mesh);
-    void renderDebugEdges(const std::vector<ColorEdge> &edges, std::shared_ptr<open3d::geometry::LineSet> &line);
-    void renderDebugVertices(const std::vector<ColorVertex> &vertices, std::shared_ptr<open3d::geometry::PointCloud> &point);
+    void renderDebugFacets(const std::vector<ColorFacetPtr> &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &mesh);
+    void renderDebugEdges(const std::vector<ColorEdgePtr> &edges, std::shared_ptr<open3d::geometry::LineSet> &line);
+    void renderDebugVertices(const std::vector<ColorVertexPtr> &vertices, std::shared_ptr<open3d::geometry::PointCloud> &point);
 
     void renderDebugVertices(const std::vector<Eigen::Vector3d> &vertices, const Eigen::Vector3d &color, std::shared_ptr<open3d::geometry::PointCloud> &point);
 }
