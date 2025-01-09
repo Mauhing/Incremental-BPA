@@ -1036,11 +1036,13 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
 
 void Mesher::addVertex(Vertex *v)
 {
+    #ifdef _DEBUG
     if (v->index() < -1)
     {
         std::cerr << "Vertex index is less than -1" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+    #endif
 
     if (v->index() != -1)
         return;
@@ -1927,7 +1929,7 @@ bool Mesher::removeDiskFanSingular()
     return found_disk_fan_vertex;
 }
 
-void Mesher::mesh_integrityCheck() const
+void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
 {
     // make a share object of o3d_mesh
     std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
@@ -1944,19 +1946,16 @@ void Mesher::mesh_integrityCheck() const
 
         // Print number of non-manifold vertices
         std::cout << "Number of non-manifold vertices: " << non_manifold_vertices.size() << std::endl;
-        Vertex *vertex[non_manifold_vertices.size()];
         for (size_t i = 0; i < non_manifold_vertices.size(); i++)
         {
             Eigen::Vector3d v = o3d_mesh->vertices_[non_manifold_vertices[i]];
-            vertex[i] = new Vertex(v.x(), v.y(), v.z(), 0, 0, 0);
+            
+            // the constructor is Vertex(double x, double y, double z, double nx, double ny, double nz)
+            //debug_vertices.push_back(ColorVertex(Vertex(v.x(), v.y(), v.z(), 0, 0, 0), Eigen::Vector3d(1.0, 0.0, 0.0)));
+            std::cout << "Non-manifold vertex " << i << ": " << v.x() << " " << v.y() << " " << v.z() << std::endl;
         }
-        // I stop here  
-        
-        // delete the newly created vertex
-        for (size_t i = 0; i < non_manifold_vertices.size(); i++) {
-            delete vertex[i];
-        }
-        std::exit(EXIT_FAILURE);
+         
+        //std::exit(EXIT_FAILURE);
     }
 
     // check o3d_mesh properties
@@ -1985,6 +1984,7 @@ void Mesher::mesh_integrityCheck() const
         std::cerr << "Error: The mesh is not orientable" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+    return;
 }
 
 Facet *Mesher::createFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)

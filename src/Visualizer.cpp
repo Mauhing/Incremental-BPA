@@ -8,7 +8,9 @@ void Visualizer::visualizationThread(
     Mesher &mesher,
     std::mutex &o3d_mesh_mutex,
     std::atomic<bool> &should_exit,
-    std::vector<ColorVertex> &received_vertices)
+    std::vector<ColorVertex> &received_vertices,
+    std::condition_variable &cv_debug_visualization,
+    bool &task_in_progress)
 {
     // Create a visualizer object
     open3d::visualization::Visualizer visualizer;
@@ -91,22 +93,16 @@ void Visualizer::visualizationThread(
 
                     // Shader
                     // o3d_mesh->ComputeVertexNormals();
-                    // o3d_mesh->ComputeTriangleNormals();
+                    // o3d_mesh->ComputeTriangleNormals(); 
 
-                    // is it vertex manifold?
-                    //bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
-                    //if (!is_vertex_manifold) {
-                    //    // get the non-manifold vertices
-                    //    debug_point->points_.clear();
-                    //    debug_point->colors_.clear();
-                    //    std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
-                    //    // put the non-manifold vertices in debug_point
-                    //    for (size_t i = 0; i < non_manifold_vertices.size(); i++) {
-                    //        debug_point->points_.push_back(o3d_mesh->vertices_[non_manifold_vertices[i]]);
-                    //        debug_point->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
-                    //    }
-                    //    std::cout << "Non-manifold vertices: " << non_manifold_vertices.size() << std::endl;
-                    //}
+                    if (task_in_progress) {
+                        task_in_progress = false;
+                        std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
+                        std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl;
+                        cv_debug_visualization.notify_one();
+                    }
+                    
+
                     visualizer.UpdateGeometry(o3d_mesh);
                     visualizer.UpdateGeometry(debug_point);
                     mesher.clearNewFacetFlag();

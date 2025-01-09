@@ -135,12 +135,19 @@ int main(int argc, char **argv)
     std::atomic<bool> should_exit(false);
     mesher.setVisualizationSync(&o3d_mesh_mutex);
 
+    std::condition_variable cv_debug_visualization;
+    bool task_in_progress(false);
+
     std::vector<ColorVertex> received_vertices;
+     received_vertices.push_back(ColorVertex(Vertex(-5.672, -3.527, 0.974, 0, 0, 0), Eigen::Vector3d(1.0, 0.0, 0.0)));
+
     std::thread vis_thread(Visualizer::visualizationThread,
                            std::ref(mesher),
                            std::ref(o3d_mesh_mutex),
                            std::ref(should_exit),
-                           std::ref(received_vertices));
+                           std::ref(received_vertices),
+                           std::ref(cv_debug_visualization),
+                           std::ref(task_in_progress));
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
@@ -163,10 +170,10 @@ int main(int argc, char **argv)
 
         // Add the vertices to the received_vertices
         {
-            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-            for (const auto& v : vertices) {
-                received_vertices.emplace_back(v, Eigen::Vector3d(0.0, 0.0, 1.0)); // Blue
-            }
+            //std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+            //for (const auto& v : vertices) {
+            //    received_vertices.emplace_back(v, Eigen::Vector3d(0.0, 1.0, 0.0)); // Green
+            //}
         }
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -183,7 +190,20 @@ int main(int argc, char **argv)
         
 #ifdef _DEBUG
         std::cout << "Mesh integrity check" << std::endl;
-        mesher.mesh_integrityCheck();
+        mesher.mesh_integrityCheck(received_vertices);
+
+        {
+            std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
+            task_in_progress = true;
+            cv_debug_visualization.notify_one();
+            std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
+            std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
+            
+            cv_debug_visualization.wait(lock, [&task_in_progress]{ return !task_in_progress; });
+            std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
+        }
+
+
 #endif
 
         // sleep for 100ms

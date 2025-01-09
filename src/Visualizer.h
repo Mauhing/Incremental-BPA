@@ -12,7 +12,9 @@ namespace Visualizer
         Mesher &mesher,
         std::mutex &o3d_mesh_mutex,
         std::atomic<bool> &should_exit,
-        std::vector<ColorVertex> &received_vertices);
+        std::vector<ColorVertex> &received_vertices,
+        std::condition_variable &cv_debug_visualization,
+        bool &task_in_progress);
 
     void renderMainMesh(const Facet_star_list &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
     void renderFreshVertices(const std::vector<Vertex *> &vertices, std::shared_ptr<open3d::geometry::PointCloud> &O3d_point);
