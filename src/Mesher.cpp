@@ -303,10 +303,10 @@ bool Mesher::trySeed(Vertex &v)
             this->addFacet(facet);
             // >>>
 
-            if (m_nfacets % 10000 == 0)
-                std::cout << m_nfacets << " facets. "
-                          << m_edge_front.size() << " front edges. "
-                          << m_border_edges.size() << " border edges." << std::endl;
+            //if (m_nfacets % 10000 == 0)
+            //    std::cout << m_nfacets << " facets. "
+            //              << m_edge_front.size() << " front edges. "
+            //              << m_border_edges.size() << " border edges." << std::endl;
 
             e1 = v.getLinkingEdge(candidate);
             e2 = vtest.getLinkingEdge(candidate);
@@ -1719,6 +1719,20 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Check and remove collision facets
     this->checkAndRemoveCollisionFacets(vertices);
 
+    // Removing collision facets may create fanfan singular
+    // Therefore, we need to remove fanfan singular first
+    while (true)
+    {
+        // Remove singular vertices
+        bool found_fan_fan_vertex = this->removeFanFanSingular();
+        if (!found_fan_fan_vertex)
+        {
+            break;
+        }
+    }
+    
+    this->mesh_integrityCheck();
+
     // Add points to the octree
     this->addPointsToOctreeVertices(vertices);
 
@@ -1832,16 +1846,19 @@ bool Mesher::removeFanFanSingular()
             std::lock_guard<std::mutex> lock(*visualization_mutex);
             this->removeFacets(singular_facets);
 
-            for (auto *facet : m_facets)
-            {
-                Vertex *v1 = facet->getVertex(0);
-                Vertex *v2 = facet->getVertex(1);
-                Vertex *v3 = facet->getVertex(2);
-                if (v1 == nullptr || v2 == nullptr || v3 == nullptr)
-                {
-                    std::cout << "Facet address: " << facet << std::endl;
-                }
-            }
+            #ifdef _DEBUG
+            //for (auto *facet : m_facets)
+            //{
+            //    Vertex *v1 = facet->getVertex(0);
+            //    Vertex *v2 = facet->getVertex(1);
+            //    Vertex *v3 = facet->getVertex(2);
+            //    if (v1 == nullptr || v2 == nullptr || v3 == nullptr)
+            //    {
+            //        std::cout << "There is a facet with null vertex" << std::endl;
+            //        std::exit(EXIT_FAILURE);
+            //    }
+            //}
+            #endif
         }
     }
     return found_fan_fan_vertex;
@@ -1868,7 +1885,7 @@ bool Mesher::removeDiskFanSingular()
         {
             if (boundary_vertices.find(f->getVertex(i)) == boundary_vertices.end())
             {
-                // not a boundary vertex, skip
+                // The fresh facet vertex is not in a boundary vertex. We do not need to count it.
                 continue;
             }
             // the key does not exist, then insert it with 1
@@ -1909,6 +1926,7 @@ bool Mesher::removeDiskFanSingular()
                 for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets)
                 {
                     found_disk_fan_vertex = true;
+                    std::cout << "nm_vertex xyz: " << nm_vertex->x() << " " << nm_vertex->y() << " " << nm_vertex->z() << std::endl;
                     for (Facet *facet : fan_facets)
                     {
                         this->removeRedundantDiskFanFacet(nm_vertex, facet);
@@ -1956,6 +1974,64 @@ void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
         }
          
         //std::exit(EXIT_FAILURE);
+    }
+
+    // check o3d_mesh properties
+    // is it edge manifold?
+    bool allow_boundary_edges = true;
+    bool is_edge_manifold = o3d_mesh->IsEdgeManifold(allow_boundary_edges);
+    if (!is_edge_manifold)
+    {
+        // get non-manifold edges
+        std::vector<Eigen::Vector2i> non_manifold_edges = o3d_mesh->GetNonManifoldEdges(allow_boundary_edges);
+        // print non-manifold edges
+        std::cout << "Non-manifold edges: " << non_manifold_edges.size() << std::endl;
+        // print top 10 non-manifold edges
+        for (size_t i = 0; i < non_manifold_edges.size(); i++)
+        {
+            std::cout << "Non-manifold edge " << i << ": " << non_manifold_edges[i][0] << " " << non_manifold_edges[i][1] << std::endl;
+        }
+        std::cerr << "Error: The mesh is not edge manifold" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // is it orientable?
+    bool is_orientable = o3d_mesh->IsOrientable();
+    if (!is_orientable)
+    {
+        std::cerr << "Error: The mesh is not orientable" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return;
+}
+
+void Mesher::mesh_integrityCheck()
+{
+    // make a share object of o3d_mesh
+    std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+
+    Visualizer::renderMainMesh(this->getFacets(), o3d_mesh);
+
+    // is it vertex manifold?
+    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
+    if (!is_vertex_manifold)
+    {
+        std::cout << "Mesh is not vertex manifold" << std::endl;
+        // Get all the non-manifold vertices
+        std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
+
+        // Print number of non-manifold vertices
+        std::cout << "Number of non-manifold vertices: " << non_manifold_vertices.size() << std::endl;
+        for (size_t i = 0; i < non_manifold_vertices.size(); i++)
+        {
+            Eigen::Vector3d v = o3d_mesh->vertices_[non_manifold_vertices[i]];
+            
+            // the constructor is Vertex(double x, double y, double z, double nx, double ny, double nz)
+            //debug_vertices.push_back(ColorVertex(Vertex(v.x(), v.y(), v.z(), 0, 0, 0), Eigen::Vector3d(1.0, 0.0, 0.0)));
+            std::cout << "Non-manifold vertex " << i << ": " << v.x() << " " << v.y() << " " << v.z() << std::endl;
+        }
+         
+        std::exit(EXIT_FAILURE);
     }
 
     // check o3d_mesh properties

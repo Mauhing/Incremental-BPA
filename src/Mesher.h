@@ -618,6 +618,8 @@ public: // Sanity check
     void debugCheckOrientation() const;
 
     void mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const;
+
+    void mesh_integrityCheck();
 #endif
 };
 

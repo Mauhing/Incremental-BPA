@@ -93,8 +93,8 @@ void Visualizer::visualizationThread(
                     renderReceivedVertices(received_vertices, debug_point);
 
                     // Shader
-                    // o3d_mesh->ComputeVertexNormals();
-                    // o3d_mesh->ComputeTriangleNormals(); 
+                    //o3d_mesh->ComputeVertexNormals();
+                    //o3d_mesh->ComputeTriangleNormals(); 
 
                     if (task_in_progress) {
                         std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
