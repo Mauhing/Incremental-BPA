@@ -3,6 +3,7 @@
 #include <atomic>
 #include <open3d/Open3D.h>
 #include "Visualizer.h"
+#include "types.h"
 
 void Visualizer::visualizationThread(
     Mesher &mesher,
@@ -96,14 +97,17 @@ void Visualizer::visualizationThread(
                     // o3d_mesh->ComputeTriangleNormals(); 
 
                     if (task_in_progress) {
-                        task_in_progress = false;
                         std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
-                        std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl;
+                        renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+
+                        std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
+                        task_in_progress = false;
                         cv_debug_visualization.notify_one();
                     }
                     
 
                     visualizer.UpdateGeometry(o3d_mesh);
+                    visualizer.UpdateGeometry(debug_edge);
                     visualizer.UpdateGeometry(debug_point);
                     mesher.clearNewFacetFlag();
                 }
@@ -262,4 +266,39 @@ void Visualizer::renderReceivedVertices(std::vector<ColorVertex> &received_verti
     }
 
     received_vertices.clear();
+}
+
+void Visualizer::renderBorderEdges(const Edge_star_list &border_edges, std::shared_ptr<open3d::geometry::LineSet> &line)
+{
+    std::unordered_map<Vertex*, int> vertex_to_index;
+    int current_index = 0;
+    
+    // First pass - build vertex index map
+    for (auto edge : border_edges) {
+        if (vertex_to_index.find(edge->getSource()) == vertex_to_index.end()) {
+            vertex_to_index[edge->getSource()] = current_index++;
+        }
+        if (vertex_to_index.find(edge->getTarget()) == vertex_to_index.end()) {
+            vertex_to_index[edge->getTarget()] = current_index++;
+        }
+    }
+
+    // Second pass - create lines using indices
+    line->points_.clear();
+    line->colors_.clear();
+    line->lines_.clear();
+
+    // Add vertices
+    line->points_.resize(vertex_to_index.size());
+    for (const auto& [vertex, index] : vertex_to_index) {
+        line->points_[index] = Eigen::Vector3d(vertex->x(), vertex->y(), vertex->z());
+    }
+
+    // Add lines with red color
+    for (auto edge : border_edges) {
+        line->lines_.push_back(Eigen::Vector2i(
+            vertex_to_index[edge->getSource()], 
+            vertex_to_index[edge->getTarget()]));
+        line->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0)); // Red color
+    }
 }

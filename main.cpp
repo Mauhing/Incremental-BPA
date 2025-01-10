@@ -189,8 +189,6 @@ int main(int argc, char **argv)
         mesher.batchReconstruct(vertices);
         
 #ifdef _DEBUG
-        std::cout << "Mesh integrity check" << std::endl;
-        mesher.mesh_integrityCheck(received_vertices);
 
         {
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
@@ -203,7 +201,8 @@ int main(int argc, char **argv)
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
 
-
+        std::cout << "Mesh integrity check" << std::endl;
+        mesher.mesh_integrityCheck(received_vertices);
 #endif
 
         // sleep for 100ms

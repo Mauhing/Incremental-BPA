@@ -607,6 +607,12 @@ public:
         return m_debug_render_vertices;
     }
 
+public:
+    const Edge_star_list& debugGetBorderEdges() const
+    {
+        return m_border_edges;
+    }
+
 #ifdef _DEBUG
 public: // Sanity check
     void debugCheckOrientation() const;

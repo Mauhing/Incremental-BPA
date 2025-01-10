@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <atomic>
 #include "Mesher.h"
+#include "types.h"
 
 namespace Visualizer
 {
@@ -26,6 +27,8 @@ namespace Visualizer
     void renderDebugVertices(const std::vector<Eigen::Vector3d> &vertices, const Eigen::Vector3d &color, std::shared_ptr<open3d::geometry::PointCloud> &point);
 
     void renderReceivedVertices(std::vector<ColorVertex> &received_vertices, std::shared_ptr<open3d::geometry::PointCloud> &point);
+
+    void renderBorderEdges(const Edge_star_list &border_edges, std::shared_ptr<open3d::geometry::LineSet> &line);
 }
 
 #endif // VISUALIZER_H
