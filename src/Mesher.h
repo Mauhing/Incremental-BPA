@@ -426,37 +426,6 @@ private: // auxilliary methods for performing the triangulation
      */
     void changeRadius(double radius);
 
-private: // parallel methods
-    /** @brief try to find a triangle around a given point
-     * @param v candidate point
-     * @param containment_node ensuring that the seed found is inside
-     * a node (or in a small band around the node, see d parameter)
-     * @param d band width around the node
-     * @return true if a seed triangle was found
-     */
-    bool trySeed(Vertex &v, OctreeNodeV *containment_node, double d);
-
-    /** @brief get all active edges in a node and add it to the
-     * parameter set of active edges
-     * @param containment_node for restricting the triangulation
-     * @param[out] active_egdes set of active edges
-     */
-    void collectActiveEdges(OctreeNodeV *containment_node,
-                            Edge_set &active_edges);
-
-    /** @brief get all border edges in a node and add it to mesher border
-     * @param containment_node for restricting the triangulation
-     */
-    void collectBorderEdges(OctreeNodeV *containment_node);
-
-    /** @brief get all border edges in a node and add it to
-     * the parameter set of border_edges
-     * @param containment_node for restricting the triangulation
-     * @param[out] border_egdes set of border edges
-     */
-    void collectBorderEdges(OctreeNodeV *containment_node,
-                            Edge_set &border_edges);
-
 public:
     void removeFacets(std::set<Facet *> &boundary_facets);
 
