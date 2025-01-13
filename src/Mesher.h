@@ -427,18 +427,6 @@ private: // auxilliary methods for performing the triangulation
     void changeRadius(double radius);
 
 private: // parallel methods
-    /** @brief find a seed triangle in a given octree node or at least
-     * a front edge and expand the triangulation it while keeping the
-     * front contained in a dilated cell
-     * @param containment_node node in which the expansion front
-     * stays confined
-     * @param node node to search for a seed triangle
-     * @param d band width around the node
-     * @param found 1 if a seed triangle was found; false otherwise
-     */
-    void findSeedTriangle(OctreeNodeV *containment_node,
-                          OctreeNodeV *node, double d, bool &found);
-
     /** @brief try to find a triangle around a given point
      * @param v candidate point
      * @param containment_node ensuring that the seed found is inside
@@ -447,13 +435,6 @@ private: // parallel methods
      * @return true if a seed triangle was found
      */
     bool trySeed(Vertex &v, OctreeNodeV *containment_node, double d);
-
-    /**expand triangulation in a loose box around the node
-     * @param containment_node for restricting the triangulation
-     * @param d bandwidth around the node
-     */
-    void expandTriangulationAroundNode(OctreeNodeV *containment_node,
-                                       double d);
 
     /** @brief get all active edges in a node and add it to the
      * parameter set of active edges

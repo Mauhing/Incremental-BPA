@@ -1122,48 +1122,7 @@ void Mesher::fillHoles()
     }
 }
 
-void Mesher::findSeedTriangle(OctreeNodeV *containment_node, OctreeNodeV *node,
-                              double d, bool &found)
-{
-    if (node->getDepth() != 0)
-    {
-        for (unsigned int i = 0; i < 8; i++)
-        {
-            if (node->getChild(i) != NULL)
-                findSeedTriangle(containment_node, node->getChild(i), d, found);
-        }
-    }
-    else if (node->getNpts() != 0)
-    {
-        // Vertex_list::iterator pi = node->points_begin();
-        Vertex_UnOrdSet::const_iterator pi = node->points_begin();
-        while (pi != node->points_end())
-        {
-            Vertex *v = *pi;
-            if (v->getType() == Vertex::FRONT) // 1
-            {
-                Edge_set &edges = v->adjacentEdges();
-                Edge_set::iterator ei;
-                for (ei = edges.begin(); ei != edges.end(); ++ei)
-                {                                        // added the parantheses for compiler warning
-                    if ((*ei)->getType() == Edge::FRONT) // 1
-                        m_edge_front.push_front(*ei);
-                    expandTriangulationAroundNode(containment_node, d);
-                } // added the parantheses for compiler warning
-            }
-            else if (v->getType() == Vertex::ORPHAN) // 0
-            {
-                if (trySeed(*v, containment_node, d))
-                {
-                    found = true;
-                    expandTriangulationAroundNode(containment_node, d);
-                    continue;
-                }
-            }
-            ++pi;
-        }
-    }
-}
+
 
 bool Mesher::trySeed(Vertex &v, OctreeNodeV *containment_node, double d)
 {
@@ -1249,60 +1208,7 @@ bool Mesher::trySeed(Vertex &v, OctreeNodeV *containment_node, double d)
     return false;
 }
 
-void Mesher::expandTriangulationAroundNode(OctreeNodeV *containment_node,
-                                           double d)
-{
-    while (!m_edge_front.empty())
-    {
-        Edge *edge = m_edge_front.front();
-        m_edge_front.pop_front();
 
-        if (edge->getType() != Edge::FRONT)
-            continue;
-
-        Point center;
-        Vertex *candidate = findCandidateVertex(edge, center);
-
-        if ((candidate == NULL) || (candidate->getType() == Vertex::INNER) // 2
-            || (!candidate->isCompatibleWith(*edge)))
-        {
-            edge->setType(Edge::BORDER);
-            m_border_edges.push_back(edge);
-            continue;
-        }
-
-        Edge *e1 = candidate->getLinkingEdge(edge->getSource());
-        Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
-
-        if (((e1 != NULL) && (e1->getType() != Edge::FRONT)) || ((e2 != NULL) && (e2->getType() != Edge::FRONT)))
-        {
-            edge->setType(Edge::BORDER);
-            m_border_edges.push_back(edge);
-            continue;
-        }
-        // checking that the front remains inside the given node and a small
-        //  band around it
-        if (!containment_node->isInside(*candidate, d))
-        {
-            // edge->setType(1);
-            edge->setType(Edge::FRONT);
-            m_node_border_edges.push_back(edge);
-            continue;
-        }
-
-        Facet *facet = this->createFacet(edge, candidate, center);
-        addFacet(facet);
-
-        e1 = candidate->getLinkingEdge(edge->getSource());
-        e2 = candidate->getLinkingEdge(edge->getTarget());
-
-        if (e1->getType() == Edge::FRONT)
-            m_edge_front.push_front(e1);
-
-        if (e2->getType() == Edge::FRONT)
-            m_edge_front.push_front(e2);
-    }
-}
 
 void Mesher::collectActiveEdges(OctreeNodeV *containment_node,
                                 Edge_set &active_edges)
