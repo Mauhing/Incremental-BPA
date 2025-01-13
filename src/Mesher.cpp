@@ -1883,19 +1883,20 @@ bool Mesher::removeDiskFanSingular()
     {
         for (int i = 0; i < 3; i++)
         {
-            if (boundary_vertices.find(f->getVertex(i)) == boundary_vertices.end())
+            Vertex *vertex = f->getVertex(i);
+            if (boundary_vertices.find(vertex) == boundary_vertices.end())
             {
                 // The fresh facet vertex is not in a boundary vertex. We do not need to count it.
                 continue;
             }
             // the key does not exist, then insert it with 1
-            if (fresh_vertices_counter.find(f->getVertex(i)) == fresh_vertices_counter.end())
+            if (fresh_vertices_counter.find(vertex) == fresh_vertices_counter.end())
             {
-                fresh_vertices_counter[f->getVertex(i)] = 1;
+                fresh_vertices_counter[vertex] = 1;
             }
             else
             {
-                fresh_vertices_counter[f->getVertex(i)]++;
+                fresh_vertices_counter[vertex]++;
             }
         }
     }
@@ -1927,6 +1928,19 @@ bool Mesher::removeDiskFanSingular()
                 {
                     found_disk_fan_vertex = true;
                     std::cout << "nm_vertex xyz: " << nm_vertex->x() << " " << nm_vertex->y() << " " << nm_vertex->z() << std::endl;
+                    std::cout << "nm_vertex type: ";
+                    switch(nm_vertex->getType()) {
+                        case Vertex::ORPHAN:
+                            std::cout << "ORPHAN";
+                            break;
+                        case Vertex::FRONT:
+                            std::cout << "FRONT";
+                            break;
+                        case Vertex::INNER:
+                            std::cout << "INNER";
+                            break;
+                    }
+                    std::cout << std::endl;
                     for (Facet *facet : fan_facets)
                     {
                         this->removeRedundantDiskFanFacet(nm_vertex, facet);
