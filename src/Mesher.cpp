@@ -299,8 +299,7 @@ bool Mesher::trySeed(Vertex &v)
             }
             // <<<
             // Now, the seed triangle will take account of the handness.
-            Facet *facet = this->createFacet(v0, v1, v2, center);
-            this->addFacet(facet);
+            this->createAndAddFacet(v0, v1, v2, center);
             // >>>
 
             //if (m_nfacets % 10000 == 0)
@@ -674,8 +673,7 @@ void Mesher::expandTriangulation()
         }
         // >>>
 
-        Facet *facet = this->createFacet(edge, candidate, center);
-        addFacet(facet);
+        this->createAndAddFacet(edge, candidate, center);
 
         Edge *e1 = candidate->getLinkingEdge(edge->getSource());
         Edge *e2 = candidate->getLinkingEdge(edge->getTarget());
@@ -790,7 +788,6 @@ Vertex *Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
 
 void Mesher::addFacet(Facet *f)
 {
-    std::unique_lock<std::mutex> lock(*visualization_mutex);
     addVertex(f->vertex(0));
     addVertex(f->vertex(1));
     addVertex(f->vertex(2));
@@ -805,16 +802,6 @@ void Mesher::addFacet(Facet *f)
     f->setBallCenterPtr(ball_center);
 
     new_facet_added = true;
-
-    if (m_slow_visualization)
-    {
-        // Release mutex before sleep to allow visualization updates
-        lock.unlock();
-        // std::cout << "Press enter to continue" << std::endl;
-        // std::cin.get();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        lock.lock();
-    }
 }
 
 std::pair<bool, Facet_set> Mesher::extractConnectedFacets(Vertex *v, const Facet_set &facets) const
@@ -1115,8 +1102,7 @@ void Mesher::fillHoles()
         computeBallCenterUsingOrderOfVertices(*tgt, *src, *v, center);
         // The new facet should be from target to source to mimic the half-edge data structure.
 
-        Facet *f = this->createFacet(tgt, src, v, center);
-        addFacet(f);
+        this->createAndAddFacet(tgt, src, v, center);
 
         ei = m_border_edges.erase(ei);
     }
@@ -1820,14 +1806,36 @@ void Mesher::mesh_integrityCheck()
     return;
 }
 
-Facet *Mesher::createFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
+void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    return new Facet(v1, v2, v3, center);
+    Facet *facet = new Facet(v1, v2, v3, center);
+    addFacet(facet); 
+
+    if (m_slow_visualization)
+    {
+        // Release mutex before sleep to allow visualization updates
+        visualization_mutex->unlock();
+        // std::cout << "Press enter to continue" << std::endl;
+        // std::cin.get();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        visualization_mutex->lock();
+    }
 }
 
-Facet *Mesher::createFacet(Edge *edge, Vertex *vertex, const Point &center)
+void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    return new Facet(edge, vertex, center);
+    Facet *facet = new Facet(edge, vertex, center);
+    addFacet(facet);
+
+    if (m_slow_visualization)
+    {
+        // Release mutex before sleep to allow visualization updates
+        visualization_mutex->unlock();
+        // std::cout << "Press enter to continue" << std::endl;
+        // std::cin.get();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        visualization_mutex->lock();
+    }
 }

@@ -454,9 +454,9 @@ public:
     void checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices);
 
 private: // create facets
-    Facet *createFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center);
+    void createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center);
 
-    Facet *createFacet(Edge *edge, Vertex *vertex, const Point &center);
+    void createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center);
 
 private:
     void resetBoundaryEdges();
