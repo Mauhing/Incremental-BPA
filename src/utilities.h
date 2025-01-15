@@ -43,7 +43,7 @@ enum ReconstructionType
 /** @brief get the common element of two sets, if any
  * @param set1 first set to compare
  * @param set2 second set to compare
- * @return common element if any, NULL if none
+ * @return common element if any, nullptr if none
  */
 template <class T>
 T getCommonElement(const set<T> &set1, const set<T> &set2)
@@ -55,7 +55,7 @@ T getCommonElement(const set<T> &set1, const set<T> &set2)
     // The unique is the address. Not the edge itself.
 
     if (set1.empty() || set2.empty())
-        return NULL;
+        return nullptr;
 
     typename set<T>::const_iterator it1 = set1.begin();
     typename set<T>::const_iterator it1End = set1.end();
@@ -63,7 +63,7 @@ T getCommonElement(const set<T> &set1, const set<T> &set2)
     typename set<T>::const_iterator it2End = set2.end();
 
     if (*it1 > *set2.rbegin() || *it2 > *set1.rbegin())
-        return NULL;
+        return nullptr;
 
     while (it1 != it1End && it2 != it2End)
     {
@@ -79,7 +79,7 @@ T getCommonElement(const set<T> &set1, const set<T> &set2)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /** @brief compute 2 to the n

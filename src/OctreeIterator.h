@@ -333,7 +333,7 @@ void TOctreeIterator<T>::loopOverAllNodes(TOctreeNode<T> *node, Func f)
     {
         for (int i = 0; i < 8; ++i)
         {
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 loopOverAllNodes(node->getChild(i), f);
         }
     }
@@ -372,7 +372,7 @@ void TOctreeIterator<T>::debug_checkAllNodesPoints()
 template <class T>
 TOctreeIterator<T>::TOctreeIterator()
 {
-    m_octree = NULL;
+    m_octree = nullptr;
 }
 
 template <class T>
@@ -388,7 +388,7 @@ template <class T>
 TOctreeIterator<T>::~TOctreeIterator()
 {
     std::cout << "TOctreeIterator destructor called" << std::endl;
-    m_octree = NULL;
+    m_octree = nullptr;
 }
 
 template <class T>
@@ -500,7 +500,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point &query,
                 {
                     TOctreeNode<T> *node = m_octree->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
-                    if ((node != NULL) && (node->getDepth() == m_activeDepth))
+                    if ((node != nullptr) && (node->getDepth() == m_activeDepth))
                         explore(node, query, neighbors);
                     ++zi;
                 }
@@ -544,7 +544,7 @@ unsigned int TOctreeIterator<T>::getNeighbors(const Point &query,
                 {
                     TOctreeNode<T> *node = m_octree->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, s);
-                    if ((node != NULL) && (node->getDepth() == s))
+                    if ((node != nullptr) && (node->getDepth() == s))
                         explore(node, query, neighbors);
                     ++zi;
                 }
@@ -570,7 +570,7 @@ void TOctreeIterator<T>::traverseToLevel(TOctreeNode<T> **node,
         unsigned int childBranchBit = 1 << l;
         unsigned int childIndex = ((((xLocCode) & (childBranchBit)) >> l) << 2) + (((yLocCode & childBranchBit) >> l) << 1) + ((zLocCode & childBranchBit) >> l);
 
-        if ((*node)->getChild(childIndex) != NULL)
+        if ((*node)->getChild(childIndex) != nullptr)
         {
             *node = (*node)->getChild(childIndex);
             l--;
@@ -588,7 +588,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
     if (node->getDepth() != 0)
     {
         for (unsigned int i = 0; i < 8; i++)
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 explore(node->getChild(i), query_point, neighbors);
     }
     else if (node->getNpts() != 0)
@@ -666,7 +666,7 @@ unsigned int TOctreeIterator<T>::getSortedNeighbors(const Point &query,
                 {
                     TOctreeNode<T> *node = m_octree->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
-                    if ((node != NULL) && (node->getDepth() == m_activeDepth))
+                    if ((node != nullptr) && (node->getDepth() == m_activeDepth))
                         exploreSort(node, query, neighbors);
                     ++zi;
                 }
@@ -710,7 +710,7 @@ unsigned int TOctreeIterator<T>::getSortedNeighbors(const Point &query,
                 {
                     TOctreeNode<T> *node = m_octree->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, s);
-                    if ((node != NULL) && (node->getDepth() == s))
+                    if ((node != nullptr) && (node->getDepth() == s))
                         exploreSort(node, query, neighbors);
                     ++zi;
                 }
@@ -730,7 +730,7 @@ void TOctreeIterator<T>::exploreSort(TOctreeNode<T> *node,
     if (node->getDepth() != 0)
     {
         for (unsigned int i = 0; i < 8; i++)
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 exploreSort(node->getChild(i), query_point, neighbors);
     }
     else if (node->getNpts() != 0)
@@ -875,7 +875,7 @@ bool TOctreeIterator<T>::containsOnly(const Point &query,
                     TOctreeNode<T> *node = m_octree->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, m_activeDepth);
                     bool ok = true;
-                    if ((node != NULL) && (node->getDepth() == m_activeDepth))
+                    if ((node != nullptr) && (node->getDepth() == m_activeDepth))
                     {
                         explore(node, query, exceptions, ok);
                         if (!ok)
@@ -924,7 +924,7 @@ bool TOctreeIterator<T>::containsOnly(const Point &query,
                     TOctreeNode<T> *node = m_octree->getRoot();
                     traverseToLevel(&node, *xi, *yi, *zi, s);
                     bool ok = true;
-                    if ((node != NULL) && (node->getDepth() == s))
+                    if ((node != nullptr) && (node->getDepth() == s))
                         explore(node, query, exceptions, ok);
                     if (!ok)
                         return false;
@@ -952,7 +952,7 @@ void TOctreeIterator<T>::explore(TOctreeNode<T> *node,
         unsigned int i = 0;
         while ((i < 8) && (check))
         {
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 explore(node->getChild(i), query_point, exceptions, check);
             i++;
         }
@@ -994,7 +994,7 @@ static unsigned int debug_checkTotalNumberOfElementsNode(TOctreeNode<T> *node)
         unsigned int total_points = 0;
         for (unsigned int i = 0; i < 8; i++)
         {
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 total_points += debug_checkTotalNumberOfElementsNode(node->getChild(i));
         }
         return total_points;

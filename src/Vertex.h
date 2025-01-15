@@ -143,7 +143,7 @@ public: // accessors + modifiers
 
     /** @brief get edge linking two vertices if any
      * @param vertex test vertex
-     * @return edge* if an edge links the two vertices and NULL otherwise
+     * @return edge* if an edge links the two vertices and nullptr otherwise
      */
     Edge *getLinkingEdge(Vertex *vertex) const;
 
@@ -205,7 +205,7 @@ public: // accessors + modifiers
     /** @brief test if two vertices are linked by a closed border with
      * three edges.
      * @param test test vertex
-     * @return closure vertex or NULL
+     * @return closure vertex or nullptr
      */
     Vertex *findBorder(Vertex *test);
 

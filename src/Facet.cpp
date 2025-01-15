@@ -30,7 +30,7 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
     m_ball_center = ball_center;
 
     Edge *e0 = v0->getLinkingEdge(v1);
-    if (e0 == NULL)
+    if (e0 == nullptr)
     {
         // It is the Facet class own the edge object.
         e0 = new Edge(v0, v1);
@@ -38,14 +38,14 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
     e0->addAdjacentFacet(this);
 
     Edge *e1 = v1->getLinkingEdge(v2);
-    if (e1 == NULL)
+    if (e1 == nullptr)
     {
         e1 = new Edge(v1, v2);
     }
     e1->addAdjacentFacet(this);
 
     Edge *e2 = v2->getLinkingEdge(v0);
-    if (e2 == NULL)
+    if (e2 == nullptr)
     {
         e2 = new Edge(v2, v0);
     }
@@ -77,7 +77,7 @@ Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
     for (int i = 0; i < 2; ++i)
     {
         Edge *e = m_vertex[i]->getLinkingEdge(m_vertex[i + 1]);
-        if (e == NULL)
+        if (e == nullptr)
         {
             e = new Edge(m_vertex[i], m_vertex[i + 1]);
         }

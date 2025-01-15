@@ -137,7 +137,7 @@ void FileIO::saveContent(OctreeNodeV *node, ofstream &f)
     if (node->getDepth() != 0)
     {
         for (int i = 0; i < 8; i++)
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 saveContent(node->getChild(i), f);
     }
     else if (node->getNpts() != 0)

@@ -30,7 +30,7 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
     // m_nz = nz;
     m_index = -1;
     setType(Vertex::ORPHAN);
-    m_octreeNodeLeaf = NULL;
+    m_octreeNodeLeaf = nullptr;
 }
 
 Vertex::~Vertex()
@@ -40,7 +40,7 @@ Vertex::~Vertex()
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
     setType(Vertex::ORPHAN); // 0
-    m_octreeNodeLeaf = NULL;
+    m_octreeNodeLeaf = nullptr;
 }
 
 bool Vertex::addAdjacentEdge(Edge *edge)
@@ -255,7 +255,7 @@ Vertex *Vertex::findBorder(Vertex *test)
     Facet *facet = e0->getFacet1();
 
     Edge_set::iterator ei = m_adjacentEdges.begin();
-    Vertex *candidate = NULL;
+    Vertex *candidate = nullptr;
     while (ei != m_adjacentEdges.end())
     {
         // if((*ei)->getType() != 0)
@@ -282,7 +282,7 @@ Vertex *Vertex::findBorder(Vertex *test)
         }
 
         Edge *e = v->getLinkingEdge(test);
-        if (e == NULL)
+        if (e == nullptr)
         {
             ++ei;
             continue;

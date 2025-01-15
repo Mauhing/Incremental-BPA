@@ -315,8 +315,8 @@ template <class T>
 TOctreeNode<T>::TOctreeNode()
 {
     for (int i = 0; i < 8; i++)
-        m_child[i] = NULL;
-    m_parent = NULL;
+        m_child[i] = nullptr;
+    m_parent = nullptr;
     m_xloc = m_yloc = m_zloc = 0;
     m_depth = 0;
     m_npts = 0;
@@ -329,8 +329,8 @@ template <class T>
 TOctreeNode<T>::TOctreeNode(const Point &origin, double size, unsigned int depth)
 {
     for (int i = 0; i < 8; i++)
-        m_child[i] = NULL;
-    m_parent = NULL;
+        m_child[i] = nullptr;
+    m_parent = nullptr;
     m_xloc = m_yloc = m_zloc = 0;
     m_depth = depth;
     m_npts = 0;

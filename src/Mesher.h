@@ -333,7 +333,7 @@ private: // auxilliary methods for performing the triangulation
      * @param v1 first vertex
      * @param v2 second vertex
      * @param center center of the facet circumsphere if it exists
-     * @return third vertex if any was found, NULL otherwise
+     * @return third vertex if any was found, nullptr otherwise
      */
     // Vertex* tryTriangleSeed(Vertex *v1,Vertex *v2, Point &center) const;
 
@@ -406,7 +406,7 @@ private: // auxilliary methods for performing the triangulation
                        double &nx, double &ny, double &nz) const;
 
     /** @brief find a candidate vertex for creating a face
-     * @return either the candidate vertex if any or NULL
+     * @return either the candidate vertex if any or nullptr
      */
     Vertex *findCandidateVertex(Edge *edge, Point &center);
 

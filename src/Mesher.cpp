@@ -54,13 +54,13 @@ static bool isNotInSet(const K &element, const std::set<K> &mySet)
 Mesher::Mesher() : visualization_mutex(nullptr),
                    new_facet_added(false)
 {
-    m_octree_vertices = NULL;
-    m_iterator_vertices = NULL;
+    m_octree_vertices = nullptr;
+    m_iterator_vertices = nullptr;
     m_nfacets = 0;
     m_vertice_idx = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
-    m_octree_ball_centers = NULL;
-    m_octree_ball_centers_iterator = NULL;
+    m_octree_ball_centers = nullptr;
+    m_octree_ball_centers_iterator = nullptr;
 }
 
 Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator_vertices,
@@ -96,7 +96,7 @@ Mesher::~Mesher()
     {
         // delete *fi;
         removeFacet(*fi);
-        *fi = NULL;
+        *fi = nullptr;
     }
     m_facets.clear();
 
@@ -205,7 +205,7 @@ void Mesher::findSeedTriangle(OctreeNodeV *node, bool &found)
     {
         for (unsigned int i = 0; i < 8; i++)
         {
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
                 findSeedTriangle(node->getChild(i), found);
         }
     }
@@ -259,7 +259,7 @@ bool Mesher::trySeed(Vertex &v)
         Neighbor_iterator nj = ni;
         ++nj;
 
-        Vertex *candidate = NULL;
+        Vertex *candidate = nullptr;
         Point center;
 
         bool changeHandness = false;
@@ -273,7 +273,7 @@ bool Mesher::trySeed(Vertex &v)
             ++nj;
         }
 
-        if (candidate != NULL)
+        if (candidate != nullptr)
         {
             // <<<
             // To check any of the edges are not a front edge, we can use the getLinkingEdge method
@@ -281,7 +281,7 @@ bool Mesher::trySeed(Vertex &v)
             Edge *e2 = vtest.getLinkingEdge(candidate);
             Edge *e3 = v.getLinkingEdge(&vtest);
 
-            if (((e1 != NULL) && (e1->getType() != Edge::FRONT)) || ((e2 != NULL) && (e2->getType() != Edge::FRONT)) || ((e3 != NULL) && (e3->getType() != Edge::FRONT)))
+            if (((e1 != nullptr) && (e1->getType() != Edge::FRONT)) || ((e2 != nullptr) && (e2->getType() != Edge::FRONT)) || ((e3 != nullptr) && (e3->getType() != Edge::FRONT)))
             {
                 ++ni;
                 continue;
@@ -343,7 +343,7 @@ bool Mesher::tryTriangleSeed(Vertex *v1, Vertex *v2, Vertex *v3,
 
     Edge *e1 = v1->getLinkingEdge(v3);
     Edge *e2 = v2->getLinkingEdge(v3);
-    if (((e1 != NULL) && (e1->getType() == Edge::INNER)) || ((e2 != NULL) && (e2->getType() == Edge::INNER)))
+    if (((e1 != nullptr) && (e1->getType() == Edge::INNER)) || ((e2 != nullptr) && (e2->getType() == Edge::INNER)))
         return false;
 
     m_iterator_vertices->setR(m_ball_radius);
@@ -650,7 +650,7 @@ void Mesher::expandTriangulation()
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);
 
-        if ((candidate == NULL) || (candidate->getType() == Vertex::INNER) // 2
+        if ((candidate == nullptr) || (candidate->getType() == Vertex::INNER) // 2
             || (!candidate->isCompatibleWith(*edge)))
         {
             // If the candidate is type 2, which means it is an inner vertex.
@@ -757,7 +757,7 @@ Vertex *Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
     normalize(ax, ay, az);
     // >>>
 
-    Vertex *candidate = NULL;
+    Vertex *candidate = nullptr;
     double min_angle = 2.0 * PI;
 
     for (Vertex_star_list::const_iterator vi = neighbors.begin();
@@ -812,7 +812,7 @@ Vertex *Mesher::findCandidateVertex(Edge *edge, Point &candidate_ball_center)
         candidate_ball_center = new_center;
     }
     // print candidate type
-    // if(candidate != NULL && candidate->getType() == 2)
+    // if(candidate != nullptr && candidate->getType() == 2)
     //     std::cout << "!!!!!!!!   candidate type: " << candidate->getType() << std::endl;
     return candidate;
 }
@@ -984,8 +984,8 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
             edgesTouchingNmVertex.insert(e);
         }
 
-        bool doesFacet1Exist = (e->getFacet1() != NULL);
-        bool doesFacet2Exist = (e->getFacet2() != NULL);
+        bool doesFacet1Exist = (e->getFacet1() != nullptr);
+        bool doesFacet2Exist = (e->getFacet2() != nullptr);
 
         bool full_edge = doesFacet1Exist && doesFacet2Exist;
         bool half_edge = !full_edge;
@@ -1122,7 +1122,7 @@ void Mesher::fillHoles()
 
         // if no oriented border links tgt to src (order is important since
         // edges of the front are oriented consistently all over the front)
-        if (v == NULL)
+        if (v == nullptr)
         {
             ++ei;
             continue;
@@ -1206,8 +1206,8 @@ void Mesher::removeFacet(Facet *facet)
         int target_idx = (i + 1) % 3;
         Edge *e = vertex[source_idx]->getLinkingEdge(vertex[target_idx]);
 
-        bool doesFacet1Exist = (e->getFacet1() != NULL);
-        bool doesFacet2Exist = (e->getFacet2() != NULL);
+        bool doesFacet1Exist = (e->getFacet1() != nullptr);
+        bool doesFacet2Exist = (e->getFacet2() != nullptr);
 
         if (doesFacet1Exist == true && doesFacet2Exist == true)
         {
@@ -1223,7 +1223,7 @@ void Mesher::removeFacet(Facet *facet)
             vertex[target_idx]->removeAdjacentEdge(e);
             m_border_edges.remove(e);
             delete e;
-            e = NULL;
+            e = nullptr;
             continue;
         }
 #ifdef _DEBUG
@@ -1292,7 +1292,7 @@ bool sameOrientation(int i, Facet *query_facet)
     facet_2 = e0->getFacet2();
 
     Facet *adjacent_facet = (facet_1 == query_facet) ? facet_2 : facet_1;
-    if (adjacent_facet == NULL)
+    if (adjacent_facet == nullptr)
     {
         return true;
     }

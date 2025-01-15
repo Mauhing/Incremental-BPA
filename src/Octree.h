@@ -252,7 +252,7 @@ void TOctree<T>::updateNodeLoc(TOctreeNode<T> *node, unsigned int level, unsigne
     {
         for (unsigned int i = 0; i < 8; i++)
         {
-            if (node->getChild(i) != NULL)
+            if (node->getChild(i) != nullptr)
             {
                 updateNodeLoc(node->getChild(i), level, x_insert_index, y_insert_index, z_insert_index);
             }
@@ -282,7 +282,7 @@ TOctree<T>::TOctree(unsigned int depth)
     m_root_depth = depth;
     m_nb_interval = pow2(depth);
     m_npoints = 0;
-    m_root = NULL;
+    m_root = nullptr;
     // m_nb_non_empty_cells.assign(depth,0);
 }
 
@@ -294,7 +294,7 @@ TOctree<T>::TOctree(const Point &origin, double size, unsigned int depth)
     m_nb_interval = pow2(depth);
     m_origin = origin;
     m_npoints = 0;
-    m_root = NULL;
+    m_root = nullptr;
     // m_nb_non_empty_cells.assign(depth,0);
 }
 
@@ -308,10 +308,10 @@ TOctree<T>::~TOctree()
     m_npoints = 0;
     m_origin = Point();
 
-    if (m_root != NULL)
+    if (m_root != nullptr)
     {
         delete m_root;
-        m_root = NULL;
+        m_root = nullptr;
     }
     // m_nb_non_empty_cells.clear();
 }
@@ -338,7 +338,7 @@ void TOctree<T>::initialize(const Point &origin, double size)
     m_root->setYLoc(0);
     m_root->setZLoc(0);
 
-    m_root->setParent(NULL);
+    m_root->setParent(nullptr);
 }
 
 template <class T>
@@ -572,7 +572,7 @@ T *TOctree<T>::addPoint(const T &pt)
         unsigned int z = ((codz & childBranchBit) >> l);
         unsigned int childIndex = (x << 2) + (y << 1) + z;
 
-        if (node->getChild(childIndex) == NULL)
+        if (node->getChild(childIndex) == nullptr)
         {
             double childSize = node->getSize() / 2.0;
             unsigned int childDepth = node->getDepth() - 1; // childDepth is smaller and amaller over the while loop.
@@ -609,7 +609,7 @@ void TOctree<T>::getNodes(unsigned int depth, TOctreeNode<T> *starting_node,
     else
     {
         for (int i = 0; i < 8; ++i)
-            if (starting_node->getChild(i) != NULL)
+            if (starting_node->getChild(i) != nullptr)
                 getNodes(depth, starting_node->getChild(i), nodes);
     }
 }
