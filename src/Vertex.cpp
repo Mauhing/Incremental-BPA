@@ -360,7 +360,6 @@ std::pair<bool, Facet_set> Vertex::extractConnectedFacets(const Facet_set &facet
 {
 
     Facet *f = *(facets.begin());
-    std::cout << "The starting facet is " << f << std::endl;
 
     // Check if the facet is a disk facet.
     bool is_disk_facet_set = false;
@@ -375,10 +374,6 @@ std::pair<bool, Facet_set> Vertex::extractConnectedFacets(const Facet_set &facet
         Vertex *next_v = current_facet->nextVertex(this);
         Edge *e = this->getLinkingEdge(next_v);
         Facet *next_facet = e->anotherFacet(current_facet);
-        std::cout << "Following orientation: The current facet is " << current_facet << std::endl;
-        std::cout << "Following orientation: The next vertex is " << next_v << std::endl;
-        std::cout << "Following orientation: The next edge is " << e << std::endl;
-        std::cout << "Following orientation: The next facet is " << next_facet << std::endl;
 
 #ifdef _DEBUG
         if (next_facet != nullptr && utilities::isNotInSet(next_facet, facets))
@@ -424,11 +419,6 @@ std::pair<bool, Facet_set> Vertex::extractConnectedFacets(const Facet_set &facet
         Vertex *prev_v = current_facet->previousVertex(this);
         Edge *e = this->getLinkingEdge(prev_v);
         Facet *prev_facet = e->anotherFacet(current_facet);
-
-        std::cout << "Opposite orientation: The current facet is " << current_facet << std::endl;
-        std::cout << "Opposite orientation: The previous vertex is " << prev_v << std::endl;
-        std::cout << "Opposite orientation: The previous edge is " << e << std::endl;
-        std::cout << "Opposite orientation: The previous facet is " << prev_facet << std::endl;
 
 #ifdef _DEBUG
         if (prev_facet != nullptr && utilities::isNotInSet(prev_facet, facets))

@@ -144,7 +144,7 @@ public: // accessors+modifiers
 
   void flipOrientation();
 
-  void alignWithFacet1();
+  bool alignWithFacet1();
 
 #ifdef _DEBUG
 public: // use for debug

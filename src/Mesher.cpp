@@ -645,7 +645,11 @@ void Mesher::expandTriangulation()
         }
 #endif
 
-        edge->alignWithFacet1();
+        bool isFlipped = edge->alignWithFacet1();
+        if (isFlipped)
+        {
+            std::cout << "Flipped orientation of edge to align with facet 1" << std::endl;
+        }
 
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);

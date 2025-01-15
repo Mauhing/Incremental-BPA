@@ -257,7 +257,7 @@ void Edge::flipOrientation()
     m_tgt = temp;
 }
 
-void Edge::alignWithFacet1()
+bool Edge::alignWithFacet1()
 {
     Facet *facet = m_facet1;
     
@@ -271,9 +271,11 @@ void Edge::alignWithFacet1()
     if ((facetSourceIndex + 1) % 3 == facetTargetIndex)
     {
         // This is good.
+        return false;
     }
     else
     {
         flipOrientation();
+        return true;
     } 
 }
