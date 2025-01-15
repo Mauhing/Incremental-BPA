@@ -54,6 +54,10 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
     for (unsigned int i = 0; i < 3; i++)
     {
         m_vertex[i]->addAdjacentFacet(this);
+    }
+
+    for (unsigned int i = 0; i < 3; i++)
+    {
         m_vertex[i]->updateType();
     }
 }
@@ -83,6 +87,10 @@ Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
     for (int i = 0; i < 3; ++i)
     {
         m_vertex[i]->addAdjacentFacet(this);
+    }
+
+    for (int i = 0; i < 3; ++i)
+    {
         m_vertex[i]->updateType();
     }
 }
@@ -151,4 +159,18 @@ Vertex *Facet::previousVertex(const Vertex *v) const
     std::cerr << "Vertex not found in facet" << std::endl;
     std::exit(EXIT_FAILURE);
 #endif
+}
+
+int Facet::getVertexIndex(const Vertex *v) const
+{
+    for (int i = 0; i < 3; i++)
+    {
+        if (m_vertex[i] == v)
+            return i;
+    }
+#ifdef _DEBUG
+    std::cerr << "Vertex not found in facet" << std::endl;
+    std::exit(EXIT_FAILURE);
+#endif
+    return -1;
 }

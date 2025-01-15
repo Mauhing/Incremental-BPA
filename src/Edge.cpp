@@ -103,7 +103,7 @@ bool Edge::addAdjacentFacet(Facet *facet)
     if (m_facet1 == NULL)
     {
         m_facet1 = facet;
-        updateOrientation(); // TODO: check if this is necessary
+        //updateOrientation(); // TODO: check if this is necessary
         setType(EdgeType::FRONT);
         return true;
     }
@@ -124,19 +124,24 @@ bool Edge::removeAdjacentFacet(Facet *facet)
 
     if (m_facet1 == facet)
     {
-        // m_facet1 = NULL;
         m_facet1 = m_facet2;
-        m_facet2 = NULL; // TODO: Do we need to update the orientation?
+        m_facet2 = NULL;
+        alignWithFacet1();
         setType(EdgeType::FRONT);
         return true;
     }
 
-    if (m_facet2 == facet)
+    if (m_facet2 == facet && m_facet1 != NULL)
     {
         m_facet2 = NULL;
         setType(EdgeType::FRONT);
         return true;
     }
+    
+    #ifdef _DEBUG
+    std::cerr << "Edge::removeAdjacentFacet() - Facet not found in edge" << std::endl;
+    std::exit(EXIT_FAILURE);
+    #endif
 
     return false;
 }
@@ -147,7 +152,7 @@ void Edge::updateOrientation()
 #ifdef _DEBUG
     if (opp == nullptr)
     {
-        std::cerr << "Edge::updateOrientation() - Opposite vertex is null" << std::endl;
+        std::cerr << "\033[1;31mEdge::updateOrientation() - Opposite vertex is null\033[0m" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 #endif
@@ -173,7 +178,7 @@ void Edge::updateOrientation()
         m_tgt = temp;
 
 #ifdef _DEBUG
-        std::cerr << "Edge::updateOrientation() - Edge flipped" << std::endl;
+        std::cerr << "\033[1;31mEdge::updateOrientation() - Edge flipped\033[0m" << std::endl;
         std::exit(EXIT_FAILURE);
 #endif
     }
@@ -219,7 +224,13 @@ Facet *Edge::anotherFacet(Facet *f)
 {
     if (f == m_facet1)
         return m_facet2;
-    return m_facet1;
+    if (f == m_facet2)
+        return m_facet1;
+#ifdef _DEBUG
+    std::cerr << "Facet not found in edge" << std::endl;
+    std::exit(EXIT_FAILURE);
+#endif
+    return nullptr;
 }
 
 #ifdef _DEBUG
@@ -238,3 +249,32 @@ unsigned int Edge::debugGetNumAdjacentFacets() const
 #endif
 }
 #endif
+
+void Edge::flipOrientation()
+{
+    Vertex *temp = m_src;
+    m_src = m_tgt;
+    m_tgt = temp;
+}
+
+void Edge::alignWithFacet1()
+{
+    Facet *facet = m_facet1;
+    
+    // Compare facet source and edge source to see if they are the same vertex
+    Vertex *getEdgeSource = getSource();
+    Vertex *getEdgeTarget = getTarget();
+
+    const int facetSourceIndex = facet->getVertexIndex(getEdgeSource);
+    const int facetTargetIndex = facet->getVertexIndex(getEdgeTarget);
+
+    if ((facetSourceIndex + 1) % 3 == facetTargetIndex)
+    {
+        // This is good.
+    }
+    else
+    {
+        std::cout << "\033[33mFlipping orientation of edge to align with facet 1\033[0m" << std::endl;
+        flipOrientation();
+    } 
+}

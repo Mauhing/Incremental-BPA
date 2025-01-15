@@ -87,7 +87,7 @@ Edge_set &Vertex::adjacentEdges()
     return m_adjacentEdges;
 }
 
-Edge *Vertex::getLinkingEdge(Vertex *vertex)
+Edge *Vertex::getLinkingEdge(Vertex *vertex) const
 {
     return getCommonElement(m_adjacentEdges, vertex->adjacentEdges());
 }
@@ -219,19 +219,26 @@ void Vertex::updateType()
         m_type = Vertex::ORPHAN; // 0
         return;
     }
-    Edge_set::const_iterator ei;
-    for (ei = m_adjacentEdges.begin(); ei != m_adjacentEdges.end(); ++ei)
+
+    if (this->hasDisk())
     {
-        const Edge *e = *ei;
-        if (e->getType() != Edge::INNER) // 2
-        {
-            // m_type = 1;
-            m_type = Vertex::FRONT; // 1
-            return;
-        }
+        m_type = Vertex::INNER;
+        return;
     }
-    // m_type = 2;
-    m_type = Vertex::INNER; // 2
+
+    m_type = Vertex::FRONT;
+
+    //Edge_set::const_iterator ei;
+    //for (ei = m_adjacentEdges.begin(); ei != m_adjacentEdges.end(); ++ei)
+    //{
+    //    const Edge *e = *ei;
+    //    if (e->getType() != Edge::INNER) // 2
+    //    {
+    //        // m_type = 1;
+    //        m_type = Vertex::FRONT; // 1
+    //        return;
+    //    }
+    //}
 }
 
 ostream &operator<<(ostream &out, const Vertex &v)
@@ -307,4 +314,146 @@ void Vertex::clearAdjacentEdgesAndFacets()
 {
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
+}
+
+bool Vertex::hasDisk()
+{
+    Facet_set neighbor_facets = this->adjacentFacets();
+
+    if (neighbor_facets.size() < 3)
+    {
+        return false;
+    }
+
+    VertexDiskFanInfo vertex_disk_fan_info;
+    vertex_disk_fan_info.disk_fan_vertex = this;
+
+    while (!neighbor_facets.empty())
+    {
+        std::pair<bool, Facet_set> result = extractConnectedFacets(neighbor_facets);
+        bool is_disk_facet_set = result.first;
+        Facet_set detected_facets = result.second;
+
+        if (is_disk_facet_set == false)
+        {
+            vertex_disk_fan_info.fan_facets.push_back(detected_facets);
+        }
+        else
+        {
+            vertex_disk_fan_info.disk_facets.push_back(detected_facets);
+        }
+
+        for (Facet *f : detected_facets)
+        {
+            neighbor_facets.erase(f);
+        }
+
+        if (is_disk_facet_set)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::pair<bool, Facet_set> Vertex::extractConnectedFacets(const Facet_set &facets) const
+{
+
+    Facet *f = *(facets.begin());
+    std::cout << "The starting facet is " << f << std::endl;
+
+    // Check if the facet is a disk facet.
+    bool is_disk_facet_set = false;
+    Facet_set connected_facets;
+    Facet *starting_facet = f;
+    connected_facets.insert(starting_facet);
+
+    // 1. Following orientation
+    Facet *current_facet = starting_facet;
+    while (true)
+    {
+        Vertex *next_v = current_facet->nextVertex(this);
+        Edge *e = this->getLinkingEdge(next_v);
+        Facet *next_facet = e->anotherFacet(current_facet);
+        std::cout << "Following orientation: The current facet is " << current_facet << std::endl;
+        std::cout << "Following orientation: The next vertex is " << next_v << std::endl;
+        std::cout << "Following orientation: The next edge is " << e << std::endl;
+        std::cout << "Following orientation: The next facet is " << next_facet << std::endl;
+
+#ifdef _DEBUG
+        if (next_facet != nullptr && utilities::isNotInSet(next_facet, facets))
+        {
+            std::cerr << "\033[1;31mError: Neighbor facet is not in the set of facets\033[0m" << std::endl;
+            std::cerr << "Error coming from extractConnectedFacets: Following orientation" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+#endif
+        if (next_facet == nullptr)
+        {
+            // Case: Fan
+            break;
+        }
+
+        connected_facets.insert(next_facet);
+        current_facet = next_facet;
+
+        if (next_facet == starting_facet)
+        {
+// Case: Circle
+#ifdef _DEBUG
+            if (connected_facets.size() < 3)
+            {
+                std::cerr << "\033[1;31mError: Connected facets size is less than 3\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+#endif
+            is_disk_facet_set = true;
+            break;
+        }
+    }
+
+    if (is_disk_facet_set)
+    {
+        return std::make_pair(is_disk_facet_set, connected_facets);
+    }
+
+    // 2. Opposite orientation
+    current_facet = starting_facet;
+    while (true)
+    {
+        Vertex *prev_v = current_facet->previousVertex(this);
+        Edge *e = this->getLinkingEdge(prev_v);
+        Facet *prev_facet = e->anotherFacet(current_facet);
+
+        std::cout << "Opposite orientation: The current facet is " << current_facet << std::endl;
+        std::cout << "Opposite orientation: The previous vertex is " << prev_v << std::endl;
+        std::cout << "Opposite orientation: The previous edge is " << e << std::endl;
+        std::cout << "Opposite orientation: The previous facet is " << prev_facet << std::endl;
+
+#ifdef _DEBUG
+        if (prev_facet != nullptr && utilities::isNotInSet(prev_facet, facets))
+        {
+            std::cerr << "\033[1;31mError: Neighbor facet is not in the set of facets\033[0m" << std::endl;
+            std::cerr << "Error coming from extractConnectedFacets: Opposite orientation" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+#endif
+        if (prev_facet == nullptr)
+        {
+            // Case: Fan
+            break;
+        }
+
+        connected_facets.insert(prev_facet);
+        current_facet = prev_facet;
+
+#ifdef _DEBUG
+        if (current_facet == starting_facet)
+        {
+            std::cerr << "\033[1;31mError: Current facet is the same as starting facet\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+#endif
+    }
+    return std::make_pair(is_disk_facet_set, connected_facets);
 }

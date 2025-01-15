@@ -24,6 +24,7 @@
 
 #include "Point.h"
 #include "types.h"
+#include "utilities.h"
 // #include "OctreeNode.h"
 
 // class Edge;
@@ -32,7 +33,16 @@
 template <typename T>
 class TOctreeNode; // Forward declaration
 
-using namespace std;
+//using namespace std;
+
+struct VertexDiskFanInfo
+{
+    Vertex *disk_fan_vertex;
+    std::list<Facet_set> disk_facets;
+    std::list<Facet_set> fan_facets;
+
+    VertexDiskFanInfo() : disk_fan_vertex(nullptr) {}
+};
 
 /**
  * @class Vertex
@@ -135,7 +145,7 @@ public: // accessors + modifiers
      * @param vertex test vertex
      * @return edge* if an edge links the two vertices and NULL otherwise
      */
-    Edge *getLinkingEdge(Vertex *vertex);
+    Edge *getLinkingEdge(Vertex *vertex) const;
 
     /** @brief get x normal component
      * @return x normal component nx
@@ -205,5 +215,11 @@ public: // added by mauhing
     const Facet_set &adjacentFacets() const;
 
     void clearAdjacentEdgesAndFacets();
+
+    bool hasDisk();
+
+private:
+    std::pair<bool, Facet_set> extractConnectedFacets(const Facet_set &facets) const;   
+
 };
 #endif

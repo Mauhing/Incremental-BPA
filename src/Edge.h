@@ -142,6 +142,10 @@ public: // accessors+modifiers
 
   Facet *anotherFacet(Facet *f);
 
+  void flipOrientation();
+
+  void alignWithFacet1();
+
 #ifdef _DEBUG
 public: // use for debug
   unsigned int debugGetNumAdjacentFacets() const;

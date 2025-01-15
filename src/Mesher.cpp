@@ -529,33 +529,33 @@ ReconstructionType Mesher::computeReconstructionType(
     const Vertex *candidate) const
 {
     // We can already assume the candidate is not INNER vertex.
-    bool doesESourceExist = eSource != NULL;
-    bool doesETargetExist = eTarget != NULL;
+    bool doesEdgeFromSourceExist = eSource != nullptr;
+    bool doesEdgeFromTargetExist = eTarget != nullptr;
     bool isCandidateORPHAN = candidate->getType() == Vertex::ORPHAN;
 
     // If both e1 and e2 do not exist, then the reconstruction type is expansion.
-    if (!doesESourceExist && !doesETargetExist && isCandidateORPHAN)
+    if (!doesEdgeFromSourceExist && !doesEdgeFromTargetExist && isCandidateORPHAN)
     {
         return ReconstructionType::EXPANSION;
     }
 
-    // If both e1 and e2 exist, then the reconstruction type is glue.
-    if (!doesESourceExist && !doesETargetExist && !isCandidateORPHAN)
+    // If both e1 and e2 do not exist, then the reconstruction type is glue.
+    if (!doesEdgeFromSourceExist && !doesEdgeFromTargetExist && !isCandidateORPHAN)
     {
         return ReconstructionType::GLUE;
     }
 
     // If e1 or e2 is not a front edge, then no reconstruction is needed.
-    bool isESourceNotFront = doesESourceExist && (eSource->getType() != Edge::FRONT);
-    bool isETargetNotFront = doesETargetExist && (eTarget->getType() != Edge::FRONT);
+    bool isESourceNotFront = doesEdgeFromSourceExist && (eSource->getType() != Edge::FRONT);
+    bool isETargetNotFront = doesEdgeFromTargetExist && (eTarget->getType() != Edge::FRONT);
 
     if (isESourceNotFront || isETargetNotFront)
     {
         return ReconstructionType::NO_RECONSTRUCTION;
     }
 
-    bool isESourceFront = doesESourceExist && (eSource->getType() == Edge::FRONT);
-    bool isETargetFront = doesETargetExist && (eTarget->getType() == Edge::FRONT);
+    bool isESourceFront = doesEdgeFromSourceExist && (eSource->getType() == Edge::FRONT);
+    bool isETargetFront = doesEdgeFromTargetExist && (eTarget->getType() == Edge::FRONT);
 
     if (isESourceFront != isETargetFront)
     {
@@ -624,6 +624,29 @@ void Mesher::expandTriangulation()
         if (edge->getType() != Edge::FRONT)
             continue;
 
+#ifdef _DEBUG
+        // Check for invalid edge facet configuration
+        if (edge->getFacet2() != nullptr && edge->getFacet1() == nullptr) {
+            std::cerr << "\033[1;31mError: Edge has facet2 but no facet1\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+
+        bool isFacet1Exist = edge->getFacet1() != nullptr;
+        bool isFacet2Exist = edge->getFacet2() != nullptr;
+
+        if (isFacet1Exist && !(isFacet2Exist))
+        {
+            // This is good.
+        }
+        else
+        {
+            std::cerr << "\033[1;31mError: Edge has no facet1 or facet2\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+#endif
+
+        edge->alignWithFacet1();
+
         Point center;
         Vertex *candidate = findCandidateVertex(edge, center);
 
@@ -637,9 +660,17 @@ void Mesher::expandTriangulation()
             m_border_edges.push_back(edge);
             continue;
         }
+        
+
 
         Edge *eSource = candidate->getLinkingEdge(edge->getSource());
         Edge *eTarget = candidate->getLinkingEdge(edge->getTarget());
+
+        // Check for invalid edge facet configuration
+        //if (eSource == nullptr || eTarget == nullptr) {
+        //    std::cerr << "\033[1;31mError: Edge has no source or target linking edge\033[0m" << std::endl;
+        //    std::exit(EXIT_FAILURE);
+        //}
 
         ReconstructionType reconstructionType = computeReconstructionType(eSource, eTarget, candidate);
 

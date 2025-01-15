@@ -125,7 +125,8 @@ public:
 
     Vertex *previousVertex(const Vertex *v) const;
 
-    bool hasEdge(Edge *e);
+    int getVertexIndex(const Vertex *v) const;
+
 };
 
 #endif

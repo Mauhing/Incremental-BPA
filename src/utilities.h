@@ -145,4 +145,13 @@ inline static void normalize(double &vx, double &vy, double &vz)
     vz = vz * t;
 }
 
+namespace utilities
+{
+    template <typename K>
+    static bool isNotInSet(const K &element, const std::set<K> &mySet)
+    {
+        return mySet.find(element) == mySet.end();
+    }
+}
+
 #endif
