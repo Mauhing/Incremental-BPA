@@ -139,7 +139,8 @@ int main(int argc, char **argv)
     bool task_in_progress(false);
 
     std::vector<ColorVertex> received_vertices;
-     received_vertices.push_back(ColorVertex(Vertex(-5.672, -3.527, 0.974, 0, 0, 0), Eigen::Vector3d(1.0, 0.0, 0.0)));
+    // -2.347 -0.159 0.28
+    received_vertices.push_back(ColorVertex(Vertex(-2.347, -0.159, 0.28, 0, 0, 0), Eigen::Vector3d(0.0, 0.0, 1.0)));
 
     std::thread vis_thread(Visualizer::visualizationThread,
                            std::ref(mesher),

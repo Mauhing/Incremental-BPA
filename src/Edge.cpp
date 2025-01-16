@@ -126,7 +126,9 @@ bool Edge::removeAdjacentFacet(Facet *facet)
     {
         m_facet1 = m_facet2;
         m_facet2 = nullptr;
-        alignWithFacet1();
+        if (m_facet1 != nullptr) {
+            alignWithFacet1();
+        }
         setType(EdgeType::FRONT);
         return true;
     }

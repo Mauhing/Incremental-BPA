@@ -977,64 +977,59 @@ void Mesher::removeFacet(Facet *facet)
     for (int i = 0; i < 3; ++i)
     {
         vertex[i] = facet->getVertex(i);
-        if (vertex[i] == nullptr)
-        {
-            std::cerr << "Error: Invalid vertex pointer at index " << i << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
+        vertex[i]->removeAdjacentFacet(facet);
     }
 
-    // Deal with the edges first.
+    Edge *edge[3];
     for (int i = 0; i < 3; ++i)
     {
-        int source_idx = i;
-        int target_idx = (i + 1) % 3;
-        Edge *e = vertex[source_idx]->getLinkingEdge(vertex[target_idx]);
-
-        bool doesFacet1Exist = (e->getFacet1() != nullptr);
-        bool doesFacet2Exist = (e->getFacet2() != nullptr);
-
-        if (doesFacet1Exist == true && doesFacet2Exist == true)
-        {
-            // In this case, the edge is shared by two facets.
-            e->removeAdjacentFacet(facet);
-            e->setType(Edge::EdgeType::BORDER);
-            m_border_edges.push_back(e);
-            continue;
-        }
-        if (doesFacet1Exist != doesFacet2Exist)
-        {
-            vertex[source_idx]->removeAdjacentEdge(e);
-            vertex[target_idx]->removeAdjacentEdge(e);
-            m_border_edges.remove(e);
-            delete e;
-            e = nullptr;
-            continue;
-        }
-#ifdef _DEBUG
-        if (doesFacet1Exist == false && doesFacet2Exist == false)
-        {
-            std::cerr << "Error: Edge is not shared by any facets!" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-#endif
+        edge[i] = vertex[i]->getLinkingEdge(vertex[(i + 1) % 3]);
+        edge[i]->removeAdjacentFacet(facet);
     }
+
+    // Update edges
+    for (int i = 0; i < 3; ++i)
+    { 
+        bool edge_has_no_facet = (edge[i]->getFacet1() == nullptr && edge[i]->getFacet2() == nullptr);
+        if (edge_has_no_facet) {
+            Vertex *source_vertex = edge[i]->getSource();
+            source_vertex->removeAdjacentEdge(edge[i]);
+
+            Vertex *target_vertex = edge[i]->getTarget();
+            target_vertex->removeAdjacentEdge(edge[i]);
+
+            m_border_edges.remove(edge[i]);
+            delete edge[i];
+        }
+        else
+        {
+            edge[i]->setType(Edge::EdgeType::BORDER);
+            m_border_edges.push_back(edge[i]);
+        }
+    }
+    
 
     // Deal with the vertices.
-    // This function does not delete the vertex.
-    for (unsigned int i = 0; i < 3; ++i)
+    for (Vertex *v : vertex)
     {
-        vertex[i]->removeAdjacentFacet(facet);
-        bool vertex_still_has_adjacent_facets = (vertex[i]->adjacentFacets().size() != 0);
-        if (vertex_still_has_adjacent_facets)
+        v->updateType();
+        if (v->adjacentFacets().size() == 0)
         {
-            vertex[i]->setType(Vertex::VertexType::FRONT);
-        }
-        else // The vertex is not shared by any other facets.
-        {
-            exileVertex(vertex[i]);
+            #ifdef _DEBUG
+            if (v->adjacentEdges().size() > 0)
+            {
+                std::cerr << "\033[1;31mError: Vertex has adjacent edges\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            #endif
+            exileVertex(v);
+            continue;
         }
     }
+
+    m_facets.remove(facet);
+    m_fresh_facets.erase(facet);
+    m_nfacets--;
     delete facet;
 }
 
@@ -1046,9 +1041,9 @@ void Mesher::removeFacets(SetType &facets)
     for (auto facet : facets)
     {
         removeFacet(facet);
-        m_facets.remove(facet);
-        m_fresh_facets.erase(facet); // It erase if exists
-        m_nfacets--;
+        //m_facets.remove(facet);
+        //m_fresh_facets.erase(facet); // It erase if exists
+        //m_nfacets--;
     }
 }
 
@@ -1461,19 +1456,20 @@ bool Mesher::removeDiskFanSingular()
 
     #ifdef _DEBUG
     // check any facet to be removed that will deplicate.
-    std::list<Facet *> facets_to_be_removed;
+    std::set<Facet *> facets_to_be_removed;
     for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices)
     {
-        Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
         for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets)
         {
             for (Facet *facet : fan_facets)
             {
-                if (std::find(facets_to_be_removed.begin(), facets_to_be_removed.end(), facet) != facets_to_be_removed.end()) {
-                    std::cerr << "\033[1;31mError: Facet already marked for removal\033[0m" << std::endl;
-                    std::exit(EXIT_FAILURE);
-                }
-                facets_to_be_removed.push_back(facet);
+                #ifdef _DEBUG
+                //if (facets_to_be_removed.find(facet) != facets_to_be_removed.end()) {
+                //    std::cerr << "\033[1;31mError: Facet already marked for removal\033[0m" << std::endl;
+                //    std::exit(EXIT_FAILURE);
+                //}
+                #endif
+                facets_to_be_removed.insert(facet);
             }
         }
     }
@@ -1482,135 +1478,17 @@ bool Mesher::removeDiskFanSingular()
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // Remove the redundant facets
-        for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices)
-        {
-            Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
-            if (vertex_disk_fan_info.disk_facets.size() > 0)
-            {
-                for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets)
-                {
-                    found_disk_fan_vertex = true;
-                    std::cout << "nm_vertex xyz: " << nm_vertex->x() << " " << nm_vertex->y() << " " << nm_vertex->z() << std::endl;
-                    std::cout << "nm_vertex type: ";
-                    switch(nm_vertex->getType()) {
-                        case Vertex::ORPHAN:
-                            std::cout << "ORPHAN";
-                            break;
-                        case Vertex::FRONT:
-                            std::cout << "FRONT";
-                            break;
-                        case Vertex::INNER:
-                            std::cout << "INNER";
-                            break;
-                    }
-                    std::cout << std::endl;
-
-                    for (Facet *facet : fan_facets)
-                    {                        
-                        this->removeRedundantDiskFanFacet(nm_vertex, facet);
-
-                    }
-                }
-
-            }
+        for (Facet *facet : facets_to_be_removed)
+        {                        
+            std::cout << "Removing facet in DiskFan: " << facet->getVertex(0)->x() << " " << facet->getVertex(0)->y() << " " << facet->getVertex(0)->z() << std::endl;
+            //this->removeRedundantDiskFanFacet(facet);
+            this->removeFacet(facet);
+ 
         }
-    }
 
-    return found_disk_fan_vertex;
 }
 
-void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
-{
-    // Policy:
-    // No vertex get deleted. Edge with no neighbour facets are deleted.
-    // Edge with neighbour facets are set to border and their vertices are set to FRONT.
-    Vertex *vertex[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        vertex[i] = facet->getVertex(i);
-    }
-
-    std::set<Edge *> edgesTouchingNmVertex;
-
-    // Deal with the edges first.
-    for (int i = 0; i < 3; ++i)
-    {
-        int source_idx = i;
-        int target_idx = (i + 1) % 3;
-        Vertex *source_vertex = vertex[source_idx];
-        Vertex *target_vertex = vertex[target_idx];
-        Edge *e = source_vertex->getLinkingEdge(target_vertex);
-
-        if (nm_vertex == source_vertex || nm_vertex == target_vertex)
-        {
-            edgesTouchingNmVertex.insert(e);
-        }
-
-        bool doesFacet1Exist = (e->getFacet1() != nullptr);
-        bool doesFacet2Exist = (e->getFacet2() != nullptr);
-
-        bool full_edge = doesFacet1Exist && doesFacet2Exist;
-        bool half_edge = !full_edge;
-
-        if (half_edge)
-        {
-#ifdef _DEBUG
-            if (!m_edge_front.empty())
-            {
-                std::cerr << "\033[1;31mEdge front is not empty\033[0m" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-#endif
-            // actually, only one of the contains has the edge.
-            // but we remove it from both since we do not know which one it is.
-            m_border_edges.remove(e);
-            source_vertex->removeAdjacentEdge(e);
-            target_vertex->removeAdjacentEdge(e);
-            delete e;
-        }
-        else
-        {
-            // full edge.
-            e->removeAdjacentFacet(facet);
-            e->setType(Edge::BORDER);
-            m_border_edges.push_back(e);
-        }
-    }
-
-    // Deal with the vertices.
-    for (Vertex *v : vertex)
-    {
-        if (v == nm_vertex)
-        {
-            v->removeAdjacentFacet(facet);
-            v->setType(Vertex::INNER);
-            continue;
-        }
-        if (v->adjacentFacets().size() == 1)
-        {
-#ifdef _DEBUG
-            if (v->getType() != Vertex::FRONT)
-            {
-                std::cerr << "\033[1;31mError: Vertex is not front\033[0m" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-#endif
-            exileVertex(v);
-            continue;
-        }
-        if (v->adjacentFacets().size() > 1)
-        {
-            // Inner vertex.
-            v->setType(Vertex::FRONT);
-            v->removeAdjacentFacet(facet);
-            continue;
-        }
-    }
-
-    m_facets.remove(facet);
-    m_fresh_facets.erase(facet);
-    m_nfacets--;
-    delete facet;
+    return found_disk_fan_vertex;
 }
 
 void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
@@ -1639,7 +1517,7 @@ void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
             std::cout << "Non-manifold vertex " << i << ": " << v.x() << " " << v.y() << " " << v.z() << std::endl;
         }
          
-        //std::exit(EXIT_FAILURE);
+        std::exit(EXIT_FAILURE);
     }
 
     // check o3d_mesh properties

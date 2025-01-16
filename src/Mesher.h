@@ -490,7 +490,6 @@ public: // Detect and remove Disk-Fan singular Fan
 
 private: // Check non-manifold vertices
 
-    void removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet);
 
     Facet_UnOrdSet m_fresh_facets;
 
