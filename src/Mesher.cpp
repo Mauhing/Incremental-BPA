@@ -45,12 +45,6 @@
 
 const double PI = 3.1415926535;
 
-template <typename K>
-static bool isNotInSet(const K &element, const std::set<K> &mySet)
-{
-    return mySet.find(element) == mySet.end();
-}
-
 Mesher::Mesher() : visualization_mutex(nullptr),
                    new_facet_added(false)
 {
@@ -839,127 +833,7 @@ void Mesher::addFacet(Facet *f)
     new_facet_added = true;
 }
 
-std::pair<bool, Facet_set> Mesher::extractConnectedFacets(Vertex *v, const Facet_set &facets) const
-{
-#ifdef _DEBUG
-    if (v->getType() == Vertex::ORPHAN)
-    {
-        std::cerr << "\033[1;31mThe vertex is type ORPHAN\033[0m" << std::endl;
-        std::cerr << "Vertex: " << v << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-#endif
 
-    Facet *f = *(facets.begin());
-
-    // Check if the facet is a disk facet.
-    bool is_disk_facet_set = false;
-    Facet_set connected_facets;
-    Facet *starting_facet = f;
-    connected_facets.insert(starting_facet);
-
-    // 1. Following orientation
-    Facet *current_facet = starting_facet;
-    while (true)
-    {
-        // The problem is the code in this scope.
-        Vertex *next_v = current_facet->nextVertex(v);
-        Edge *e = v->getLinkingEdge(next_v);
-        Facet *next_facet = e->anotherFacet(current_facet);
-
-#ifdef _DEBUG
-        if (next_facet != nullptr && isNotInSet(next_facet, facets))
-        {
-            std::cerr << "\033[1;31mError: Neighbor facet is not in the set of facets\033[0m" << std::endl;
-            std::cerr << "Error coming from extractConnectedFacets: Following orientation" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-#endif
-        if (next_facet == nullptr)
-        {
-            // Case: Fan
-            break;
-        }
-        if (next_facet == starting_facet)
-        {
-// Case: Circle
-#ifdef _DEBUG
-            if (connected_facets.size() < 3)
-            {
-                std::cerr << "\033[1;31mError: Connected facets size is less than 3\033[0m" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-#endif
-            is_disk_facet_set = true;
-            break;
-        }
-        connected_facets.insert(next_facet);
-        current_facet = next_facet;
-    }
-
-    if (is_disk_facet_set)
-    {
-        return std::make_pair(is_disk_facet_set, connected_facets);
-    }
-
-    // 2. Opposite orientation
-    current_facet = starting_facet;
-    while (true)
-    {
-        // The problem is the code in this scope.
-        Vertex *prev_v = starting_facet->previousVertex(v);
-        Edge *e = v->getLinkingEdge(prev_v);
-        Facet *prev_facet = e->anotherFacet(starting_facet);
-
-#ifdef _DEBUG
-        if (prev_facet != nullptr && isNotInSet(prev_facet, facets))
-        {
-            std::cerr << "\033[1;31mError: Neighbor facet is not in the set of facets\033[0m" << std::endl;
-            std::cerr << "Error coming from extractConnectedFacets: Opposite orientation" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-
-#endif
-        if (prev_facet == nullptr)
-        {
-            // Case: Fan
-            break;
-        }
-
-        connected_facets.insert(prev_facet);
-        starting_facet = prev_facet;
-    }
-    return std::make_pair(is_disk_facet_set, connected_facets);
-}
-
-Mesher::VertexDiskFanInfo Mesher::getDiskFan(Vertex *v) const
-{
-    Facet_set neighbor_facets = v->adjacentFacets();
-    VertexDiskFanInfo vertex_disk_fan_info;
-    vertex_disk_fan_info.disk_fan_vertex = v;
-
-    while (!neighbor_facets.empty())
-    {
-        std::pair<bool, Facet_set> result = extractConnectedFacets(v, neighbor_facets);
-        bool is_disk_facet_set = result.first;
-        Facet_set detected_facets = result.second;
-
-        if (is_disk_facet_set == false)
-        {
-            vertex_disk_fan_info.fan_facets.push_back(detected_facets);
-        }
-        else
-        {
-            vertex_disk_fan_info.disk_facets.push_back(detected_facets);
-        }
-
-        for (Facet *f : detected_facets)
-        {
-            neighbor_facets.erase(f);
-        }
-    }
-    return vertex_disk_fan_info;
-}
 
 void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
 {
@@ -1671,7 +1545,7 @@ bool Mesher::removeDiskFanSingular()
     {
         if (count > 1)
         {
-            VertexDiskFanInfo vertex_disk_fan_info = this->getDiskFan(v);
+            VertexDiskFanInfo vertex_disk_fan_info = v->getDiskFan();
             disk_fan_vertices.push_back(vertex_disk_fan_info);
         }
     }

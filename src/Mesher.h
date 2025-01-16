@@ -490,20 +490,6 @@ public: // Detect and remove Disk-Fan singular Fan
     }
 
 private: // Check non-manifold vertices
-    // std::map<Vertex *, std::list<Facet_set>> getDiskSingularVertexAndItsGroupFacets(Facet *f);
-
-    struct VertexDiskFanInfo
-    {
-        Vertex *disk_fan_vertex;
-        std::list<Facet_set> disk_facets;
-        std::list<Facet_set> fan_facets;
-
-        VertexDiskFanInfo() : disk_fan_vertex(nullptr) {}
-    };
-
-    VertexDiskFanInfo getDiskFan(Vertex *v) const;
-
-    std::pair<bool, Facet_set> extractConnectedFacets(Vertex *v, const Facet_set &facets) const;
 
     void removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet);
 

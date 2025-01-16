@@ -218,6 +218,8 @@ public: // added by mauhing
 
     bool hasDisk();
 
+    VertexDiskFanInfo getDiskFan();
+
 private:
     std::pair<bool, Facet_set> extractConnectedFacets(const Facet_set &facets) const;   
 

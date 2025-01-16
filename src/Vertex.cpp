@@ -318,13 +318,12 @@ void Vertex::clearAdjacentEdgesAndFacets()
 
 bool Vertex::hasDisk()
 {
+    return getDiskFan().disk_facets.size() > 0;
+}
+
+VertexDiskFanInfo Vertex::getDiskFan()
+{
     Facet_set neighbor_facets = this->adjacentFacets();
-
-    if (neighbor_facets.size() < 3)
-    {
-        return false;
-    }
-
     VertexDiskFanInfo vertex_disk_fan_info;
     vertex_disk_fan_info.disk_fan_vertex = this;
 
@@ -347,13 +346,8 @@ bool Vertex::hasDisk()
         {
             neighbor_facets.erase(f);
         }
-
-        if (is_disk_facet_set)
-        {
-            return true;
-        }
     }
-    return false;
+    return vertex_disk_fan_info;
 }
 
 std::pair<bool, Facet_set> Vertex::extractConnectedFacets(const Facet_set &facets) const
