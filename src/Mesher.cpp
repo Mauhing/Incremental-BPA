@@ -835,101 +835,7 @@ void Mesher::addFacet(Facet *f)
 
 
 
-void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
-{
-    // Policy:
-    // No vertex get deleted. Edge with no neighbour facets are deleted.
-    // Edge with neighbour facets are set to border and their vertices are set to FRONT.
-    Vertex *vertex[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        vertex[i] = facet->getVertex(i);
-    }
 
-    std::set<Edge *> edgesTouchingNmVertex;
-
-    // Deal with the edges first.
-    for (int i = 0; i < 3; ++i)
-    {
-        int source_idx = i;
-        int target_idx = (i + 1) % 3;
-        Vertex *source_vertex = vertex[source_idx];
-        Vertex *target_vertex = vertex[target_idx];
-        Edge *e = source_vertex->getLinkingEdge(target_vertex);
-
-        if (nm_vertex == source_vertex || nm_vertex == target_vertex)
-        {
-            edgesTouchingNmVertex.insert(e);
-        }
-
-        bool doesFacet1Exist = (e->getFacet1() != nullptr);
-        bool doesFacet2Exist = (e->getFacet2() != nullptr);
-
-        bool full_edge = doesFacet1Exist && doesFacet2Exist;
-        bool half_edge = !full_edge;
-
-        if (half_edge)
-        {
-#ifdef _DEBUG
-            if (!m_edge_front.empty())
-            {
-                std::cerr << "\033[1;31mEdge front is not empty\033[0m" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-#endif
-            // actually, only one of the contains has the edge.
-            // but we remove it from both since we do not know which one it is.
-            m_border_edges.remove(e);
-            source_vertex->removeAdjacentEdge(e);
-            target_vertex->removeAdjacentEdge(e);
-            delete e;
-        }
-        else
-        {
-            // full edge.
-            e->removeAdjacentFacet(facet);
-            e->setType(Edge::BORDER);
-            m_border_edges.push_back(e);
-        }
-    }
-
-    // Deal with the vertices.
-    for (Vertex *v : vertex)
-    {
-        if (v == nm_vertex)
-        {
-            v->setType(Vertex::INNER);
-            v->removeAdjacentFacet(facet);
-            continue;
-        }
-        if (v->adjacentFacets().size() == 1)
-        {
-// Orphan vertex.
-// v->setType(Vertex::ORPHAN);
-#ifdef _DEBUG
-            if (v->getType() != Vertex::FRONT)
-            {
-                std::cerr << "\033[1;31mError: Vertex is not front\033[0m" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-#endif
-            exileVertex(v);
-            continue;
-        }
-        if (v->adjacentFacets().size() > 1)
-        {
-            // Inner vertex.
-            v->setType(Vertex::FRONT);
-            v->removeAdjacentFacet(facet);
-            continue;
-        }
-    }
-
-    m_facets.remove(facet);
-    m_fresh_facets.erase(facet);
-    m_nfacets--;
-    delete facet;
-}
 
 void Mesher::addVertex(Vertex *v)
 {
@@ -1553,20 +1459,36 @@ bool Mesher::removeDiskFanSingular()
         }
     }
 
+    #ifdef _DEBUG
+    // check any facet to be removed that will deplicate.
+    std::list<Facet *> facets_to_be_removed;
+    for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices)
+    {
+        Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
+        for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets)
+        {
+            for (Facet *facet : fan_facets)
+            {
+                if (std::find(facets_to_be_removed.begin(), facets_to_be_removed.end(), facet) != facets_to_be_removed.end()) {
+                    std::cerr << "\033[1;31mError: Facet already marked for removal\033[0m" << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+                facets_to_be_removed.push_back(facet);
+            }
+        }
+    }
+    #endif
+
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // Remove the redundant facets
-        int loop1 = 0;
         for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices)
         {
-            loop1++;
             Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
             if (vertex_disk_fan_info.disk_facets.size() > 0)
             {
-                int loop2 = 0;
                 for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets)
                 {
-                    loop2++;
                     found_disk_fan_vertex = true;
                     std::cout << "nm_vertex xyz: " << nm_vertex->x() << " " << nm_vertex->y() << " " << nm_vertex->z() << std::endl;
                     std::cout << "nm_vertex type: ";
@@ -1583,23 +1505,8 @@ bool Mesher::removeDiskFanSingular()
                     }
                     std::cout << std::endl;
 
-                    int loop3 = 0;
                     for (Facet *facet : fan_facets)
                     {                        
-                        loop3++;
-                        #ifdef _DEBUG
-                        for (auto *facet : m_facets)
-                        {
-                            Vertex *v1 = facet->getVertex(0);
-                            Vertex *v2 = facet->getVertex(1);
-                            Vertex *v3 = facet->getVertex(2);
-                            if (v1 == nullptr || v2 == nullptr || v3 == nullptr)
-                            {
-                                std::cout << "There is a facet with null vertex" << std::endl;
-                                std::exit(EXIT_FAILURE);
-                            }
-                        }
-                        #endif
                         this->removeRedundantDiskFanFacet(nm_vertex, facet);
 
                     }
@@ -1610,6 +1517,100 @@ bool Mesher::removeDiskFanSingular()
     }
 
     return found_disk_fan_vertex;
+}
+
+void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
+{
+    // Policy:
+    // No vertex get deleted. Edge with no neighbour facets are deleted.
+    // Edge with neighbour facets are set to border and their vertices are set to FRONT.
+    Vertex *vertex[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        vertex[i] = facet->getVertex(i);
+    }
+
+    std::set<Edge *> edgesTouchingNmVertex;
+
+    // Deal with the edges first.
+    for (int i = 0; i < 3; ++i)
+    {
+        int source_idx = i;
+        int target_idx = (i + 1) % 3;
+        Vertex *source_vertex = vertex[source_idx];
+        Vertex *target_vertex = vertex[target_idx];
+        Edge *e = source_vertex->getLinkingEdge(target_vertex);
+
+        if (nm_vertex == source_vertex || nm_vertex == target_vertex)
+        {
+            edgesTouchingNmVertex.insert(e);
+        }
+
+        bool doesFacet1Exist = (e->getFacet1() != nullptr);
+        bool doesFacet2Exist = (e->getFacet2() != nullptr);
+
+        bool full_edge = doesFacet1Exist && doesFacet2Exist;
+        bool half_edge = !full_edge;
+
+        if (half_edge)
+        {
+#ifdef _DEBUG
+            if (!m_edge_front.empty())
+            {
+                std::cerr << "\033[1;31mEdge front is not empty\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+#endif
+            // actually, only one of the contains has the edge.
+            // but we remove it from both since we do not know which one it is.
+            m_border_edges.remove(e);
+            source_vertex->removeAdjacentEdge(e);
+            target_vertex->removeAdjacentEdge(e);
+            delete e;
+        }
+        else
+        {
+            // full edge.
+            e->removeAdjacentFacet(facet);
+            e->setType(Edge::BORDER);
+            m_border_edges.push_back(e);
+        }
+    }
+
+    // Deal with the vertices.
+    for (Vertex *v : vertex)
+    {
+        if (v == nm_vertex)
+        {
+            v->removeAdjacentFacet(facet);
+            v->setType(Vertex::INNER);
+            continue;
+        }
+        if (v->adjacentFacets().size() == 1)
+        {
+#ifdef _DEBUG
+            if (v->getType() != Vertex::FRONT)
+            {
+                std::cerr << "\033[1;31mError: Vertex is not front\033[0m" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+#endif
+            exileVertex(v);
+            continue;
+        }
+        if (v->adjacentFacets().size() > 1)
+        {
+            // Inner vertex.
+            v->setType(Vertex::FRONT);
+            v->removeAdjacentFacet(facet);
+            continue;
+        }
+    }
+
+    m_facets.remove(facet);
+    m_fresh_facets.erase(facet);
+    m_nfacets--;
+    delete facet;
 }
 
 void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
