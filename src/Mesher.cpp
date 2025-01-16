@@ -926,6 +926,7 @@ void Mesher::removeRedundantDiskFanFacet(Vertex *nm_vertex, Facet *facet)
     }
 
     m_facets.remove(facet);
+    m_fresh_facets.erase(facet);
     m_nfacets--;
     delete facet;
 }
@@ -1131,19 +1132,11 @@ void Mesher::removeFacet(Facet *facet)
     delete facet;
 }
 
-void Mesher::removeFacets(std::set<Facet *> &facets)
+template <typename SetType>
+void Mesher::removeFacets(SetType &facets)
 {
-    for (auto facet : facets)
-    {
-        removeFacet(facet);
-        m_facets.remove(facet);
-        m_fresh_facets.erase(facet); // It erase if exists
-        m_nfacets--;
-    }
-}
-
-void Mesher::removeFacets(std::unordered_set<Facet *> &facets)
-{
+    static_assert(std::is_same_v<typename SetType::value_type, Facet*>,
+                     "SetType must contain Facet pointers");
     for (auto facet : facets)
     {
         removeFacet(facet);
@@ -1546,24 +1539,34 @@ bool Mesher::removeDiskFanSingular()
         if (count > 1)
         {
             VertexDiskFanInfo vertex_disk_fan_info = v->getDiskFan();
-            disk_fan_vertices.push_back(vertex_disk_fan_info);
+            #ifdef _DEBUG
+            if (vertex_disk_fan_info.disk_facets.size() > 1)
+            {
+                std::cerr << "Disk facet set size: " << vertex_disk_fan_info.disk_facets.size() << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            #endif
+            if (vertex_disk_fan_info.disk_facets.size() > 0)
+            {
+                disk_fan_vertices.push_back(vertex_disk_fan_info);
+            }
         }
     }
 
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // Remove the redundant facets
+        int loop1 = 0;
         for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices)
         {
+            loop1++;
             Vertex *nm_vertex = vertex_disk_fan_info.disk_fan_vertex;
-            if (vertex_disk_fan_info.disk_facets.size() == 0)
+            if (vertex_disk_fan_info.disk_facets.size() > 0)
             {
-                continue;
-            }
-            if (vertex_disk_fan_info.disk_facets.size() == 1)
-            {
+                int loop2 = 0;
                 for (Facet_set &fan_facets : vertex_disk_fan_info.fan_facets)
                 {
+                    loop2++;
                     found_disk_fan_vertex = true;
                     std::cout << "nm_vertex xyz: " << nm_vertex->x() << " " << nm_vertex->y() << " " << nm_vertex->z() << std::endl;
                     std::cout << "nm_vertex type: ";
@@ -1579,20 +1582,30 @@ bool Mesher::removeDiskFanSingular()
                             break;
                     }
                     std::cout << std::endl;
+
+                    int loop3 = 0;
                     for (Facet *facet : fan_facets)
-                    {
+                    {                        
+                        loop3++;
+                        #ifdef _DEBUG
+                        for (auto *facet : m_facets)
+                        {
+                            Vertex *v1 = facet->getVertex(0);
+                            Vertex *v2 = facet->getVertex(1);
+                            Vertex *v3 = facet->getVertex(2);
+                            if (v1 == nullptr || v2 == nullptr || v3 == nullptr)
+                            {
+                                std::cout << "There is a facet with null vertex" << std::endl;
+                                std::exit(EXIT_FAILURE);
+                            }
+                        }
+                        #endif
                         this->removeRedundantDiskFanFacet(nm_vertex, facet);
+
                     }
                 }
-            }
 
-#ifdef _DEBUG
-            if (vertex_disk_fan_info.disk_facets.size() >= 2)
-            {
-                std::cerr << "Disk facet set size: " << vertex_disk_fan_info.disk_facets.size() << std::endl;
-                std::exit(EXIT_FAILURE);
             }
-#endif
         }
     }
 

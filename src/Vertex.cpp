@@ -216,6 +216,13 @@ void Vertex::updateType()
     if (m_adjacentEdges.empty())
     {
         // m_type = 0;
+#ifdef _DEBUG
+        if (adjacentFacets().size() > 0)
+        {
+            std::cerr << "\033[1;31mError: Vertex is an orphan but has adjacent facets.\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+#endif
         m_type = Vertex::ORPHAN; // 0
         return;
     }
@@ -227,6 +234,7 @@ void Vertex::updateType()
     }
 
     m_type = Vertex::FRONT;
+    return;
 
     //Edge_set::const_iterator ei;
     //for (ei = m_adjacentEdges.begin(); ei != m_adjacentEdges.end(); ++ei)
@@ -234,7 +242,6 @@ void Vertex::updateType()
     //    const Edge *e = *ei;
     //    if (e->getType() != Edge::INNER) // 2
     //    {
-    //        // m_type = 1;
     //        m_type = Vertex::FRONT; // 1
     //        return;
     //    }

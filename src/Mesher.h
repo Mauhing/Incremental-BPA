@@ -427,9 +427,8 @@ private: // auxilliary methods for performing the triangulation
     void changeRadius(double radius);
 
 public:
-    void removeFacets(std::set<Facet *> &boundary_facets);
-
-    void removeFacets(std::unordered_set<Facet *> &boundary_facets);
+    template <typename SetType>
+    void removeFacets(SetType &boundary_facets);
 
     void removeFacet(Facet *facet);
 
