@@ -121,6 +121,8 @@ public:
 
     int getVertexIndex(const Vertex *v) const;
 
+    bool isRightOrientation() const;
+
 };
 
 #endif

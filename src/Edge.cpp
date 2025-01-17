@@ -222,7 +222,7 @@ Vertex *Edge::getOppositeVertex() const
     return nullptr;
 }
 
-Facet *Edge::anotherFacet(Facet *f)
+Facet *Edge::anotherFacet(const Facet *f) const
 {
     if (f == m_facet1)
         return m_facet2;

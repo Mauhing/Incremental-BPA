@@ -140,7 +140,7 @@ public: // accessors+modifiers
 
   void setType(EdgeType type);
 
-  Facet *anotherFacet(Facet *f);
+  Facet *anotherFacet(const Facet *f) const;
 
   void flipOrientation();
 

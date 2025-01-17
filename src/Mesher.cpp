@@ -1193,6 +1193,7 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
     // Collection of collision facets
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
 
+    std::cout << "Removing collision facets (after computeCollisionFacets)" << std::endl;
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1246,13 +1247,16 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Asumming radius is already set.
 
     // Expand the octree
+    std::cout << "Expanding octree" << std::endl;
     this->expandOctree(vertices);
 
     // Check and remove collision facets
+    std::cout << "Removing collision facets" << std::endl;
     this->checkAndRemoveCollisionFacets(vertices);
 
     // Removing collision facets may create fanfan singular
     // Therefore, we need to remove fanfan singular first
+    std::cout << "Removing fanfan singular" << std::endl;
     while (true)
     {
         // Remove singular vertices
@@ -1263,15 +1267,18 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
         }
     }
     
-    this->mesh_integrityCheck();
+    //this->mesh_integrityCheck();
 
     // Add points to the octree
+    std::cout << "Adding points to the octree" << std::endl;
     this->addPointsToOctreeVertices(vertices);
 
     // Reset boundary edges to edge_front
+    std::cout << "Resetting boundary edges" << std::endl;
     this->resetBoundaryEdges();
 
     // Further reconstruction
+    std::cout << "Reconstructing" << std::endl;
     this->reconstruct();
 
     // Fill holes
@@ -1279,6 +1286,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
 
+    std::cout << "Removing fanfan and disk fan singular" << std::endl;
     while (true)
     {
         // Remove singular vertices
@@ -1293,6 +1301,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
         }
     }
 
+    std::cout << "Clearing" << std::endl;
     // Clear fresh facets
     this->clearFreshFacets();
 
@@ -1544,6 +1553,21 @@ void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
     if (!is_orientable)
     {
         std::cerr << "Error: The mesh is not orientable" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // Check if mesh has self-intersections
+    bool has_self_intersections = o3d_mesh->IsSelfIntersecting();
+    if (has_self_intersections) {
+        // Get self-intersecting triangles
+        std::vector<Eigen::Vector2i> intersecting_triangles = o3d_mesh->GetSelfIntersectingTriangles();
+        
+        // Print the intersecting triangle pairs
+        std::cout << "Self-intersecting triangle pairs:" << std::endl;
+        for (const auto& pair : intersecting_triangles) {
+            std::cout << "Triangle " << pair[0] << " intersects with triangle " << pair[1] << std::endl;
+        }
+        std::cerr << "Error: The mesh has self-intersections" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return;

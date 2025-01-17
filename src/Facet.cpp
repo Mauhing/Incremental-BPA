@@ -60,6 +60,11 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
     {
         m_vertex[i]->updateType();
     }
+
+    if(!isRightOrientation()) {
+        std::cerr << "Facet is not right oriented" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 }
 
 Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
@@ -92,6 +97,11 @@ Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
     for (int i = 0; i < 3; ++i)
     {
         m_vertex[i]->updateType();
+    }
+
+    if(!isRightOrientation()) {
+        std::cerr << "Facet is not right oriented" << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 }
 
@@ -173,4 +183,40 @@ int Facet::getVertexIndex(const Vertex *v) const
     std::exit(EXIT_FAILURE);
 #endif
     return -1;
+}
+
+bool Facet::isRightOrientation() const
+{
+    // Get adjacent facets through each edge
+    for(int i = 0; i < 3; i++) {
+        Vertex* v1 = m_vertex[i];
+        Vertex* v2 = m_vertex[(i+1)%3];
+        Edge* edge = v1->getLinkingEdge(v2);
+
+#ifdef _DEBUG
+        if(edge == nullptr) {
+            std::cerr << "Edge is nullptr" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+#endif
+
+        Facet* adjacent = edge->anotherFacet(this);
+        if(adjacent == nullptr) {
+            continue;
+        }
+
+        // Find indices of these vertices in both facets
+        int this_v1_idx = this->getVertexIndex(v1);
+        int this_v2_idx = this->getVertexIndex(v2);
+        int adj_v1_idx = adjacent->getVertexIndex(v1);
+        int adj_v2_idx = adjacent->getVertexIndex(v2);
+
+        // In correctly oriented adjacent facets, vertices should appear in opposite order
+        bool is_right_orientation = ((this_v2_idx == (this_v1_idx + 1) % 3) && ((adj_v2_idx + 1)%3 == adj_v1_idx));
+        if(!is_right_orientation) {
+            return false;
+        }
+    }
+    return true;
+    
 }
