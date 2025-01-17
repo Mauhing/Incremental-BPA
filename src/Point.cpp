@@ -26,6 +26,21 @@ Point::Point(double x, double y, double z) : m_x(x), m_y(y), m_z(z)
 {
 }
 
+Point& Point::operator=(const Point& other)
+{
+    if (this != &other)
+    {
+        m_x = other.m_x;
+        m_y = other.m_y;
+        m_z = other.m_z;
+    }
+    return *this;
+}
+
+Point::Point(const Point& other) : m_x(other.m_x), m_y(other.m_y), m_z(other.m_z)
+{
+}
+
 Point::~Point()
 {
 }

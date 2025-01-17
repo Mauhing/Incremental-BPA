@@ -59,6 +59,16 @@ public:
      */
     double z() const;
 
+    /** @brief copy constructor
+     * @param other Point to copy from
+     */
+    Point(const Point& other);
+
+    /** @brief assignment operator
+     * @param other Point to copy from
+     */
+    Point& operator=(const Point& other);
+
     void setOctreeNodeLeaf(TOctreeNode<Point> *node)
     {
         (void)node; // Mark the parameter as unused

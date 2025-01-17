@@ -36,7 +36,7 @@ private:
     Vertex *m_vertex[3];
 
     /** @brief center of the ball that generated the facet*/
-    Point m_ball_center;
+    const Point m_ball_center;
 
     BallCenter *m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
 
@@ -111,14 +111,8 @@ private:
     static std::set<Edge *> sb_recordedNewBoundaryEdges;
 
 public:
-    void insertNewBoundaryEdge(Edge *edge);
-    void removeNewBoundaryEdge(Edge *edge);
 
     void setBallCenterPtr(BallCenter *ball_center_ptr);
-
-    static void clearNewBoundaryEdges();
-
-    static std::set<Edge *> getRecordedNewBoundaryEdges();
 
 public:
     Vertex *nextVertex(const Vertex *v) const;

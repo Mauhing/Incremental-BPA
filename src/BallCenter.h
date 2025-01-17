@@ -45,8 +45,6 @@ public: // constructor+destructor
 public: // accessors + modifiers
     void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
 
-    TOctreeNode<BallCenter> *getOctreeNodeLeaf() const;
-
     Facet *getFacet() const;
 };
 #endif

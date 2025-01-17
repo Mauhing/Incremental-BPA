@@ -23,11 +23,11 @@
 std::set<Edge *> Facet::sb_recordedNewBoundaryEdges;
 
 Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
+    : m_ball_center(ball_center), m_ball_center_ptr(nullptr)
 {
     m_vertex[0] = v0;
     m_vertex[1] = v1;
     m_vertex[2] = v2;
-    m_ball_center = ball_center;
 
     Edge *e0 = v0->getLinkingEdge(v1);
     if (e0 == nullptr)
@@ -63,6 +63,7 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
 }
 
 Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
+    : m_ball_center(ball_center), m_ball_center_ptr(nullptr)
 {
     Vertex *src = edge->getSource();
     Vertex *tgt = edge->getTarget();
@@ -70,7 +71,6 @@ Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)
     m_vertex[0] = src;
     m_vertex[1] = vertex;
     m_vertex[2] = tgt;
-    m_ball_center = ball_center;
 
     edge->addAdjacentFacet(this);
 
