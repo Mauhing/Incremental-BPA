@@ -82,36 +82,41 @@ void Visualizer::visualizationThread(
 
         // Wait for new facet with timeout
         {
-            std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
-            if (lock.try_lock())
+            //std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
+            //if (lock.try_lock())
             { // Only proceed if we got the lock
                 // if (mesher.hasNewFacet())
                 if (true)
                 {
-                    renderMainMesh(mesher.getFacets(), o3d_mesh);
+                    //renderMainMesh(mesher.getFacets(), o3d_mesh);
                     //renderFreshVertices(mesher.getFreshVertices(), debug_point);
-                    renderReceivedVertices(received_vertices, debug_point);
+                    //renderReceivedVertices(received_vertices, debug_point);
 
                     // Shader
                     //o3d_mesh->ComputeVertexNormals();
                     //o3d_mesh->ComputeTriangleNormals(); 
 
                     if (task_in_progress) {
+
+                        renderMainMesh(mesher.getFacets(), o3d_mesh);
+                        renderReceivedVertices(received_vertices, debug_point);
+
+
                         std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
                         renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
                         std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
                         task_in_progress = false;
                         cv_debug_visualization.notify_one();
-                    }
-                    
 
-                    visualizer.UpdateGeometry(o3d_mesh);
-                    visualizer.UpdateGeometry(debug_edge);
-                    visualizer.UpdateGeometry(debug_point);
-                    mesher.clearNewFacetFlag();
+                        visualizer.UpdateGeometry(o3d_mesh);
+                        visualizer.UpdateGeometry(debug_edge);
+                        visualizer.UpdateGeometry(debug_point);
+                        mesher.clearNewFacetFlag();
+                    }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         }
 
