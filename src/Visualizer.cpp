@@ -34,7 +34,7 @@ void Visualizer::visualizationThread(
 
     // Enable GPU rendering options
     auto &render_option = visualizer.GetRenderOption();
-    render_option.mesh_show_back_face_ = true;
+    render_option.mesh_show_back_face_ = false;
     render_option.point_size_ = 5.0;
     render_option.light_on_ = true;
     render_option.mesh_shade_option_ = open3d::visualization::RenderOption::MeshShadeOption::FlatShade;
@@ -101,9 +101,13 @@ void Visualizer::visualizationThread(
                         renderMainMesh(mesher.getFacets(), o3d_mesh);
                         renderReceivedVertices(received_vertices, debug_point);
 
+                        //o3d_mesh->ComputeVertexNormals();
+                        //o3d_mesh->ComputeTriangleNormals(); 
 
                         std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
                         renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+
+                        integrityCheck(o3d_mesh, debug_edge);
 
                         std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
                         task_in_progress = false;
@@ -306,4 +310,85 @@ void Visualizer::renderBorderEdges(const Edge_star_list &border_edges, std::shar
             vertex_to_index[edge->getTarget()]));
         line->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0)); // Red color
     }
+}
+
+bool Visualizer::integrityCheck(const std::shared_ptr<open3d::geometry::TriangleMesh> &mesh, std::shared_ptr<open3d::geometry::LineSet> &line) {
+    // Check if mesh has self-intersections
+
+
+    bool has_self_intersections = mesh->IsSelfIntersecting();
+    if (has_self_intersections) {
+        // Clear existing line data
+        line->points_.clear();
+        line->lines_.clear();
+        line->colors_.clear();
+
+        // Get self-intersecting triangles
+        std::vector<Eigen::Vector2i> intersecting_triangles = mesh->GetSelfIntersectingTriangles();
+        
+        // Print vertices of intersecting triangles
+        std::cout << "Intersecting triangles vertices:" << std::endl;
+        for (const auto& pair : intersecting_triangles) {
+            // Print first triangle vertices
+            Eigen::Vector3i tri1 = mesh->triangles_[pair[0]];
+            std::cout << "Triangle " << pair[0] << ":" << std::endl;
+            for (int i = 0; i < 3; i++) {
+                Eigen::Vector3d v = mesh->vertices_[tri1[i]];
+                std::cout << "  v" << i << " [" << tri1[i] << "]: (" << v.x() << ", " << v.y() << ", " << v.z() << ")" << std::endl;
+            }
+            
+            // Print second triangle vertices  
+            Eigen::Vector3i tri2 = mesh->triangles_[pair[1]];
+            std::cout << "Triangle " << pair[1] << ":" << std::endl;
+            for (int i = 0; i < 3; i++) {
+                Eigen::Vector3d v = mesh->vertices_[tri2[i]];
+                std::cout << "  v" << i << " [" << tri2[i] << "]: (" << v.x() << ", " << v.y() << ", " << v.z() << ")" << std::endl;
+            }
+            std::cout << "---" << std::endl;
+        }
+
+        
+        
+        // Add vertices from intersecting triangles
+        std::unordered_map<int, int> vertex_map;
+        size_t current_index = 0; // Start from 0 since we cleared
+
+        // For each intersecting triangle pair
+        for (const auto& pair : intersecting_triangles) {
+            // Get vertices for both triangles
+            for (int tri_idx : {pair[0], pair[1]}) {
+                // Get the three vertex indices for this triangle
+                Eigen::Vector3i triangle = mesh->triangles_[tri_idx];
+                
+                std::cout << "Triangle " << tri_idx << " vertices:" << std::endl;
+                
+                // Add each vertex if not already added
+                for (int i = 0; i < 3; i++) {
+                    Eigen::Vector3d vertex = mesh->vertices_[triangle[i]];
+                    std::cout << "  v" << i << ": (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")" << std::endl;
+                    
+                    if (vertex_map.find(triangle[i]) == vertex_map.end()) {
+                        vertex_map[triangle[i]] = static_cast<int>(current_index++);
+                        line->points_.push_back(vertex);
+                    }
+                }
+
+                // Add lines forming the triangle
+                for (int i = 0; i < 3; i++) {
+                    line->lines_.push_back(Eigen::Vector2i(
+                        vertex_map[triangle[i]], 
+                        vertex_map[triangle[(i + 1) % 3]]));
+                    line->colors_.push_back(Eigen::Vector3d(0.0, 0.0, 1.0)); // Blue color
+                }
+            }
+        }
+
+        std::cout << "Found " << intersecting_triangles.size() << " self-intersecting triangle pairs" << std::endl;
+        return false;
+    }
+    else {
+        std::cout << "\033[32mNo self-intersecting triangles found\033[0m" << std::endl;
+        return true;
+    }
+
 }

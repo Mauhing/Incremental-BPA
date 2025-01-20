@@ -139,8 +139,14 @@ int main(int argc, char **argv)
     bool task_in_progress(false);
 
     std::vector<ColorVertex> received_vertices;
-    // -2.347 -0.159 0.28
-    received_vertices.push_back(ColorVertex(Vertex(-2.347, -0.159, 0.28, 0, 0, 0), Eigen::Vector3d(0.0, 0.0, 1.0)));
+
+    received_vertices.push_back(ColorVertex(Vertex(-7.22, -6.672, 1.837, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
+    received_vertices.push_back(ColorVertex(Vertex(-7.26, -6.669, 1.841, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
+    received_vertices.push_back(ColorVertex(Vertex(-7.219, -6.673, 1.834, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
+
+    received_vertices.push_back(ColorVertex(Vertex(-7.298, -6.663, 1.837, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
+    received_vertices.push_back(ColorVertex(Vertex(-7.26, -6.669, 1.841, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
+    received_vertices.push_back(ColorVertex(Vertex(-7.301, -6.664, 1.848, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
 
     std::thread vis_thread(Visualizer::visualizationThread,
                            std::ref(mesher),
@@ -202,8 +208,15 @@ int main(int argc, char **argv)
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
 
-        std::cout << "Mesh integrity check" << std::endl;
-        mesher.mesh_integrityCheck(received_vertices);
+        //std::cout << "Mesh integrity check" << std::endl;
+        //mesher.mesh_integrityCheck(received_vertices);
+        
+        #ifdef _DEBUG
+        if (batch_index  >= 11) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            
+        }
+        #endif
 #endif
 
         // sleep for 100ms

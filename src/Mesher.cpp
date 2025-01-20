@@ -209,8 +209,6 @@ void Mesher::findSeedTriangle(OctreeNodeV *node, bool &found)
         typename Vertex_UnOrdSet::const_iterator pi = node->points_begin();
         while (pi != node->points_end())
         {
-            // current approach is find seed and expand
-            // then find a seed again and expand.
             Vertex *v = *pi;
             if (v->getType() == Vertex::ORPHAN) // 0
             {
@@ -350,7 +348,7 @@ bool Mesher::tryTriangleSeed(Vertex *v1, Vertex *v2, Vertex *v3,
         Vertex *v = ni->second;
         if ((v == v1) || (v == v2) || (v == v3))
             continue;
-        if (dist2(center, *v) < m_sq_ball_radius - 1e-16)
+        if (dist2(center, *v) < (m_sq_ball_radius - 1e-16))
             return false;
     }
     return true;
@@ -469,17 +467,25 @@ bool Mesher::computeBallCenter(const Vertex &v1, const Vertex &v2,
     double z = alpha * v1.z() + beta * v2.z() + gamma * v3.z();
 
     // computing the radius of the circumcircle
-    double sq_circumradius = a * b * c;
+    double sq_circumradius;
 
-    a = sqrt(a);
-    b = sqrt(b);
-    c = sqrt(c);
+    double sq_circumradius_numerator = a * b * c;
 
-    sq_circumradius = sq_circumradius /
-                      ((a + b + c) * (b + c - a) * (c + a - b) * (a + b - c));
+    a = std::sqrt(a);
+    b = std::sqrt(b);
+    c = std::sqrt(c);
+
+    double sq_circumradius_denominator = (a + b + c) * (b + c - a) * (c + a - b) * (a + b - c);
+
+    sq_circumradius = sq_circumradius_numerator / sq_circumradius_denominator;
 
     // compute the ortogonal distance from the hypothetic center to the triangle
     double height = m_sq_ball_radius - sq_circumradius;
+
+    if (sq_circumradius < 0 || sq_circumradius > m_sq_ball_radius) {
+        //std::cout << "\033[1;31msq_circumradius: " << sq_circumradius << "\033[0m" << std::endl;
+        return false;
+    }
 
     // compute the normal of the three points
     double nx, ny, nz = 0;
@@ -1663,4 +1669,57 @@ void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         visualization_mutex->lock();
     }
+}
+
+void Mesher::checkDegenerateTriangle(Facet* facet) const
+{
+        const Vertex *v1 = facet->getVertex(0);
+        const Vertex *v2 = facet->getVertex(1);
+        const Vertex *v3 = facet->getVertex(2);
+        
+        // Calculate vectors for the triangle edges
+        Eigen::Vector3d e1_2(v2->x() - v1->x(), v2->y() - v1->y(), v2->z() - v1->z());
+        Eigen::Vector3d e2_3(v3->x() - v2->x(), v3->y() - v2->y(), v3->z() - v2->z());
+        Eigen::Vector3d e3_1(v1->x() - v3->x(), v1->y() - v3->y(), v1->z() - v3->z());
+
+        // Calculate angles using dot product (in degrees)
+        double angle1 = std::acos(e1_2.dot(-e3_1) / (e1_2.norm() * e3_1.norm())) * 180.0 / M_PI;
+        double angle2 = std::acos(e2_3.dot(-e1_2) / (e2_3.norm() * e1_2.norm())) * 180.0 / M_PI;
+        double angle3 = std::acos(e3_1.dot(-e2_3) / (e3_1.norm() * e2_3.norm())) * 180.0 / M_PI;
+
+        const double min_angle = 0.0001;
+        if (angle1 < min_angle || angle2 < min_angle || angle3 < min_angle) {
+            std::cout << "Degenerate triangle found with small angle(s):" << std::endl;
+            std::cout << "Angles (radians): " << angle1 << ", " << angle2 << ", " << angle3 << std::endl;
+            std::cout << "v1: (" << v1->x() << ", " << v1->y() << ", " << v1->z() << ")" << std::endl;
+            std::cout << "v2: (" << v2->x() << ", " << v2->y() << ", " << v2->z() << ")" << std::endl; 
+            std::cout << "v3: (" << v3->x() << ", " << v3->y() << ", " << v3->z() << ")" << std::endl;
+            //std::exit(EXIT_FAILURE);
+    }
+
+}
+
+bool Mesher::isDegenerateTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3) const
+{
+    // Calculate vectors for the triangle edges
+    Eigen::Vector3d e1_2(v2->x() - v1->x(), v2->y() - v1->y(), v2->z() - v1->z());
+    Eigen::Vector3d e2_3(v3->x() - v2->x(), v3->y() - v2->y(), v3->z() - v2->z());
+    Eigen::Vector3d e3_1(v1->x() - v3->x(), v1->y() - v3->y(), v1->z() - v3->z());
+
+    // Calculate angles using dot product (in degrees)
+    double angle1 = std::acos(e1_2.dot(-e3_1) / (e1_2.norm() * e3_1.norm())) * 180.0 / M_PI;
+    double angle2 = std::acos(e2_3.dot(-e1_2) / (e2_3.norm() * e1_2.norm())) * 180.0 / M_PI;
+    double angle3 = std::acos(e3_1.dot(-e2_3) / (e3_1.norm() * e2_3.norm())) * 180.0 / M_PI;
+
+    const double min_angle = 0.0001;
+    if (angle1 < min_angle || angle2 < min_angle || angle3 < min_angle) {
+        //std::cout << "Degenerate triangle found with small angle(s):" << std::endl;
+        //std::cout << "Angles (radians): " << angle1 << ", " << angle2 << ", " << angle3 << std::endl;
+        //std::cout << "v1: (" << v1->x() << ", " << v1->y() << ", " << v1->z() << ")" << std::endl;
+        //std::cout << "v2: (" << v2->x() << ", " << v2->y() << ", " << v2->z() << ")" << std::endl; 
+        //std::cout << "v3: (" << v3->x() << ", " << v3->y() << ", " << v3->z() << ")" << std::endl;
+        //std::exit(EXIT_FAILURE);
+        return true;
+    }
+    return false;
 }

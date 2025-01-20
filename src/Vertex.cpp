@@ -164,11 +164,8 @@ bool Vertex::isCompatibleWithAndHandnessCheck(const Vertex &v1, const Vertex &v2
 
     double ntx, nty, ntz;
 
-    // cross_product(x() - v1.x(), y() - v1.y(), z() - v1.z(),
-    //               v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
-    //               ntx, nty, ntz);
     cross_product(v1.x() - x(), v1.y() - y(), v1.z() - z(),
-                  v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
+                  v2.x() - x(), v2.y() - y(), v2.z() - z(),
                   ntx, nty, ntz);
     normalize(ntx, nty, ntz);
 

@@ -554,6 +554,10 @@ public: // Sanity check
     void mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const;
 
     void mesh_integrityCheck();
+
+    void checkDegenerateTriangle(Facet* facet) const;
+
+    bool isDegenerateTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3) const;
 #endif
 };
 
