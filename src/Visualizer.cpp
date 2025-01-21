@@ -107,7 +107,7 @@ void Visualizer::visualizationThread(
                         std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
                         renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
-                        integrityCheck(o3d_mesh, debug_edge);
+                        //integrityCheck(o3d_mesh, debug_edge);
 
                         std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
                         task_in_progress = false;

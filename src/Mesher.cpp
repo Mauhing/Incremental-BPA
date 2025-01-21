@@ -1131,7 +1131,6 @@ void Mesher::debugPrintStats()
 Facet_set Mesher::computeCollisionFacets(const std::list<Vertex> &vertices)
 {
     Facet_set collision_facets;
-    m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
     for (auto &vertex : vertices)
     {
         // Check if the vertex is in side the any ball
