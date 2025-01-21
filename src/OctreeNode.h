@@ -126,7 +126,7 @@ public:
     /**
      * @brief Destructor
      */
-    virtual ~TOctreeNode();
+    ~TOctreeNode();
 
     /**
      * @brief set node size
@@ -293,7 +293,7 @@ public:
      * PREREQUISITE: the node is a leaf in the octree
      * @param pt point to add
      */
-    virtual T *addPoint(const T &pt);
+    T *addPoint(const T &pt);
 
     /** @brief build the i^th child of the node
      * @param index child index

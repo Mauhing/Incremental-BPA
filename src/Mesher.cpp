@@ -1213,11 +1213,10 @@ void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)
     for (auto &vertex : vertices)
     {
         Vertex *vertex_ptr = m_octree_vertices->addPoint(vertex);
-
-        if (vertex_ptr != nullptr)
-        {
-            m_fresh_vertices.push_back(vertex_ptr);
-        }
+        m_fresh_vertices.push_back(vertex_ptr);
+        // #ifdef _DEBUG
+        //     addDebugRenderVertex(vertex_ptr, Eigen::Vector3d(0, 1, 0));
+        // #endif
     }
 }
 

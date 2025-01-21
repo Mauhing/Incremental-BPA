@@ -595,11 +595,8 @@ T *TOctree<T>::addPoint(const T &pt)
     }
 
     T *new_pt = node->addPoint(pt);
-    if (new_pt != nullptr)
-    {
-        m_npoints++;
-        new_pt->setOctreeNodeLeaf(node);
-    }
+    m_npoints++;
+    new_pt->setOctreeNodeLeaf(node);
     return new_pt;
 }
 
