@@ -43,21 +43,7 @@ public: // constructors/destructors
     /**
      * @brief default constructor
      */
-    TOctree();
-
-    /**
-     * @brief initialize an octree with given parameters
-     * @param depth depth of the octree
-     */
-    TOctree(unsigned int depth);
-
-    /**
-     * @brief initialize an octree with given parameter
-     * @param origin origin of the octree
-     * @param size  size of the loose bounding box
-     * @param depth depth of the octree
-     */
-    TOctree(const Point &origin, double size, unsigned int depth);
+    TOctree(const int max_points);
 
     /**
      * @brief Destructor
@@ -221,6 +207,11 @@ protected:
      */
     // std::vector<unsigned int> m_nb_non_empty_cells;
 
+    /**
+     * @brief maximum number of points per node
+     */
+    const int m_max_points;
+
 private: // helper functions to make another function shorter
     void expandAllNodeLoc(unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
 
@@ -264,7 +255,7 @@ void TOctree<T>::updateNodeLoc(TOctreeNode<T> *node, unsigned int level, unsigne
 }
 
 template <class T>
-TOctree<T>::TOctree()
+TOctree<T>::TOctree(const int max_points): m_max_points(max_points)
 {
     m_size = 0;
     m_root_depth = 0;
@@ -275,28 +266,6 @@ TOctree<T>::TOctree()
     m_root->setDepth(0);
 }
 
-template <class T>
-TOctree<T>::TOctree(unsigned int depth)
-{
-    m_size = 0;
-    m_root_depth = depth;
-    m_nb_interval = pow2(depth);
-    m_npoints = 0;
-    m_root = nullptr;
-    // m_nb_non_empty_cells.assign(depth,0);
-}
-
-template <class T>
-TOctree<T>::TOctree(const Point &origin, double size, unsigned int depth)
-{
-    m_size = size;
-    m_root_depth = depth;
-    m_nb_interval = pow2(depth);
-    m_origin = origin;
-    m_npoints = 0;
-    m_root = nullptr;
-    // m_nb_non_empty_cells.assign(depth,0);
-}
 
 template <class T>
 TOctree<T>::~TOctree()
@@ -594,9 +563,12 @@ T *TOctree<T>::addPoint(const T &pt)
         l--;
     }
 
-    T *new_pt = node->addPoint(pt);
-    m_npoints++;
-    new_pt->setOctreeNodeLeaf(node);
+    T *new_pt = node->addPoint(pt, m_max_points);
+    if (new_pt != nullptr)
+    {
+        m_npoints++;
+        new_pt->setOctreeNodeLeaf(node);
+    }
     return new_pt;
 }
 

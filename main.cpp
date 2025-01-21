@@ -106,7 +106,10 @@ int main(int argc, char **argv)
     unsigned int depth;
     std::tie(origin, size, depth) = FileIO::originAndDepth(batch_data[0], radius);
 
-    OctreeVertices octree_vertices;
+
+    const int max_points_per_node = 5;
+
+    OctreeVertices octree_vertices(max_points_per_node);
     octree_vertices.setDepth(depth);
     octree_vertices.initialize(origin, size);
 
@@ -115,7 +118,7 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Create the ball centers octree and its iterator
-    OctreeBallCenters octree_ball_centers;
+    OctreeBallCenters octree_ball_centers(-1);
     octree_ball_centers.setDepth(octree_vertices.getDepth());
     octree_ball_centers.initialize(octree_vertices.getOrigin(), octree_vertices.getSize());
 

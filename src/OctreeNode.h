@@ -293,7 +293,7 @@ public:
      * PREREQUISITE: the node is a leaf in the octree
      * @param pt point to add
      */
-    T *addPoint(const T &pt);
+    T *addPoint(const T &pt, const int &max_points);
 
     /** @brief build the i^th child of the node
      * @param index child index
@@ -511,12 +511,28 @@ typename std::unordered_set<T *>::const_iterator TOctreeNode<T>::points_end()
 }
 
 template <class T>
-T *TOctreeNode<T>::addPoint(const T &t)
-{
-    T *t_ptr = new T(t);
-    m_points.insert(t_ptr);
-    m_npts++;
-    return t_ptr;
+T *TOctreeNode<T>::addPoint(const T &t, const int &max_points)
+{ 
+    if (max_points == -1)
+    {
+        // In this case, the max_points is not used.
+        T *t_ptr = new T(t);
+        m_points.insert(t_ptr);
+        m_npts++;
+        return t_ptr;
+    }
+    // Convert max_points to size_type to match m_points.size()
+    else if (m_points.size() < static_cast<typename std::unordered_set<T*>::size_type>(max_points))
+    {
+        T *t_ptr = new T(t);
+        m_points.insert(t_ptr);
+        m_npts++;
+        return t_ptr;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 template <class T>
