@@ -60,17 +60,17 @@ void Visualizer::visualizationThread(
     visualizer.AddGeometry(debug_point);
 
     // Set default viewpoint
-    // visualizer.GetViewControl().SetFront({0, 0, -1});
-    // visualizer.GetViewControl().SetLookat({0, 0, 0});
-    // visualizer.GetViewControl().SetUp({0, 1, 0});
-    // visualizer.GetViewControl().SetZoom(0.7);
+     //visualizer.GetViewControl().SetFront({0, 0, -1});
+     //visualizer.GetViewControl().SetLookat({0, 0, 0});
+     //visualizer.GetViewControl().SetUp({0, 1, 0});
+     //visualizer.GetViewControl().SetZoom(0.7);
 
-    // bool first_frame = true;
+    //std::this_thread::sleep_for(std::chrono::seconds(5));
 
     // add coordinate axes
     auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
     visualizer.AddGeometry(coordinate_axes);
-
+    
     // Visualization loop
     while (!should_exit)
     {
@@ -82,15 +82,16 @@ void Visualizer::visualizationThread(
 
         // Wait for new facet with timeout
         {
-            //std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
-            //if (lock.try_lock())
+            std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
+            if (lock.try_lock())
             { // Only proceed if we got the lock
                 // if (mesher.hasNewFacet())
                 if (true)
                 {
-                    //renderMainMesh(mesher.getFacets(), o3d_mesh);
+                    renderMainMesh(mesher.getFacets(), o3d_mesh);
                     //renderFreshVertices(mesher.getFreshVertices(), debug_point);
-                    //renderReceivedVertices(received_vertices, debug_point);
+                    renderReceivedVertices(received_vertices, debug_point);
+                    renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
                     // Shader
                     //o3d_mesh->ComputeVertexNormals();
@@ -98,28 +99,32 @@ void Visualizer::visualizationThread(
 
                     if (task_in_progress) {
 
-                        renderMainMesh(mesher.getFacets(), o3d_mesh);
-                        renderReceivedVertices(received_vertices, debug_point);
+                        //renderMainMesh(mesher.getFacets(), o3d_mesh);
+                        //renderReceivedVertices(received_vertices, debug_point);
 
-                        //o3d_mesh->ComputeVertexNormals();
-                        //o3d_mesh->ComputeTriangleNormals(); 
+                        ////o3d_mesh->ComputeVertexNormals();
+                        ////o3d_mesh->ComputeTriangleNormals(); 
 
-                        std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
-                        renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+                        //std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
+                        //renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
-                        //integrityCheck(o3d_mesh, debug_edge);
+                        ////integrityCheck(o3d_mesh, debug_edge);
 
-                        std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
+                        //std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
                         task_in_progress = false;
                         cv_debug_visualization.notify_one();
 
+                        //visualizer.UpdateGeometry(o3d_mesh);
+                        //visualizer.UpdateGeometry(debug_edge);
+                        //visualizer.UpdateGeometry(debug_point);
+                        //mesher.clearNewFacetFlag();
+                    }
                         visualizer.UpdateGeometry(o3d_mesh);
                         visualizer.UpdateGeometry(debug_edge);
                         visualizer.UpdateGeometry(debug_point);
                         mesher.clearNewFacetFlag();
-                    }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 }
             }
         }
@@ -268,13 +273,13 @@ void Visualizer::renderDebugVertices(const std::vector<Eigen::Vector3d> &vertice
 
 void Visualizer::renderReceivedVertices(std::vector<ColorVertex> &received_vertices, std::shared_ptr<open3d::geometry::PointCloud> &point)
 {
+    point->points_.clear();
+    point->colors_.clear();
     for (auto color_vertex : received_vertices)
     {
         point->points_.push_back(Eigen::Vector3d(color_vertex.vertex.x(), color_vertex.vertex.y(), color_vertex.vertex.z()));
         point->colors_.push_back(color_vertex.color);
     }
-
-    received_vertices.clear();
 }
 
 void Visualizer::renderBorderEdges(const Edge_star_list &border_edges, std::shared_ptr<open3d::geometry::LineSet> &line)

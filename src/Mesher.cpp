@@ -1136,7 +1136,7 @@ Facet_set Mesher::computeCollisionFacets(const std::list<Vertex> &vertices)
         // Check if the vertex is in side the any ball
         // Point point = Point(vertex.x(), vertex.y(), vertex.z());
         std::map<double, BallCenter *> neighbors; // neighbor.first is the squared distance
-        m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
+        //m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
 
         // unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         m_octree_ball_centers_iterator->getSortedNeighbors(vertex, neighbors);
@@ -1200,6 +1200,7 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
 
     std::cout << "Removing collision facets (after computeCollisionFacets)" << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1208,6 +1209,7 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         std::cout << "collision_facets size: " << collision_facets.size() << std::endl;
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
 void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)

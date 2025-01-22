@@ -143,14 +143,6 @@ int main(int argc, char **argv)
 
     std::vector<ColorVertex> received_vertices;
 
-    received_vertices.push_back(ColorVertex(Vertex(-7.22, -6.672, 1.837, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
-    received_vertices.push_back(ColorVertex(Vertex(-7.26, -6.669, 1.841, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
-    received_vertices.push_back(ColorVertex(Vertex(-7.219, -6.673, 1.834, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
-
-    received_vertices.push_back(ColorVertex(Vertex(-7.298, -6.663, 1.837, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
-    received_vertices.push_back(ColorVertex(Vertex(-7.26, -6.669, 1.841, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
-    received_vertices.push_back(ColorVertex(Vertex(-7.301, -6.664, 1.848, 0, 0, 0), Eigen::Vector3d(0.0, 1.0, 1.0)));
-
     std::thread vis_thread(Visualizer::visualizationThread,
                            std::ref(mesher),
                            std::ref(o3d_mesh_mutex),
@@ -177,6 +169,15 @@ int main(int argc, char **argv)
         std::cout << "Remove overlape vertices in next batch" << std::endl;
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        {
+            std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+            // Add the vertices to the received_vertices
+            received_vertices.clear();
+            for (const auto& v : vertices) {
+                received_vertices.emplace_back(v, Eigen::Vector3d(0.0, 1.0, 0.0)); // Green
+            }
+        }
 
         // Add the vertices to the received_vertices
         {
@@ -215,9 +216,9 @@ int main(int argc, char **argv)
         //mesher.mesh_integrityCheck(received_vertices);
         
         #ifdef _DEBUG
-        if (batch_index  >= 11) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
+        //if (batch_index  >= 11) {
+        //    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        //}
         #endif
 #endif
 
