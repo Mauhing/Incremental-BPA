@@ -1136,6 +1136,7 @@ Facet_set Mesher::computeCollisionFacets(const std::list<Vertex> &vertices)
         // Check if the vertex is in side the any ball
         // Point point = Point(vertex.x(), vertex.y(), vertex.z());
         std::map<double, BallCenter *> neighbors; // neighbor.first is the squared distance
+        m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
 
         // unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         m_octree_ball_centers_iterator->getSortedNeighbors(vertex, neighbors);
@@ -1178,13 +1179,13 @@ void Mesher::expandOctree(const std::list<Vertex> &vertices)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Expand the ballcenters octree
     // std::cout << "Vertices size: " << vertices.size() << std::endl;
-    std::cout << "Expanding octree ball centers" << std::endl;
+    std::cout << "check octree ball centers need to expand" << std::endl;
     for (auto &vertex : vertices)
     {
         BallCenter ball_center(vertex, nullptr);
         m_octree_ball_centers->checkSizeAndexpand(ball_center);
     }
-    std::cout << "Expanding octree vertices" << std::endl;
+    std::cout << "check octree vertices need to expand" << std::endl;
     for (auto &vertex : vertices)
     {
         m_octree_vertices->checkSizeAndexpand(vertex);
@@ -1205,6 +1206,7 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
         // Remove the collision facets
         this->removeFacets(collision_facets); // This function is very wrong
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        std::cout << "collision_facets size: " << collision_facets.size() << std::endl;
     }
 }
 
@@ -1298,7 +1300,11 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
         bool found_fan_fan_vertex = this->removeFanFanSingular();
 
+        //this->checkFacetsOrientation();
+
         bool found_disk_fan_vertex = this->removeDiskFanSingular();
+
+        //this->checkFacetsOrientation();
 
         if (!found_fan_fan_vertex && !found_disk_fan_vertex)
         {
@@ -1693,32 +1699,19 @@ void Mesher::checkDegenerateTriangle(Facet* facet) const
             std::cout << "v1: (" << v1->x() << ", " << v1->y() << ", " << v1->z() << ")" << std::endl;
             std::cout << "v2: (" << v2->x() << ", " << v2->y() << ", " << v2->z() << ")" << std::endl; 
             std::cout << "v3: (" << v3->x() << ", " << v3->y() << ", " << v3->z() << ")" << std::endl;
-            //std::exit(EXIT_FAILURE);
+            std::exit(EXIT_FAILURE);
     }
 
 }
 
-bool Mesher::isDegenerateTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3) const
+void Mesher::checkFacetsOrientation() const
 {
-    // Calculate vectors for the triangle edges
-    Eigen::Vector3d e1_2(v2->x() - v1->x(), v2->y() - v1->y(), v2->z() - v1->z());
-    Eigen::Vector3d e2_3(v3->x() - v2->x(), v3->y() - v2->y(), v3->z() - v2->z());
-    Eigen::Vector3d e3_1(v1->x() - v3->x(), v1->y() - v3->y(), v1->z() - v3->z());
-
-    // Calculate angles using dot product (in degrees)
-    double angle1 = std::acos(e1_2.dot(-e3_1) / (e1_2.norm() * e3_1.norm())) * 180.0 / M_PI;
-    double angle2 = std::acos(e2_3.dot(-e1_2) / (e2_3.norm() * e1_2.norm())) * 180.0 / M_PI;
-    double angle3 = std::acos(e3_1.dot(-e2_3) / (e3_1.norm() * e2_3.norm())) * 180.0 / M_PI;
-
-    const double min_angle = 0.0001;
-    if (angle1 < min_angle || angle2 < min_angle || angle3 < min_angle) {
-        //std::cout << "Degenerate triangle found with small angle(s):" << std::endl;
-        //std::cout << "Angles (radians): " << angle1 << ", " << angle2 << ", " << angle3 << std::endl;
-        //std::cout << "v1: (" << v1->x() << ", " << v1->y() << ", " << v1->z() << ")" << std::endl;
-        //std::cout << "v2: (" << v2->x() << ", " << v2->y() << ", " << v2->z() << ")" << std::endl; 
-        //std::cout << "v3: (" << v3->x() << ", " << v3->y() << ", " << v3->z() << ")" << std::endl;
-        //std::exit(EXIT_FAILURE);
-        return true;
+    for (Facet* facet : m_facets)
+    {
+        if (!facet->isRightOrientation())
+        {
+            std::cerr << "Error: Facet is not oriented correctly" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
     }
-    return false;
 }

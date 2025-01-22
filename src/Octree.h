@@ -27,6 +27,8 @@
 #include <iostream>
 #include <vector>
 #include <cmath> // Use for log2
+#include <thread>
+#include <chrono>
 
 #include <bitset> // Use for debugging
 
@@ -432,6 +434,12 @@ void TOctree<T>::checkSizeAndexpand(const T &pt)
 
     if (x_in_box != PointRespectToBox::INSIDE || y_in_box != PointRespectToBox::INSIDE || y_in_box != PointRespectToBox::INSIDE)
     {
+        std::cout << "\033[35mExpanding octree\033[0m" << std::endl;
+        std::cout << "\033[35mType: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
+                                 std::is_same<T, BallCenter>::value ? "BallCenter" : 
+                                 "Unknown") << "\033[0m" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::cout << "\033[35m Sleeping for 2 seconds\033[0m" << std::endl;
 #ifdef _DEBUG
 // print the class name of the object
 // std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" :

@@ -27,6 +27,9 @@
 #include <cassert>
 #include <unordered_set>
 
+class BallCenter;
+class Vertex;
+
 /**
  * @class TOctreeNode
  * @brief Implements a generic node for a generic octree
@@ -515,6 +518,14 @@ T *TOctreeNode<T>::addPoint(const T &t, const int &max_points)
 { 
     if (max_points == -1)
     {
+        #ifdef _DEBUG
+        if constexpr (!std::is_same<T, BallCenter>::value) {
+            // Print warning if trying to add BallCenter
+            std::cout << "\033[33mWarning: Adding BallCenter with no max_points limit\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        #endif
+
         // In this case, the max_points is not used.
         T *t_ptr = new T(t);
         m_points.insert(t_ptr);
@@ -524,6 +535,14 @@ T *TOctreeNode<T>::addPoint(const T &t, const int &max_points)
     // Convert max_points to size_type to match m_points.size()
     else if (m_points.size() < static_cast<typename std::unordered_set<T*>::size_type>(max_points))
     {
+        #ifdef _DEBUG
+        if constexpr (!std::is_same<T, Vertex>::value) {
+            // Print warning if trying to add Vertex
+            std::cout << "\033[33mWarning: Adding Vertex with no max_points limit\033[0m" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        #endif
+
         T *t_ptr = new T(t);
         m_points.insert(t_ptr);
         m_npts++;

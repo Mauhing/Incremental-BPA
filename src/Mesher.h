@@ -557,7 +557,7 @@ public: // Sanity check
 
     void checkDegenerateTriangle(Facet* facet) const;
 
-    bool isDegenerateTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3) const;
+    void checkFacetsOrientation() const;  
 #endif
 };
 
