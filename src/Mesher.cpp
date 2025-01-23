@@ -948,7 +948,6 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
     for (auto v : temporary_orphan_vertices)
     {
         // Update node
-        node->decreaseNptsByOne();
         // Update the vertices set of the node.
         points.erase(v);
         // Remove the vertex from the mesh.
@@ -1042,8 +1041,11 @@ void Mesher::removeFacet(Facet *facet)
 template <typename SetType>
 void Mesher::removeFacets(SetType &facets)
 {
+    #ifdef _DEBUG
     static_assert(std::is_same_v<typename SetType::value_type, Facet*>,
                      "SetType must contain Facet pointers");
+    #endif
+
     for (auto facet : facets)
     {
         removeFacet(facet);
@@ -1128,10 +1130,10 @@ void Mesher::debugPrintStats()
     std::cout << "<<<<<<<<" << std::endl;
 }
 
-Facet_set Mesher::computeCollisionFacets(const std::list<Vertex> &vertices)
+Facet_set Mesher::computeCollisionFacets(const std::list<Vertex *> &vertices)
 {
     Facet_set collision_facets;
-    for (auto &vertex : vertices)
+    for (Vertex *vertex : vertices)
     {
         // Check if the vertex is in side the any ball
         // Point point = Point(vertex.x(), vertex.y(), vertex.z());
@@ -1139,7 +1141,7 @@ Facet_set Mesher::computeCollisionFacets(const std::list<Vertex> &vertices)
         //m_octree_ball_centers_iterator->setDepth(m_octree_ball_centers->getDepth());
 
         // unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
-        m_octree_ball_centers_iterator->getSortedNeighbors(vertex, neighbors);
+        m_octree_ball_centers_iterator->getSortedNeighbors(*vertex, neighbors);
 
         // print the size of neighbors
         if (neighbors.size() == 0)
@@ -1193,14 +1195,13 @@ void Mesher::expandOctree(const std::list<Vertex> &vertices)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
-void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
+void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices)
 {
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Collection of collision facets
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
 
     std::cout << "Removing collision facets (after computeCollisionFacets)" << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     {
         std::lock_guard<std::mutex> lock(*visualization_mutex);
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1209,7 +1210,6 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         std::cout << "collision_facets size: " << collision_facets.size() << std::endl;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
 void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)
@@ -1259,9 +1259,19 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     std::cout << "Expanding octree" << std::endl;
     this->expandOctree(vertices);
 
+    // Add points to the octree
+    std::cout << "Adding points to the octree" << std::endl;
+    this->addPointsToOctreeVertices(vertices);
+
+    // Downsample the octree
+    std::cout << "Downsampling the octree" << std::endl;
+    std::list<Vertex*> recruited_points = this->m_iterator_vertices->downSample();
+
+    std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
+
     // Check and remove collision facets
     std::cout << "Removing collision facets" << std::endl;
-    this->checkAndRemoveCollisionFacets(vertices);
+    this->checkAndRemoveCollisionFacets(recruited_points);
 
     // Removing collision facets may create fanfan singular
     // Therefore, we need to remove fanfan singular first
@@ -1277,10 +1287,6 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     }
     
     //this->mesh_integrityCheck();
-
-    // Add points to the octree
-    std::cout << "Adding points to the octree" << std::endl;
-    this->addPointsToOctreeVertices(vertices);
 
     // Reset boundary edges to edge_front
     std::cout << "Resetting boundary edges" << std::endl;
@@ -1579,6 +1585,23 @@ void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
         std::cout << "Self-intersecting triangle pairs:" << std::endl;
         for (const auto& pair : intersecting_triangles) {
             std::cout << "Triangle " << pair[0] << " intersects with triangle " << pair[1] << std::endl;
+            
+            // Print vertices of first triangle
+            std::cout << "  Triangle " << pair[0] << " vertices:" << std::endl;
+            for (int i = 0; i < 3; i++) {
+                int vertex_idx = o3d_mesh->triangles_[pair[0]][i];
+                Eigen::Vector3d vertex = o3d_mesh->vertices_[vertex_idx];
+                std::cout << "    v" << vertex_idx << ": (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")" << std::endl;
+            }
+
+            // Print vertices of second triangle  
+            std::cout << "  Triangle " << pair[1] << " vertices:" << std::endl;
+            for (int i = 0; i < 3; i++) {
+                int vertex_idx = o3d_mesh->triangles_[pair[1]][i];
+                Eigen::Vector3d vertex = o3d_mesh->vertices_[vertex_idx];
+                std::cout << "    v" << vertex_idx << ": (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")" << std::endl;
+            }
+            std::cout << std::endl;
         }
         std::cerr << "Error: The mesh has self-intersections" << std::endl;
         std::exit(EXIT_FAILURE);

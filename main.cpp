@@ -107,9 +107,9 @@ int main(int argc, char **argv)
     std::tie(origin, size, depth) = FileIO::originAndDepth(batch_data[0], radius);
 
 
-    const int max_points_per_node = 5;
+    const int max_orphan_points_per_node = 1;
 
-    OctreeVertices octree_vertices(max_points_per_node);
+    OctreeVertices octree_vertices(max_orphan_points_per_node);
     octree_vertices.setDepth(depth);
     octree_vertices.initialize(origin, size);
 
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
         }
 
         //std::cout << "Mesh integrity check" << std::endl;
-        //mesher.mesh_integrityCheck(received_vertices);
+        mesher.mesh_integrityCheck(received_vertices);
         
         #ifdef _DEBUG
         //if (batch_index  >= 11) {

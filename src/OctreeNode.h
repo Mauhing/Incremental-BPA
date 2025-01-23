@@ -25,6 +25,8 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <random>
+#include <vector>
 #include <unordered_set>
 
 class BallCenter;
@@ -74,11 +76,6 @@ protected:
      */
     unsigned int m_nchild;
 
-    /** @brief number of points included in the node or in
-     * the node's children
-     */
-    unsigned int m_npts; // Base on my observation. Only leaf has non zero m_npts. Rest of the node are zero.
-
     /** @brief origin of the node*/
     Point m_origin;
 
@@ -111,6 +108,8 @@ protected:
      */
     std::unordered_set<T *> m_points;
     // list<T> m_points; // It stores vertices, not pointers to vertices.
+
+    std::unordered_set<T *> m_points_buffer;
 
 public:
     /**
@@ -147,7 +146,7 @@ public:
      * @return number of points contained in the node (if leaf)
      * or node's children
      */
-    const unsigned int &getNpts() const;
+    unsigned int getNpts() const;
 
     /**
      * @brief set child number (depends on the relative location of the
@@ -296,7 +295,7 @@ public:
      * PREREQUISITE: the node is a leaf in the octree
      * @param pt point to add
      */
-    T *addPoint(const T &pt, const int &max_points);
+    T *addPoint(const T &pt);
 
     /** @brief build the i^th child of the node
      * @param index child index
@@ -307,11 +306,11 @@ public:
 
     std::unordered_set<T *> &GetPoints();
 
-    void decreaseNptsByOne();
-
     void removeElement(T *element);
 
     bool isLeaf() const;
+
+    void downSample(const int max_points, std::vector<T*> &recruited_points); 
 };
 
 template <class T>
@@ -322,7 +321,6 @@ TOctreeNode<T>::TOctreeNode()
     m_parent = nullptr;
     m_xloc = m_yloc = m_zloc = 0;
     m_depth = 0;
-    m_npts = 0;
     m_origin = Point();
     m_size = 0.0;
     m_points.clear();
@@ -336,7 +334,6 @@ TOctreeNode<T>::TOctreeNode(const Point &origin, double size, unsigned int depth
     m_parent = nullptr;
     m_xloc = m_yloc = m_zloc = 0;
     m_depth = depth;
-    m_npts = 0;
     m_origin = origin;
     m_size = size;
     m_points.clear();
@@ -352,7 +349,6 @@ TOctreeNode<T>::~TOctreeNode()
     m_points.clear();
     m_xloc = m_yloc = m_zloc = 0;
     m_depth = 0;
-    m_npts = 0;
     for (int i = 0; i < 8; i++)
     {
         delete m_child[i];
@@ -388,9 +384,9 @@ void TOctreeNode<T>::setSize(double size)
 }
 
 template <class T>
-const unsigned int &TOctreeNode<T>::getNpts() const
+unsigned int TOctreeNode<T>::getNpts() const
 {
-    return m_npts;
+    return static_cast<unsigned int>(m_points.size());
 }
 
 template <class T>
@@ -514,44 +510,31 @@ typename std::unordered_set<T *>::const_iterator TOctreeNode<T>::points_end()
 }
 
 template <class T>
-T *TOctreeNode<T>::addPoint(const T &t, const int &max_points)
+T *TOctreeNode<T>::addPoint(const T &t)
 { 
-    if (max_points == -1)
+    if constexpr (std::is_same<T, BallCenter>::value)
     {
-        #ifdef _DEBUG
-        if constexpr (!std::is_same<T, BallCenter>::value) {
-            // Print warning if trying to add BallCenter
-            std::cout << "\033[33mWarning: Adding BallCenter with no max_points limit\033[0m" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        #endif
-
-        // In this case, the max_points is not used.
         T *t_ptr = new T(t);
+        t_ptr->setOctreeNodeLeaf(this);
         m_points.insert(t_ptr);
-        m_npts++;
         return t_ptr;
     }
-    // Convert max_points to size_type to match m_points.size()
-    else if (m_points.size() < static_cast<typename std::unordered_set<T*>::size_type>(max_points))
-    {
-        #ifdef _DEBUG
-        if constexpr (!std::is_same<T, Vertex>::value) {
-            // Print warning if trying to add Vertex
-            std::cout << "\033[33mWarning: Adding Vertex with no max_points limit\033[0m" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        #endif
 
+    if constexpr (std::is_same<T, Vertex>::value)
+    {
         T *t_ptr = new T(t);
-        m_points.insert(t_ptr);
-        m_npts++;
+        t_ptr->setOctreeNodeLeaf(this);
+        m_points_buffer.insert(t_ptr);
         return t_ptr;
     }
-    else
+
+    #ifdef _DEBUG
     {
-        return nullptr;
+        std::cerr << "\033[33mWarning: Adding non-Vertex or BallCenter type to octree\033[0m" << std::endl;
+        std::exit(EXIT_FAILURE);
     }
+    #endif
+    
 }
 
 template <class T>
@@ -577,19 +560,77 @@ template <class T>
 std::unordered_set<T *> &TOctreeNode<T>::GetPoints() { return m_points; }
 
 template <class T>
-void TOctreeNode<T>::decreaseNptsByOne() { m_npts--; }
-
-template <class T>
 void TOctreeNode<T>::removeElement(T *element)
 {
     m_points.erase(element);
-    decreaseNptsByOne();
 }
 
 template <class T>
 bool TOctreeNode<T>::isLeaf() const
 {
     return m_depth == 0;
+}
+
+template <class T>
+void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited_points)
+{
+    if (!isLeaf())
+    {
+        for (unsigned int i = 0; i < 8; i++)
+        {
+            TOctreeNode<T> *node = getChild(i);
+            if (node != nullptr)
+            {
+                node->downSample(max_points, recruited_points);
+            }
+        }
+    }
+    else
+    {
+        if (static_cast<int>(m_points_buffer.size()) > 0)
+        {
+            std::vector<T*> temp_points;
+            temp_points.reserve(m_points.size() + m_points_buffer.size());
+
+            // Move orphan points from m_points to temp_points
+            for (auto it = m_points.begin(); it != m_points.end();) {
+                if ((*it)->getType() == T::VertexType::ORPHAN) {
+                    temp_points.push_back(*it);
+                    it = m_points.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+            
+            // Add buffer points to temp_points
+            for (auto* point : m_points_buffer) {
+                temp_points.push_back(point);
+            }
+            
+            // Random shuffle
+            //std::random_device rd;
+            std::mt19937 gen(42);
+            std::shuffle(temp_points.begin(), temp_points.end(), gen);
+            
+            // Cap the size of temp_points to max_points
+            if (static_cast<int>(temp_points.size()) > max_points) {
+                temp_points.resize(max_points);
+            }
+
+            // Add selected points back to m_points
+            for (T* point : temp_points) {
+                m_points.insert(point);
+            }
+
+            // Add recruited points
+            for (T* point : temp_points) {
+                if (m_points_buffer.find(point) != m_points_buffer.end()) {
+                    recruited_points.push_back(point);
+                }
+            }
+            m_points_buffer.clear();
+        }
+    }
 }
 
 #endif

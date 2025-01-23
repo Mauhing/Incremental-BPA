@@ -71,12 +71,6 @@ public: // accessors and modifiers
      */
     const Point &getOrigin() const;
 
-    /**
-     * @brief get number of points
-     * @return number of points
-     */
-    unsigned int getNpoints() const;
-
     /**get side size of the octree
      * @return size of the octree
      */
@@ -103,6 +97,8 @@ public: // accessors and modifiers
     // copy constructor
     TOctree(const TOctree &other);
 
+    unsigned int getMaxPoints() const;
+
 public: // adding points
     /**
      * @brief initialize the octree with the origin and size
@@ -116,16 +112,6 @@ public: // adding points
      * @param pt point to add
      */
     T *addPoint(const T &pt);
-
-    /**
-     *
-     * @brief Adding a batch of points to the octree
-     * @param begin begin iterator of the batch
-     * @param end end iterator of the batch
-     * @return number of added points
-     */
-    template <class Iterator>
-    unsigned int addPoints(Iterator begin, Iterator end);
 
     /**
      * @brief get all nodes at given depth
@@ -177,10 +163,6 @@ protected:
      */
     unsigned int m_root_depth;
 
-    /**
-     *@brief Number of points sorted in the octree
-     */
-    unsigned int m_npoints;
 
     /**
      * @brief Origin of the octree
@@ -262,7 +244,6 @@ TOctree<T>::TOctree(const int max_points): m_max_points(max_points)
     m_size = 0;
     m_root_depth = 0;
     m_nb_interval = 0;
-    m_npoints = 0;
     m_origin = Point();
     m_root = new TOctreeNode<T>();
     m_root->setDepth(0);
@@ -276,7 +257,6 @@ TOctree<T>::~TOctree()
     m_size = 0;
     m_root_depth = 0;
     m_nb_interval = 0;
-    m_npoints = 0;
     m_origin = Point();
 
     if (m_root != nullptr)
@@ -328,12 +308,6 @@ void TOctree<T>::setDepth(unsigned int depth)
 }
 
 template <class T>
-unsigned int TOctree<T>::getNpoints() const
-{
-    return m_npoints;
-}
-
-template <class T>
 double TOctree<T>::getSize() const
 {
     // The size is the physical length
@@ -365,20 +339,6 @@ TOctreeNode<T> *TOctree<T>::getRoot() const
     return m_root;
 }
 
-template <class T>
-template <class Iterator>
-unsigned int TOctree<T>::addPoints(Iterator begin, Iterator end)
-{
-    Iterator it = begin;
-
-    while (it != end)
-    {
-        T &a = *it;
-        addPoint(a);
-        ++it;
-    }
-    return m_npoints;
-}
 
 enum PointRespectToBox
 {
@@ -571,13 +531,8 @@ T *TOctree<T>::addPoint(const T &pt)
         l--;
     }
 
-    T *new_pt = node->addPoint(pt, m_max_points);
-    if (new_pt != nullptr)
-    {
-        m_npoints++;
-        new_pt->setOctreeNodeLeaf(node);
-    }
-    return new_pt;
+    T *pt_ptr = node->addPoint(pt);
+    return pt_ptr;
 }
 
 template <class T>
@@ -617,6 +572,12 @@ void TOctree<T>::getNodes(unsigned int depth,
     }
 }
 
+template <class T>
+unsigned int TOctree<T>::getMaxPoints() const
+{
+    return m_max_points;
+}
+
 #ifdef _DEBUG
 template <class T>
 void TOctree<T>::debugPrintStats()
@@ -631,12 +592,12 @@ void TOctree<T>::debugPrintStats()
     double size = m_size / 2;
     for (int i = m_root_depth - 1; i >= 0; i--)
     {
-        std::cout << "level " << i << " ; The size length " << size
-                  << " ; mean number of points: "
-                  //<<(double)m_npoints / ((double)m_nb_non_empty_cells[i])
-                  << "currently unavailable"
-                  << std::endl;
-        size = size / 2.0;
+        //std::cout << "level " << i << " ; The size length " << size
+        //          << " ; mean number of points: "
+        //          //<<(double)m_npoints / ((double)m_nb_non_empty_cells[i])
+        //          << "currently unavailable"
+        //          << std::endl;
+        //size = size / 2.0;
     }
     TOctreeNode<T> *root = getRoot();
     // Print the size of the root node

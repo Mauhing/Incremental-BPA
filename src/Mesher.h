@@ -438,7 +438,7 @@ public:
 
     void debugPrintStats();
 
-    Facet_set computeCollisionFacets(const std::list<Vertex> &vertices);
+    Facet_set computeCollisionFacets(const std::list<Vertex *> &vertices);
 
     void clearOrphanVertices();
 
@@ -450,7 +450,7 @@ public:
 
     void expandOctree(const std::list<Vertex> &vertices);
 
-    void checkAndRemoveCollisionFacets(const std::list<Vertex> &vertices);
+    void checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices);
 
 private: // create facets
     void createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center);
