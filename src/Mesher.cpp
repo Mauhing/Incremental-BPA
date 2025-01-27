@@ -1269,8 +1269,6 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
 
-    this->checkOctreeIntegrity();
-
     // Check and remove collision facets
     std::cout << "Removing collision facets" << std::endl;
     this->checkAndRemoveCollisionFacets(recruited_points);
@@ -1288,8 +1286,6 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
         }
     }
     
-    //this->mesh_integrityCheck();
-
     // Reset boundary edges to edge_front
     std::cout << "Resetting boundary edges" << std::endl;
     this->resetBoundaryEdges();
@@ -1307,14 +1303,9 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     while (true)
     {
         // Remove singular vertices
-
         bool found_fan_fan_vertex = this->removeFanFanSingular();
 
-        //this->checkFacetsOrientation();
-
         bool found_disk_fan_vertex = this->removeDiskFanSingular();
-
-        //this->checkFacetsOrientation();
 
         if (!found_fan_fan_vertex && !found_disk_fan_vertex)
         {
@@ -1338,12 +1329,6 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
         this->clearOrphanVertices();
     else
         std::cout << "\033[31mNot clearing orphan vertices\033[0m" << std::endl;
-
-    //{
-    //    std::lock_guard<std::mutex> lock(*visualization_mutex);
-    //    std::cout << "Press enter to continue" << std::endl;
-    //    std::cin.get();
-    //}
 }
 
 bool Mesher::removeFanFanSingular()

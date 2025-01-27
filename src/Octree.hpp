@@ -184,37 +184,35 @@ void TOctree<T>::checkSizeAndexpand(const T &pt)
     if (x_in_box != PointRespectToBox::INSIDE || y_in_box != PointRespectToBox::INSIDE || z_in_box != PointRespectToBox::INSIDE)
     {
 
-        //std::this_thread::sleep_for(std::chrono::seconds(2));
-        //std::cout << "\033[35m Sleeping for 2 seconds\033[0m" << std::endl;
 #ifdef _DEBUG
-// print the class name of the object
-std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" :
-                         std::is_same<T, BallCenter>::value ? "BallCenter" :
-                         "Unknown") << std::endl;
- if (x_in_box != PointRespectToBox::INSIDE) {
-     std::cout << "x outside the box" << std::endl;
-     std::cout << "n_x: " << n_x << std::endl;
-     std::cout << "x_in_box: " << x_in_box << std::endl;
-     std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-     std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-     std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
- }
- if (y_in_box != PointRespectToBox::INSIDE) {
-     std::cout << "y outside the box" << std::endl;
-     std::cout << "n_y: " << n_y << std::endl;
-     std::cout << "y_in_box: " << y_in_box << std::endl;
-     std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-     std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-     std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
- }
- if (z_in_box != PointRespectToBox::INSIDE) {
-     std::cout << "z outside the box" << std::endl;
-     std::cout << "n_z: " << n_z << std::endl;
-     std::cout << "z_in_box: " << z_in_box << std::endl;
-     std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
-     std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
-     std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
- }
+    // print the class name of the object
+    std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" :
+                            std::is_same<T, BallCenter>::value ? "BallCenter" :
+                            "Unknown") << std::endl;
+    if (x_in_box != PointRespectToBox::INSIDE) {
+        std::cout << "x outside the box" << std::endl;
+        std::cout << "n_x: " << n_x << std::endl;
+        std::cout << "x_in_box: " << x_in_box << std::endl;
+        std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+    }
+    if (y_in_box != PointRespectToBox::INSIDE) {
+        std::cout << "y outside the box" << std::endl;
+        std::cout << "n_y: " << n_y << std::endl;
+        std::cout << "y_in_box: " << y_in_box << std::endl;
+        std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+    }
+    if (z_in_box != PointRespectToBox::INSIDE) {
+        std::cout << "z outside the box" << std::endl;
+        std::cout << "n_z: " << n_z << std::endl;
+        std::cout << "z_in_box: " << z_in_box << std::endl;
+        std::cout << "Point location: " << pt.x() << " " << pt.y() << " " << pt.z() << std::endl;
+        std::cout << "Lower bound: " << m_origin.x() << " " << m_origin.y() << " " << m_origin.z() << std::endl;
+        std::cout << "Upper bound: " << m_origin.x() + m_size << " " << m_origin.y() + m_size << " " << m_origin.z() + m_size << std::endl;
+    }
 #endif
 
         unsigned int n_max = (n_x > n_y) ? ((n_x > n_z) ? n_x : n_z) : ((n_y > n_z) ? n_y : n_z);
@@ -233,8 +231,6 @@ std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" :
             unsigned int top_level = m_root->getDepth();
 
             // Update all node
-
-            // Alternative1
             expandAllNodeLoc(top_level, x_insert_index, y_insert_index, z_insert_index);
 
             // Then add parent
@@ -261,9 +257,6 @@ std::cout << "Type: " << (std::is_same<T, Vertex>::value ? "Vertex" :
             m_nb_interval = pow2(m_root_depth + 1);
             m_origin = new_origin;
             m_root_depth = m_root->getDepth();
-            // bug, we should also update m_root_depth
-
-            // Insert the new root node
         }
     }
 }

@@ -137,22 +137,6 @@ public: // adding points
 
     T *checkSizeAndaddPoint(const T &pt);
 
-    // void debugPrint()
-    //{
-    //     for (auto* node: m_created_nodes)
-    //     {
-    //         std::cout << " <<<< " << std::endl;
-    //         std::cout << "Node: depth " << node->getDepth() << " size " << node->getSize() << std::endl;
-    //         std::cout << "X start " << node->getOrigin().x() << std::endl;
-    //         std::cout << "X end " << node->getOrigin().x() + node->getSize() << std::endl;
-    //         std::cout << "Depth in binary " << std::bitset<32>(node->getDepth()) << std::endl;
-    //         std::cout << "XLoc in binary: " << std::bitset<32>(node->getXLoc()) << std::endl;
-    //         if (node->getDepth() == 0) {
-    //             std::cout << "Number of pts contained: " << node->getNpts() << std::endl;
-    //         }
-    //     }
-    // }
-
     void checkSizeAndexpand(const T &pt);
 
 protected:

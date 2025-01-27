@@ -213,13 +213,7 @@ int main(int argc, char **argv)
         }
 
         //std::cout << "Mesh integrity check" << std::endl;
-        mesher.mesh_integrityCheck(received_vertices);
-        
-        #ifdef _DEBUG
-        //if (batch_index  >= 11) {
-        //    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        //}
-        #endif
+        //mesher.mesh_integrityCheck(received_vertices);        
 #endif
 
         // sleep for 100ms

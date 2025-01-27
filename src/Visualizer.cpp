@@ -88,36 +88,23 @@ void Visualizer::visualizationThread(
                 // if (mesher.hasNewFacet())
                 if (true)
                 {
-                    renderMainMesh(mesher.getFacets(), o3d_mesh);
-                    //renderFreshVertices(mesher.getFreshVertices(), debug_point);
-                    renderReceivedVertices(received_vertices, debug_point);
-                    renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
                     // Shader
                     //o3d_mesh->ComputeVertexNormals();
                     //o3d_mesh->ComputeTriangleNormals(); 
 
                     if (task_in_progress) {
+                        renderMainMesh(mesher.getFacets(), o3d_mesh);
+                        renderReceivedVertices(received_vertices, debug_point);
+                        renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
-                        //renderMainMesh(mesher.getFacets(), o3d_mesh);
-                        //renderReceivedVertices(received_vertices, debug_point);
+                        // Shader
+                        //o3d_mesh->ComputeVertexNormals();
+                        //o3d_mesh->ComputeTriangleNormals(); 
 
-                        ////o3d_mesh->ComputeVertexNormals();
-                        ////o3d_mesh->ComputeTriangleNormals(); 
 
-                        //std::cout << "\033[34mSignal received at visualization thread\033[0m" << std::endl;
-                        //renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
-
-                        ////integrityCheck(o3d_mesh, debug_edge);
-
-                        //std::cout << "\033[34mTask in progress set to false\033[0m" << std::endl; 
                         task_in_progress = false;
-                        cv_debug_visualization.notify_one();
-
-                        //visualizer.UpdateGeometry(o3d_mesh);
-                        //visualizer.UpdateGeometry(debug_edge);
-                        //visualizer.UpdateGeometry(debug_point);
-                        //mesher.clearNewFacetFlag();
+                        cv_debug_visualization.notify_one(); 
                     }
                         visualizer.UpdateGeometry(o3d_mesh);
                         visualizer.UpdateGeometry(debug_edge);
