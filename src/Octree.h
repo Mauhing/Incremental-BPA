@@ -361,7 +361,7 @@ void TOctree<T>::checkSizeAndexpand(const T &pt)
 
     if (pt.x() > (m_origin.x() + m_size))
     {
-        n_x = static_cast<unsigned int>(ceil(log2((pt.x() - m_origin.x()) / m_size)));
+        n_x = static_cast<unsigned int>(std::ceil(log2((pt.x() - m_origin.x()) / m_size)));
         x_in_box = PointRespectToBox::RIGHT;
     }
     if (pt.x() < m_origin.x())
@@ -394,10 +394,7 @@ void TOctree<T>::checkSizeAndexpand(const T &pt)
 
     if (x_in_box != PointRespectToBox::INSIDE || y_in_box != PointRespectToBox::INSIDE || y_in_box != PointRespectToBox::INSIDE)
     {
-        std::cout << "\033[35mExpanding octree\033[0m" << std::endl;
-        std::cout << "\033[35mType: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
-                                 std::is_same<T, BallCenter>::value ? "BallCenter" : 
-                                 "Unknown") << "\033[0m" << std::endl;
+
         //std::this_thread::sleep_for(std::chrono::seconds(2));
         //std::cout << "\033[35m Sleeping for 2 seconds\033[0m" << std::endl;
 #ifdef _DEBUG
@@ -435,7 +432,10 @@ void TOctree<T>::checkSizeAndexpand(const T &pt)
         unsigned int x_insert_index = (x_in_box == PointRespectToBox::LEFT) ? 1 : 0;
         unsigned int y_insert_index = (y_in_box == PointRespectToBox::LEFT) ? 1 : 0;
         unsigned int z_insert_index = (z_in_box == PointRespectToBox::LEFT) ? 1 : 0;
-
+        std::cout << "\033[35mExpanding octree\033[0m" << std::endl;
+        std::cout << "\033[35mType: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
+                                 std::is_same<T, BallCenter>::value ? "BallCenter" : 
+                                 "Unknown") << "\033[0m" << std::endl;
         // At this stage, n_max will be minimum 1.
         // this for loop can not be parallelized
         for (unsigned int i = 0; i < n_max; ++i)
@@ -487,6 +487,12 @@ T *TOctree<T>::checkSizeAndaddPoint(const T &pt)
     return new_pt;
 }
 
+static unsigned int leftOrRightInLevel(unsigned int code, unsigned int level)
+{
+    unsigned int childBranchBit = 1 << level;
+    return (code & childBranchBit)>>level;
+}
+
 template <class T>
 T *TOctree<T>::addPoint(const T &pt)
 {
@@ -498,15 +504,18 @@ T *TOctree<T>::addPoint(const T &pt)
 
     // At this stage, there are no nodes in the octree. We need to create a root node.
     TOctreeNode<T> *node = getRoot();
-    unsigned int l = node->getDepth() - 1;
+    unsigned int l = node->getOrdinalPositionForChild();
 
     // traverse the octree until we reach a leaf
     while (node->getDepth() != 0) // The node here will get redefined at each iteration
     {
         unsigned int childBranchBit = 1 << l;            // For example, if l=2, childBranchBit=100
-        unsigned int x = ((codx & childBranchBit) >> l); // return 1 if codx has a 1 at the l-th position, 0 otherwise.
-        unsigned int y = ((cody & childBranchBit) >> l);
-        unsigned int z = ((codz & childBranchBit) >> l);
+        //unsigned int x = ((codx & childBranchBit) >> l); // return 1 if codx has a 1 at the l-th position, 0 otherwise.
+        //unsigned int y = ((cody & childBranchBit) >> l);
+        //unsigned int z = ((codz & childBranchBit) >> l);
+        unsigned int x = leftOrRightInLevel(codx, l); // return 1 if codx has a 1 at the l-th position, 0 otherwise.
+        unsigned int y = leftOrRightInLevel(cody, l);
+        unsigned int z = leftOrRightInLevel(codz, l);
         unsigned int childIndex = (x << 2) + (y << 1) + z;
 
         if (node->getChild(childIndex) == nullptr)
@@ -521,6 +530,7 @@ T *TOctree<T>::addPoint(const T &pt)
             TOctreeNode<T> *child = node->initializeChild(childIndex,
                                                           childOrigin);
 
+            // if node is root, the getXLoc() will return 0
             child->setXLoc(node->getXLoc() + (x << (childDepth)));
             child->setYLoc(node->getYLoc() + (y << (childDepth)));
             child->setZLoc(node->getZLoc() + (z << (childDepth)));

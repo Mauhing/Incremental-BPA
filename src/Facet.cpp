@@ -61,10 +61,12 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center)
         m_vertex[i]->updateType();
     }
 
+#ifdef _DEBUG
     if(!isRightOrientation()) {
         std::cerr << "Facet is not right oriented" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+#endif
 }
 
 Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center)

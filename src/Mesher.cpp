@@ -1143,7 +1143,7 @@ Facet_set Mesher::computeCollisionFacets(const std::list<Vertex *> &vertices)
         // unsigned int num_neighbors = octree_ball_centers_iterator.getSortedNeighbors(vertex, neighbors);
         m_octree_ball_centers_iterator->getSortedNeighbors(*vertex, neighbors);
 
-        // print the size of neighbors
+    
         if (neighbors.size() == 0)
             continue;
 

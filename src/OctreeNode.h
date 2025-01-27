@@ -311,6 +311,12 @@ public:
     bool isLeaf() const;
 
     void downSample(const int max_points, std::vector<T*> &recruited_points); 
+
+    /**
+     * @brief get the digit location of the node
+     * @return digit location
+     */
+    unsigned int getOrdinalPositionForChild() const;
 };
 
 template <class T>
@@ -631,6 +637,12 @@ void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited
             m_points_buffer.clear();
         }
     }
+}
+
+template <class T>
+unsigned int TOctreeNode<T>::getOrdinalPositionForChild() const
+{
+    return m_depth - 1;
 }
 
 #endif
