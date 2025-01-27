@@ -1269,6 +1269,8 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
 
+    this->checkOctreeIntegrity();
+
     // Check and remove collision facets
     std::cout << "Removing collision facets" << std::endl;
     this->checkAndRemoveCollisionFacets(recruited_points);
@@ -1739,4 +1741,13 @@ void Mesher::checkFacetsOrientation() const
             std::exit(EXIT_FAILURE);
         }
     }
+}
+
+void Mesher::checkOctreeIntegrity()
+{
+    std::cout << "Checking octree vertices integrity" << std::endl;
+    m_octree_vertices->integrityCheck();
+
+    std::cout << "Checking octree ball centers integrity" << std::endl;
+    m_octree_ball_centers->integrityCheck();
 }

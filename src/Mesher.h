@@ -558,6 +558,8 @@ public: // Sanity check
     void checkDegenerateTriangle(Facet* facet) const;
 
     void checkFacetsOrientation() const;  
+
+    void checkOctreeIntegrity();
 #endif
 };
 
