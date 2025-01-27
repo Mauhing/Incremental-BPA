@@ -179,14 +179,6 @@ int main(int argc, char **argv)
             }
         }
 
-        // Add the vertices to the received_vertices
-        {
-            //std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-            //for (const auto& v : vertices) {
-            //    received_vertices.emplace_back(v, Eigen::Vector3d(0.0, 1.0, 0.0)); // Green
-            //}
-        }
-
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Set slow visualization flag when at batch 8
         // if (batch_index == 8) {
@@ -200,7 +192,6 @@ int main(int argc, char **argv)
         mesher.batchReconstruct(vertices);
         
 #ifdef _DEBUG
-
         {
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
             task_in_progress = true;
@@ -211,13 +202,7 @@ int main(int argc, char **argv)
             cv_debug_visualization.wait(lock, [&task_in_progress]{ return !task_in_progress; });
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
-
-        //std::cout << "Mesh integrity check" << std::endl;
-        //mesher.mesh_integrityCheck(received_vertices);        
 #endif
-
-        // sleep for 100ms
-        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // wait for terminal input

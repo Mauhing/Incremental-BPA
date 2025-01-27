@@ -171,11 +171,6 @@ protected:
     TOctreeNode<T> *m_root;
 
     /**
-     *@brief number of non-empty cells per level
-     */
-    // std::vector<unsigned int> m_nb_non_empty_cells;
-
-    /**
      * @brief maximum number of points per node
      */
     const int m_max_points;

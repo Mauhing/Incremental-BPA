@@ -92,8 +92,6 @@ void TOctree<T>::setDepth(unsigned int depth)
 {
     m_root_depth = depth;
     m_nb_interval = pow2(depth);
-    // m_nb_non_empty_cells.clear();
-    // m_nb_non_empty_cells.assign(depth,0);
 }
 
 template <class T>

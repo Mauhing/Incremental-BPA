@@ -50,7 +50,6 @@ Mesher::Mesher() : visualization_mutex(nullptr),
 {
     m_octree_vertices = nullptr;
     m_iterator_vertices = nullptr;
-    m_nfacets = 0;
     m_vertice_idx = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = nullptr;
@@ -64,7 +63,6 @@ Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator
 {
     m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
-    m_nfacets = 0;
     m_vertice_idx = 0;
     m_recycle_vertices_idx = std::unordered_set<unsigned int>();
 
@@ -95,7 +93,6 @@ Mesher::~Mesher()
     m_facets.clear();
 
     m_vertices.clear();
-    m_nfacets = 0;
     m_vertice_idx = 0;
 }
 
@@ -112,7 +109,7 @@ unsigned int Mesher::nVertices() const
 
 unsigned int Mesher::nFacets() const
 {
-    return m_nfacets;
+    return static_cast<unsigned int>(m_facets.size());
 }
 
 unsigned int Mesher::nBorderEdges() const
@@ -294,19 +291,10 @@ bool Mesher::trySeed(Vertex &v)
             this->createAndAddFacet(v0, v1, v2, center);
             // >>>
 
-            //if (m_nfacets % 10000 == 0)
-            //    std::cout << m_nfacets << " facets. "
-            //              << m_edge_front.size() << " front edges. "
-            //              << m_border_edges.size() << " border edges." << std::endl;
-
             e1 = v.getLinkingEdge(candidate);
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
 
-            // std::cout << "e1 start vertex: " << e1->getSource()->index() << std::endl;
-            // std::cout << "e2 start vertex: " << e2->getSource()->index() << std::endl;
-            // std::cout << "e3 start vertex: " << e3->getSource()->index() << std::endl;
-            // std::cout << "================================" << std::endl;
 
             if (e1->getType() == Edge::FRONT)
                 m_edge_front.push_front(e1);
@@ -719,10 +707,6 @@ void Mesher::expandTriangulation()
         if (e2->getType() == Edge::FRONT)
             m_edge_front.push_front(e2);
 
-        // if(m_nfacets % 10000 == 0)
-        //     std::cout<<m_vertice_idx<<" vertices. "<<m_nfacets<<" facets. "
-        //     <<m_edge_front.size()<<" front edges. "
-        //     <<m_border_edges.size()<<" border edges."<<std::endl;
     }
 }
 
@@ -829,7 +813,6 @@ void Mesher::addFacet(Facet *f)
 
     m_facets.push_back(f);
     addFreshFacet(f);
-    m_nfacets++;
 
     // Update the ball centers octree.
     Point temp_ball_center = f->getBallCenter();
@@ -1034,7 +1017,6 @@ void Mesher::removeFacet(Facet *facet)
 
     m_facets.remove(facet);
     m_fresh_facets.erase(facet);
-    m_nfacets--;
     delete facet;
 }
 
@@ -1049,9 +1031,6 @@ void Mesher::removeFacets(SetType &facets)
     for (auto facet : facets)
     {
         removeFacet(facet);
-        //m_facets.remove(facet);
-        //m_fresh_facets.erase(facet); // It erase if exists
-        //m_nfacets--;
     }
 }
 
