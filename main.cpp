@@ -154,8 +154,7 @@ int main(int argc, char **argv)
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
     // enter looping phase
-    
-    size_t max_batch_index  = 2;
+    size_t max_batch_index  = batch_data.size();
     for (size_t batch_index = 0; batch_index < max_batch_index; batch_index++)
     {
         if (should_exit)
@@ -222,8 +221,7 @@ int main(int argc, char **argv)
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
 
     // Open3D save ply
-    bool o3d_save_ply = false;
-
+    bool o3d_save_ply = true;
     if (o3d_save_ply)
     {
         std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
@@ -235,6 +233,5 @@ int main(int argc, char **argv)
     {
         std::cout << "O3d ply file not saved" << std::endl;
     }
-
     return EXIT_SUCCESS;
 }
