@@ -302,9 +302,17 @@ void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited
             std::mt19937 gen(42);
             std::shuffle(temp_points.begin(), temp_points.end(), gen);
             
-            // Cap the size of temp_points to max_points
+            // Store points that will be deleted
+            std::vector<T*> points_to_delete;
             if (static_cast<int>(temp_points.size()) > max_points) {
+                // Split temp_points into two vectors at max_points
+                points_to_delete.assign(temp_points.begin() + max_points, temp_points.end());
                 temp_points.resize(max_points);
+            }
+            
+            // Delete points and free memory
+            for (T* point : points_to_delete) {
+                delete point;
             }
 
             // Add selected points back to m_points
