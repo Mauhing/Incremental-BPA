@@ -558,8 +558,11 @@ public: // Sanity check
 
     void checkOctreeIntegrity();
 
-    void checkPointerIntegrity() const;
+    
+
 #endif
+public:
+    void manual_destructor();
 };
 
 #endif

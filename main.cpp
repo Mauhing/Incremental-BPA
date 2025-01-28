@@ -236,7 +236,5 @@ int main(int argc, char **argv)
         std::cout << "O3d ply file not saved" << std::endl;
     }
 
-    mesher.checkPointerIntegrity();
-
     return EXIT_SUCCESS;
 }

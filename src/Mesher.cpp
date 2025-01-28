@@ -913,10 +913,10 @@ void Mesher::fillHoles()
 
 void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
 {
-    Vertex_UnOrdSet &points = node->GetPoints();
+    Vertex_UnOrdSet &node_points = node->GetPoints();
 
     std::list<Vertex *> temporary_orphan_vertices;
-    for (auto iter = points.begin(); iter != points.end(); ++iter)
+    for (auto iter = node_points.begin(); iter != node_points.end(); ++iter)
     {
         Vertex *v = *iter;
         if (v->getType() == Vertex::ORPHAN)
@@ -929,7 +929,7 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
     {
         // Update node
         // Update the vertices set of the node.
-        points.erase(v);
+        node_points.erase(v);
         // Remove the vertex from the mesh.
         m_vertices.remove(v);
 // Retrieve the index of the vertex.
@@ -1692,27 +1692,3 @@ void Mesher::checkOctreeIntegrity()
     m_octree_ball_centers->integrityCheck();
 }
 
-void Mesher::checkPointerIntegrity() const
-{
-    std::cout << "Checking pointer integrity" << std::endl;
-    for (Facet* facet : m_facets)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            Vertex *v = facet->getVertex(i);
-            if (v == nullptr)
-            {
-                std::cerr << "Error: Vertex is nullptr" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-            bool is_adjacent =  v->adjacentFacets().find(facet) != v->adjacentFacets().end();
-            if (!is_adjacent)
-            {
-                std::cerr << "Error: Vertex is not adjacent to facet" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
-        
-    }
-    std::cout << "Pointer integrity check passed" << std::endl;
-}

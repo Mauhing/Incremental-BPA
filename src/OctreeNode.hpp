@@ -320,6 +320,8 @@ void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited
             }
             m_points_buffer.clear();
         }
+
+        // memory leak here.
     }
 }
 

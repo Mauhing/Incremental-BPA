@@ -53,7 +53,6 @@ TOctree<T>::~TOctree()
         delete m_root;
         m_root = nullptr;
     }
-    // m_nb_non_empty_cells.clear();
 }
 
 template <class T>
