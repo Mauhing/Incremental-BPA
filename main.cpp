@@ -154,7 +154,9 @@ int main(int argc, char **argv)
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
     // enter looping phase
-    for (size_t batch_index = 0; batch_index < batch_data.size(); batch_index++)
+    
+    size_t max_batch_index  = 2;
+    for (size_t batch_index = 0; batch_index < max_batch_index; batch_index++)
     {
         if (should_exit)
         { // Check if visualization window was closed
@@ -206,8 +208,8 @@ int main(int argc, char **argv)
     }
 
     // wait for terminal input
-    std::cout << "Press Enter to exit..." << std::endl;
-    std::cin.get();
+    //std::cout << "Press Enter to exit..." << std::endl;
+    //std::cin.get();
 
     should_exit = true;
     vis_thread.join();
@@ -233,6 +235,8 @@ int main(int argc, char **argv)
     {
         std::cout << "O3d ply file not saved" << std::endl;
     }
+
+    mesher.checkPointerIntegrity();
 
     return EXIT_SUCCESS;
 }

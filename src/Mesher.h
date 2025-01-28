@@ -557,6 +557,8 @@ public: // Sanity check
     void checkFacetsOrientation() const;  
 
     void checkOctreeIntegrity();
+
+    void checkPointerIntegrity() const;
 #endif
 };
 

@@ -83,14 +83,16 @@ Mesher::~Mesher()
     m_edge_front.clear();
     m_border_edges.clear();
 
+    Facet_star_list facets_to_delete = m_facets;
+
     Facet_star_list::iterator fi;
-    for (fi = m_facets.begin(); fi != m_facets.end(); ++fi)
+    for (fi = facets_to_delete.begin(); fi != facets_to_delete.end(); ++fi)
     {
         // delete *fi;
         removeFacet(*fi);
         *fi = nullptr;
     }
-    m_facets.clear();
+    facets_to_delete.clear();
 
     m_vertices.clear();
     m_vertice_idx = 0;
@@ -117,11 +119,6 @@ unsigned int Mesher::nBorderEdges() const
     return (unsigned int)m_border_edges.size();
 }
 
-// unsigned int Mesher::getNumBallCenters() const
-//{
-//     return m_num_ball_centers;
-// }
-
 void Mesher::reconstruct()
 {
     std::cout << "***********Ball radius " << m_ball_radius
@@ -143,7 +140,7 @@ void Mesher::reconstruct()
         expandTriangulation();
     }
 
-    findSeedTriangle(); // This is to find the seed triangle again.
+    //findSeedTriangle(); // This is to find the seed triangle again.
 }
 
 void Mesher::reconstruct(const std::list<double> &radii)
@@ -1003,15 +1000,7 @@ void Mesher::removeFacet(Facet *facet)
         v->updateType();
         if (v->adjacentFacets().size() == 0)
         {
-            #ifdef _DEBUG
-            if (v->adjacentEdges().size() > 0)
-            {
-                std::cerr << "\033[1;31mError: Vertex has adjacent edges\033[0m" << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-            #endif
             exileVertex(v);
-            continue;
         }
     }
 
@@ -1372,19 +1361,6 @@ bool Mesher::removeFanFanSingular()
             std::lock_guard<std::mutex> lock(*visualization_mutex);
             this->removeFacets(singular_facets);
 
-            #ifdef _DEBUG
-            //for (auto *facet : m_facets)
-            //{
-            //    Vertex *v1 = facet->getVertex(0);
-            //    Vertex *v2 = facet->getVertex(1);
-            //    Vertex *v3 = facet->getVertex(2);
-            //    if (v1 == nullptr || v2 == nullptr || v3 == nullptr)
-            //    {
-            //        std::cout << "There is a facet with null vertex" << std::endl;
-            //        std::exit(EXIT_FAILURE);
-            //    }
-            //}
-            #endif
         }
     }
     return found_fan_fan_vertex;
@@ -1714,4 +1690,29 @@ void Mesher::checkOctreeIntegrity()
 
     std::cout << "Checking octree ball centers integrity" << std::endl;
     m_octree_ball_centers->integrityCheck();
+}
+
+void Mesher::checkPointerIntegrity() const
+{
+    std::cout << "Checking pointer integrity" << std::endl;
+    for (Facet* facet : m_facets)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            Vertex *v = facet->getVertex(i);
+            if (v == nullptr)
+            {
+                std::cerr << "Error: Vertex is nullptr" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            bool is_adjacent =  v->adjacentFacets().find(facet) != v->adjacentFacets().end();
+            if (!is_adjacent)
+            {
+                std::cerr << "Error: Vertex is not adjacent to facet" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+        
+    }
+    std::cout << "Pointer integrity check passed" << std::endl;
 }
