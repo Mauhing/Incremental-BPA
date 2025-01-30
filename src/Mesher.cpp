@@ -51,6 +51,7 @@ Mesher::Mesher() : visualization_mutex(nullptr),
     m_octree_vertices = nullptr;
     m_iterator_vertices = nullptr;
     m_vertice_idx = 1;
+    m_facet_idx = 1;
     //m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = nullptr;
     m_octree_ball_centers_iterator = nullptr;
@@ -64,6 +65,7 @@ Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator
     m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
     m_vertice_idx = 1;
+    m_facet_idx = 1;
     //m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_vertices = octree_vertices;
     m_iterator_vertices = iterator_vertices;
@@ -95,6 +97,7 @@ Mesher::~Mesher()
 
     m_vertices.clear();
     m_vertice_idx = 1;
+    m_facet_idx = 1;
 }
 
 void Mesher::setBallRadius(double r)
@@ -824,14 +827,6 @@ void Mesher::addFacet(Facet *f)
 
 void Mesher::addVertex(Vertex *v)
 {
-    #ifdef _DEBUG
-    if (v->index() < 0)
-    {
-        std::cerr << "Vertex index is less than -1" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-    #endif
-
     #ifdef _DEBUG
     if (v->index() != 0)
         return;
@@ -1595,13 +1590,22 @@ void Mesher::mesh_integrityCheck()
         std::cerr << "Error: The mesh is not orientable" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+
+    // Check if mesh has self-intersections
+    std::vector<Eigen::Vector2i> intersecting_triangles = o3d_mesh->GetSelfIntersectingTriangles();
+    if (intersecting_triangles.size() > 0)
+    {
+        std::cerr << "Error: The mesh has self-intersections" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
     return;
 }
 
 void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    Facet *facet = new Facet(v1, v2, v3, center);
+    Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx++);
     addFacet(facet); 
 
     if (m_slow_visualization)
@@ -1618,7 +1622,7 @@ void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &
 void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    Facet *facet = new Facet(edge, vertex, center);
+    Facet *facet = new Facet(edge, vertex, center, m_facet_idx++);
     addFacet(facet);
 
     if (m_slow_visualization)

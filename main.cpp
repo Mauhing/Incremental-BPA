@@ -191,6 +191,8 @@ int main(int argc, char **argv)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         mesher.batchReconstruct(vertices);
+
+        //mesher.mesh_integrityCheck();
         
 #ifdef _DEBUG
         {
