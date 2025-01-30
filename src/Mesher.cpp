@@ -827,14 +827,24 @@ void Mesher::addFacet(Facet *f)
 
 void Mesher::addVertex(Vertex *v)
 {
-    #ifdef _DEBUG
-    if (v->index() != 0)
+    if (v->index()  > 0)
+        // The vertex is already in the map, return.
         return;
-    #endif
-
-    v->setIndex(m_vertice_idx);
-    m_vertices.push_back(v);
-    m_vertice_idx++;
+    else if (v->index() == 0)
+    {
+        v->setIndex(m_vertice_idx);
+        m_vertex_map[m_vertice_idx] = v;
+        m_vertices.push_back(v);
+        m_vertice_idx++;
+    }
+    else
+    {
+        #ifdef _DEBUG
+        std::cerr << "Error: Vertex index is not 0" << std::endl;
+        std::cerr << "Vertex index: " << v->index() << std::endl;
+        std::exit(EXIT_FAILURE);
+        #endif
+    }
 }
 
 std::list<Vertex *>::const_iterator Mesher::vertices_begin() const
@@ -1605,7 +1615,10 @@ void Mesher::mesh_integrityCheck()
 void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx++);
+    Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx);
+    m_facet_map[m_facet_idx] = facet;
+    m_facet_idx++;
+
     addFacet(facet); 
 
     if (m_slow_visualization)
@@ -1622,7 +1635,10 @@ void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &
 void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    Facet *facet = new Facet(edge, vertex, center, m_facet_idx++);
+    Facet *facet = new Facet(edge, vertex, center, m_facet_idx);
+    m_facet_map[m_facet_idx] = facet;
+    m_facet_idx++;
+
     addFacet(facet);
 
     if (m_slow_visualization)

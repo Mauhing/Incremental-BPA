@@ -425,6 +425,10 @@ private: // auxilliary methods for performing the triangulation
      */
     void changeRadius(double radius);
 
+private:
+    std::unordered_map<unsigned int, Vertex *> m_vertex_map;
+    std::unordered_map<unsigned int, Facet *> m_facet_map;
+
 public:
     template <typename SetType>
     void removeFacets(SetType &boundary_facets);
