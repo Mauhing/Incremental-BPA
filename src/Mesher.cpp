@@ -50,8 +50,8 @@ Mesher::Mesher() : visualization_mutex(nullptr),
 {
     m_octree_vertices = nullptr;
     m_iterator_vertices = nullptr;
-    m_vertice_idx = 0;
-    m_recycle_vertices_idx = std::unordered_set<unsigned int>();
+    m_vertice_idx = 1;
+    //m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_ball_centers = nullptr;
     m_octree_ball_centers_iterator = nullptr;
 }
@@ -63,9 +63,8 @@ Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator
 {
     m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
-    m_vertice_idx = 0;
-    m_recycle_vertices_idx = std::unordered_set<unsigned int>();
-
+    m_vertice_idx = 1;
+    //m_recycle_vertices_idx = std::unordered_set<unsigned int>();
     m_octree_vertices = octree_vertices;
     m_iterator_vertices = iterator_vertices;
     m_octree_ball_centers = octree_ball_centers;
@@ -95,7 +94,7 @@ Mesher::~Mesher()
     facets_to_delete.clear();
 
     m_vertices.clear();
-    m_vertice_idx = 0;
+    m_vertice_idx = 1;
 }
 
 void Mesher::setBallRadius(double r)
@@ -826,31 +825,21 @@ void Mesher::addFacet(Facet *f)
 void Mesher::addVertex(Vertex *v)
 {
     #ifdef _DEBUG
-    if (v->index() < -1)
+    if (v->index() < 0)
     {
         std::cerr << "Vertex index is less than -1" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     #endif
 
-    if (v->index() != -1)
+    #ifdef _DEBUG
+    if (v->index() != 0)
         return;
+    #endif
 
-    bool is_empty = m_recycle_vertices_idx.empty();
-    if (is_empty)
-    {
-        v->setIndex(m_vertice_idx);
-        m_vertices.push_back(v);
-        m_vertice_idx++;
-    }
-    else
-    {
-        unsigned int idx = *(m_recycle_vertices_idx.begin());
-        m_recycle_vertices_idx.erase(idx);
-
-        v->setIndex(idx);
-        m_vertices.push_back(v);
-    }
+    v->setIndex(m_vertice_idx);
+    m_vertices.push_back(v);
+    m_vertice_idx++;
 }
 
 std::list<Vertex *>::const_iterator Mesher::vertices_begin() const
@@ -934,9 +923,9 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
         m_vertices.remove(v);
 // Retrieve the index of the vertex.
 #ifdef _DEBUG
-        if (v->index() != -1)
+        if (v->index() != 0)
         {
-            std::cerr << "Error:Orphan Vertex index is not -1!" << std::endl;
+            std::cerr << "Error:Orphan Vertex index is not 0!" << std::endl;
             std::exit(EXIT_FAILURE);
         }
 #endif
@@ -947,12 +936,12 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
 
 void Mesher::exileVertex(Vertex *vertex)
 {
-    m_recycle_vertices_idx.insert(vertex->index());
+    //m_recycle_vertices_idx.insert(vertex->index());
     m_vertices.remove(vertex);
 
     // clear the vertex
     vertex->setType(Vertex::VertexType::ORPHAN);
-    vertex->setIndex(-1);
+    vertex->setIndex(0);
     vertex->clearAdjacentEdgesAndFacets();
 }
 

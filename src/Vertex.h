@@ -79,9 +79,9 @@ private: // properties
     /** @brief set of adjacent facets*/
     Facet_set m_adjacentFacets;
 
-    /** @brief vertex index of the triangulation, should be -1
+    /** @brief vertex index of the triangulation, should be 0
      * if the vertex is an orphan*/
-    int m_index;
+    unsigned int m_index;
 
     /** @brief tag: 0 if orphan, 1 if on front, 2 if inner*/
     // unsigned int m_type;
@@ -129,12 +129,12 @@ public: // accessors + modifiers
     /** @brief get index of the vertex
      @return index
      */
-    int index();
+    unsigned int index() const;
 
     /** @brief set the vertex index
      * @param index to set
      */
-    void setIndex(int index);
+    void setIndex(unsigned int index);
 
     /** @brief get the set of adjacent edges
      * return the set of adjacent edges

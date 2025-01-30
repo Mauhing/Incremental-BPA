@@ -191,7 +191,7 @@ protected: // class members
     /** @brief number of current index vertex*/
     unsigned int m_vertice_idx;
 
-    std::unordered_set<unsigned int> m_recycle_vertices_idx;
+    //std::unordered_set<unsigned int> m_recycle_vertices_idx;
 
     std::vector<Vertex *> m_fresh_vertices;
 
