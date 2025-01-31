@@ -198,7 +198,7 @@ int main(int argc, char **argv)
         {
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
             task_in_progress = true;
-            cv_debug_visualization.notify_one();
+            //cv_debug_visualization.notify_one();
             std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
             std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
             

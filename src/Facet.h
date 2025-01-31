@@ -41,7 +41,7 @@ private:
     BallCenter *m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
 
     /** @brief unique index for this facet */
-    size_t m_index;
+    unsigned int m_index;
 
 public: // constructor+destructor
     /** @brief constructor*/
@@ -125,6 +125,8 @@ public:
     int getVertexIndex(const Vertex *v) const;
 
     bool isRightOrientation() const;
+
+    unsigned int getIndex() const;
 
 };
 

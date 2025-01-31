@@ -222,3 +222,7 @@ bool Facet::isRightOrientation() const
     return true;
     
 }
+
+unsigned int Facet::getIndex() const {
+    return m_index;
+}

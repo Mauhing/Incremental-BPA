@@ -819,11 +819,8 @@ void Mesher::addFacet(Facet *f)
     f->setBallCenterPtr(ball_center);
 
     new_facet_added = true;
+    m_batch_facets_added.push_back(f);
 }
-
-
-
-
 
 void Mesher::addVertex(Vertex *v)
 {
@@ -833,7 +830,6 @@ void Mesher::addVertex(Vertex *v)
     else if (v->index() == 0)
     {
         v->setIndex(m_vertice_idx);
-        m_vertex_map[m_vertice_idx] = v;
         m_vertices.push_back(v);
         m_vertice_idx++;
     }
@@ -1000,6 +996,9 @@ void Mesher::removeFacet(Facet *facet)
 
     m_facets.remove(facet);
     m_fresh_facets.erase(facet);
+
+    m_batch_facets_removed.push_back(facet->getIndex());
+    removeFromAddBatchFacet(facet);
     delete facet;
 }
 
@@ -1216,6 +1215,8 @@ void Mesher::resetBoundaryEdges()
 void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 {
     // Asumming radius is already set.
+
+    this->clearBatchFacets();
 
     // Expand the octree
     std::cout << "Expanding octree" << std::endl;
@@ -1616,7 +1617,6 @@ void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
     Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx);
-    m_facet_map[m_facet_idx] = facet;
     m_facet_idx++;
 
     addFacet(facet); 
@@ -1636,7 +1636,6 @@ void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
     Facet *facet = new Facet(edge, vertex, center, m_facet_idx);
-    m_facet_map[m_facet_idx] = facet;
     m_facet_idx++;
 
     addFacet(facet);
@@ -1701,3 +1700,38 @@ void Mesher::checkOctreeIntegrity()
     m_octree_ball_centers->integrityCheck();
 }
 
+
+void Mesher::mutal_exclusion_add_remove_facets()
+{
+    auto it = m_batch_facets_added.begin();
+    while (it != m_batch_facets_added.end()) {
+        if (std::find(m_batch_facets_removed.begin(), 
+                      m_batch_facets_removed.end(), 
+                      (*it)->getIndex()) != m_batch_facets_removed.end()) {
+            it = m_batch_facets_added.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void Mesher::clearBatchFacets()
+{
+    m_batch_facets_added.clear();
+    m_batch_facets_removed.clear();
+}
+
+const std::vector<Facet*> &Mesher::getBatchFacetsAdded() const
+{
+    return m_batch_facets_added;
+}
+
+const std::vector<unsigned int> &Mesher::getBatchFacetsRemoved() const
+{
+    return m_batch_facets_removed;
+}   
+
+void Mesher::removeFromAddBatchFacet(Facet* facet)
+{
+    m_batch_facets_added.erase(std::remove(m_batch_facets_added.begin(), m_batch_facets_added.end(), facet), m_batch_facets_added.end());
+}
