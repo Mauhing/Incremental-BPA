@@ -98,8 +98,6 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Octree creation
-    time_t start, end;
-    std::time(&start);
 
     Point origin;
     double size;
@@ -153,6 +151,9 @@ int main(int argc, char **argv)
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
+    time_t start, end;
+    std::time(&start);
+
     // enter looping phase
     size_t max_batch_index  = batch_data.size();
     for (size_t batch_index = 0; batch_index < max_batch_index; batch_index++)
@@ -198,7 +199,7 @@ int main(int argc, char **argv)
         {
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
             task_in_progress = true;
-            //cv_debug_visualization.notify_one();
+            cv_debug_visualization.notify_one();
             std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
             std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
             
@@ -207,6 +208,12 @@ int main(int argc, char **argv)
         }
 #endif
     }
+
+    std::time(&end);
+    double seconds = std::difftime(end, start);
+    int minutes = static_cast<int>(seconds) / 60;
+    seconds = std::fmod(seconds, 60.0);
+    std::cout << "Time taken: " << minutes << " minutes " << seconds << " seconds" << std::endl;
 
     // wait for terminal input
     //std::cout << "Press Enter to exit..." << std::endl;

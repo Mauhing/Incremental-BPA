@@ -72,8 +72,8 @@ void Visualizer::visualizationThread(
     visualizer.AddGeometry(coordinate_axes);
     
     // Visualization loop
-    std::map<unsigned int, unsigned int> f_index_2_matrix_row;
-    std::map<unsigned int, unsigned int> v_index_2_matrix_row;
+    std::unordered_map<unsigned int, unsigned int> f_index_2_matrix_row;
+    std::unordered_map<unsigned int, unsigned int> v_index_2_matrix_row;
     while (!should_exit)
     {
         if (!visualizer.PollEvents())
@@ -94,8 +94,8 @@ void Visualizer::visualizationThread(
 
                 if (task_in_progress) {
                     //renderMainMesh(mesher.getFacets(), o3d_mesh);
-                    //renderReceivedVertices(received_vertices, debug_point);
-                    //renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+                    renderReceivedVertices(received_vertices, debug_point);
+                    renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
                     std::vector<unsigned int> facets_to_remove = mesher.getBatchFacetsRemoved();
                     std::vector<Facet*> facets_to_add = mesher.getBatchFacetsAdded();
@@ -389,7 +389,7 @@ bool Visualizer::integrityCheck(const std::shared_ptr<open3d::geometry::Triangle
 
 }
 
-void Visualizer::renderIncremental(const std::vector<unsigned int> &facets_to_remove, const std::vector<Facet*> &facets_to_add, std::map<unsigned int, unsigned int> &f_index_2_matrix_row, std::map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh) {
+void Visualizer::renderIncremental(const std::vector<unsigned int> &facets_to_remove, const std::vector<Facet*> &facets_to_add, std::unordered_map<unsigned int, unsigned int> &f_index_2_matrix_row, std::unordered_map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh) {
     // Some assumptions:
     // 1. facets_to_remove and facets_to_add are disjoint. This mean they do not share the same facet index.
     #ifdef _DEBUG
@@ -422,16 +422,17 @@ void Visualizer::renderIncremental(const std::vector<unsigned int> &facets_to_re
         unsigned int f_index = facet->getIndex();
         f_index_2_matrix_row[f_index] = static_cast<unsigned int>(matrix_triangles.size());
         matrix_triangles.push_back(Eigen::Vector3i(v_index_2_matrix_row[facet->getVertex(0)->index()],
-                                                   v_index_2_matrix_row[facet->getVertex(1)->index()], v_index_2_matrix_row[facet->getVertex(2)->index()]));
+                                                   v_index_2_matrix_row[facet->getVertex(1)->index()], 
+                                                   v_index_2_matrix_row[facet->getVertex(2)->index()]));
     }
  
     // Record the row shifts
-    std::map<unsigned int, unsigned int> row_shifts;
+    std::unordered_map<unsigned int, unsigned int> row_shifts;
     for (unsigned int row = 0; row < matrix_triangles.size(); ++row) {
         unsigned int shift = 0;
         // How many facets are removed before this row?
         for (unsigned int f_index : facets_to_remove) {
-            if (f_index_2_matrix_row[f_index] < row) {
+            if (f_index_2_matrix_row.find(f_index) != f_index_2_matrix_row.end() && f_index_2_matrix_row[f_index] < row) {
                 shift++;
             }
         }
@@ -446,7 +447,7 @@ void Visualizer::renderIncremental(const std::vector<unsigned int> &facets_to_re
         // Check if this row should be kept
         bool keep_row = true;
         for (unsigned int f_index : facets_to_remove) {
-            if (f_index_2_matrix_row[f_index] == row) {
+            if (f_index_2_matrix_row.find(f_index) != f_index_2_matrix_row.end() && f_index_2_matrix_row[f_index] == row) {
                 keep_row = false;
                 break;
             }
@@ -457,7 +458,7 @@ void Visualizer::renderIncremental(const std::vector<unsigned int> &facets_to_re
         }
     }
 
-    matrix_triangles = new_matrix;
+    O3d_mesh->triangles_ = new_matrix;
 
     // Update facet_index_2_matrix_row map
     for (auto it = f_index_2_matrix_row.begin(); it != f_index_2_matrix_row.end();) {

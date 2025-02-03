@@ -818,6 +818,10 @@ void Mesher::addFacet(Facet *f)
     BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
     f->setBallCenterPtr(ball_center);
 
+
+    f->setIndex(m_facet_idx);
+    m_facet_idx++;
+
     new_facet_added = true;
     m_batch_facets_added.push_back(f);
 }
@@ -1215,7 +1219,6 @@ void Mesher::resetBoundaryEdges()
 void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 {
     // Asumming radius is already set.
-
     this->clearBatchFacets();
 
     // Expand the octree
@@ -1616,9 +1619,7 @@ void Mesher::mesh_integrityCheck()
 void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx);
-    m_facet_idx++;
-
+    Facet *facet = new Facet(v1, v2, v3, center);
     addFacet(facet); 
 
     if (m_slow_visualization)
@@ -1635,9 +1636,7 @@ void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &
 void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
-    Facet *facet = new Facet(edge, vertex, center, m_facet_idx);
-    m_facet_idx++;
-
+    Facet *facet = new Facet(edge, vertex, center);
     addFacet(facet);
 
     if (m_slow_visualization)
@@ -1701,19 +1700,7 @@ void Mesher::checkOctreeIntegrity()
 }
 
 
-void Mesher::mutal_exclusion_add_remove_facets()
-{
-    auto it = m_batch_facets_added.begin();
-    while (it != m_batch_facets_added.end()) {
-        if (std::find(m_batch_facets_removed.begin(), 
-                      m_batch_facets_removed.end(), 
-                      (*it)->getIndex()) != m_batch_facets_removed.end()) {
-            it = m_batch_facets_added.erase(it);
-        } else {
-            ++it;
-        }
-    }
-}
+
 
 void Mesher::clearBatchFacets()
 {

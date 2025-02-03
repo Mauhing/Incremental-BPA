@@ -54,7 +54,7 @@ public: // constructor+destructor
      * @param ball_center center of the empty interior
      * ball incident to the three vertices
      */
-    Facet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &ball_center, unsigned int index);
+    Facet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &ball_center);
 
     /** @brief constructor from an edge and a vertex
      * prerequisite edge has at most one adjacent facet
@@ -70,7 +70,7 @@ public: // constructor+destructor
      * @param ball_center center of the empty interior ball
      * incident to the three vertices
      */
-    Facet(Edge *edge, Vertex *vertex, const Point &ball_center, unsigned int index);
+    Facet(Edge *edge, Vertex *vertex, const Point &ball_center);
 
     /** @brief destructor*/
     ~Facet();
@@ -109,6 +109,8 @@ public: // accessors + modifiers
      * @return vertex
      */
     Vertex *getVertex(unsigned int index);
+
+    void setIndex(unsigned int index);
 
 private:
     static std::set<Edge *> sb_recordedNewBoundaryEdges;

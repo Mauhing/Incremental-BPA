@@ -32,7 +32,7 @@ namespace Visualizer
 
     bool integrityCheck(const std::shared_ptr<open3d::geometry::TriangleMesh> &mesh, std::shared_ptr<open3d::geometry::LineSet> &debug_line);
 
-    void renderIncremental(const std::vector<unsigned int> &facets_to_remove, const std::vector<Facet*> &facets_to_add, std::map<unsigned int, unsigned int> &f_index_2_matrix_row, std::map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
+    void renderIncremental(const std::vector<unsigned int> &facets_to_remove, const std::vector<Facet*> &facets_to_add, std::unordered_map<unsigned int, unsigned int> &f_index_2_matrix_row, std::unordered_map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
 }
 
 #endif // VISUALIZER_H

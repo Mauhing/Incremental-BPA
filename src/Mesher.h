@@ -428,7 +428,6 @@ private: // auxilliary methods for performing the triangulation
 private: //For incremental rendering
     std::vector<unsigned int> m_batch_facets_removed;
     std::vector<Facet*> m_batch_facets_added;
-    void mutal_exclusion_add_remove_facets();
     void clearBatchFacets();
     
 public:
