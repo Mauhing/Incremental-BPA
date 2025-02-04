@@ -154,6 +154,9 @@ int main(int argc, char **argv)
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
     // enter looping phase
+    // time it
+    time_t start_batch, end_batch;
+    std::time(&start_batch);
     size_t max_batch_index  = batch_data.size();
     for (size_t batch_index = 0; batch_index < max_batch_index; batch_index++)
     {
@@ -207,6 +210,12 @@ int main(int argc, char **argv)
         }
 #endif
     }
+
+    std::time(&end_batch);
+    double seconds_batch = std::difftime(end_batch, start_batch);
+    int minutes_batch = static_cast<int>(seconds_batch) / 60;
+    seconds_batch = std::fmod(seconds_batch, 60.0);
+    std::cout << "Time taken: " << minutes_batch << " minutes " << seconds_batch << " seconds" << std::endl;
 
     // wait for terminal input
     //std::cout << "Press Enter to exit..." << std::endl;

@@ -425,9 +425,15 @@ private: // auxilliary methods for performing the triangulation
      */
     void changeRadius(double radius);
 
-private:
-    std::unordered_map<unsigned int, Vertex *> m_vertex_map;
-    std::unordered_map<unsigned int, Facet *> m_facet_map;
+private: // For incremental rendering
+    std::unordered_set<unsigned int> m_batch_facets_removed;
+    std::unordered_set<Facet *> m_batch_facets_added;
+
+public: // For incremental rendering
+    const std::unordered_set<unsigned int> &getBatchFacetsRemoved() const;
+    const std::unordered_set<Facet *> &getBatchFacetsAdded() const;
+    void clearBatchFacets();
+    void removeFromAddBatchFacet(Facet* facet);
 
 public:
     template <typename SetType>
@@ -564,11 +570,8 @@ public: // Sanity check
 
     void checkOctreeIntegrity();
 
-    
-
 #endif
-public:
-    void manual_destructor();
+
 };
 
 #endif

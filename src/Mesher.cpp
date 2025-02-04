@@ -819,6 +819,7 @@ void Mesher::addFacet(Facet *f)
     f->setBallCenterPtr(ball_center);
 
     new_facet_added = true;
+    m_batch_facets_added.insert(f);
 }
 
 
@@ -833,7 +834,6 @@ void Mesher::addVertex(Vertex *v)
     else if (v->index() == 0)
     {
         v->setIndex(m_vertice_idx);
-        m_vertex_map[m_vertice_idx] = v;
         m_vertices.push_back(v);
         m_vertice_idx++;
     }
@@ -1000,6 +1000,10 @@ void Mesher::removeFacet(Facet *facet)
 
     m_facets.remove(facet);
     m_fresh_facets.erase(facet);
+
+    m_batch_facets_removed.insert(facet->getIndex());
+    m_batch_facets_added.erase(facet);
+
     delete facet;
 }
 
@@ -1216,6 +1220,7 @@ void Mesher::resetBoundaryEdges()
 void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 {
     // Asumming radius is already set.
+    clearBatchFacets();
 
     // Expand the octree
     std::cout << "Expanding octree" << std::endl;
@@ -1616,7 +1621,6 @@ void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
     Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx);
-    m_facet_map[m_facet_idx] = facet;
     m_facet_idx++;
 
     addFacet(facet); 
@@ -1636,7 +1640,6 @@ void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
     std::lock_guard<std::mutex> lock(*visualization_mutex);
     Facet *facet = new Facet(edge, vertex, center, m_facet_idx);
-    m_facet_map[m_facet_idx] = facet;
     m_facet_idx++;
 
     addFacet(facet);
@@ -1701,3 +1704,23 @@ void Mesher::checkOctreeIntegrity()
     m_octree_ball_centers->integrityCheck();
 }
 
+void Mesher::clearBatchFacets()
+{
+    m_batch_facets_removed.clear();
+    m_batch_facets_added.clear();
+}
+
+void Mesher::removeFromAddBatchFacet(Facet* facet)
+{
+    m_batch_facets_added.erase(facet);
+}
+
+const std::unordered_set<Facet *> &Mesher::getBatchFacetsAdded() const
+{
+    return m_batch_facets_added;
+}
+
+const std::unordered_set<unsigned int> &Mesher::getBatchFacetsRemoved() const
+{
+    return m_batch_facets_removed;
+}
