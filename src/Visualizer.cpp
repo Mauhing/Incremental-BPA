@@ -72,8 +72,6 @@ void Visualizer::visualizationThread(
     visualizer.AddGeometry(coordinate_axes);
     
     // Visualization loop
-    std::unordered_map<unsigned int, unsigned int> f_index_2_matrix_row;
-    std::unordered_map<unsigned int, unsigned int> v_index_2_matrix_row;
     while (!should_exit)
     {
         if (!visualizer.PollEvents())
@@ -88,35 +86,33 @@ void Visualizer::visualizationThread(
             if (lock.try_lock())
             { // Only proceed if we got the lock
                 // if (mesher.hasNewFacet())
-                // Shader
-                //o3d_mesh->ComputeVertexNormals();
-                //o3d_mesh->ComputeTriangleNormals(); 
-
-                if (task_in_progress) {
-                    //renderMainMesh(mesher.getFacets(), o3d_mesh);
-                    renderReceivedVertices(received_vertices, debug_point);
-                    renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
-
-                    std::vector<unsigned int> facets_to_remove = mesher.getBatchFacetsRemoved();
-                    std::vector<Facet*> facets_to_add = mesher.getBatchFacetsAdded();
-
-                    renderIncremental(facets_to_remove, facets_to_add, f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
+                if (true)
+                {
 
                     // Shader
                     //o3d_mesh->ComputeVertexNormals();
                     //o3d_mesh->ComputeTriangleNormals(); 
 
+                    if (task_in_progress) {
+                        renderMainMesh(mesher.getFacets(), o3d_mesh);
+                        renderReceivedVertices(received_vertices, debug_point);
+                        renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
-                    task_in_progress = false;
-                    mesher.clearNewFacetFlag();
-                    cv_debug_visualization.notify_one();
-                    std::cout << "\033[34mNotify the main thread\033[0m" << std::endl;
+                        // Shader
+                        //o3d_mesh->ComputeVertexNormals();
+                        //o3d_mesh->ComputeTriangleNormals(); 
 
-                    visualizer.UpdateGeometry(o3d_mesh);
-                    visualizer.UpdateGeometry(debug_edge);
-                    visualizer.UpdateGeometry(debug_point);
+
+                        task_in_progress = false;
+                        cv_debug_visualization.notify_one(); 
+                    }
+                        visualizer.UpdateGeometry(o3d_mesh);
+                        visualizer.UpdateGeometry(debug_edge);
+                        visualizer.UpdateGeometry(debug_point);
+                        mesher.clearNewFacetFlag();
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 }
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
         }
 
@@ -387,86 +383,4 @@ bool Visualizer::integrityCheck(const std::shared_ptr<open3d::geometry::Triangle
         return true;
     }
 
-}
-
-void Visualizer::renderIncremental(const std::vector<unsigned int> &facets_to_remove, const std::vector<Facet*> &facets_to_add, std::unordered_map<unsigned int, unsigned int> &f_index_2_matrix_row, std::unordered_map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh) {
-    // Some assumptions:
-    // 1. facets_to_remove and facets_to_add are disjoint. This mean they do not share the same facet index.
-    #ifdef _DEBUG
-    for (unsigned int f_index : facets_to_remove) {
-        for (Facet* facet_add : facets_to_add) {
-            if (f_index == facet_add->getIndex()) {
-                std::cout << "Facets to remove and add has same index" << std::endl;
-                throw std::runtime_error("Facets to remove and add has same index");
-            }
-        }
-    }
-    #endif
-
-    // Add facets
-    std::vector<Eigen::Vector3i> &matrix_triangles = O3d_mesh->triangles_;
-    std::vector<Eigen::Vector3d> &matrix_vertices = O3d_mesh->vertices_;
-
-    for (auto facet : facets_to_add) {
-        // First register the point in matrix_v
-        for (int i = 0; i < 3; i++) {
-            Vertex *v = facet->getVertex(i);
-            unsigned int v_index = v->index();
-            if (v_index_2_matrix_row.find(v_index) == v_index_2_matrix_row.end()) {
-                v_index_2_matrix_row[v_index] = static_cast<unsigned int>(matrix_vertices.size());
-                matrix_vertices.push_back(Eigen::Vector3d(v->x(), v->y(), v->z()));
-            }
-        }
-
-        // Then register the triangle in matrix_t
-        unsigned int f_index = facet->getIndex();
-        f_index_2_matrix_row[f_index] = static_cast<unsigned int>(matrix_triangles.size());
-        matrix_triangles.push_back(Eigen::Vector3i(v_index_2_matrix_row[facet->getVertex(0)->index()],
-                                                   v_index_2_matrix_row[facet->getVertex(1)->index()], 
-                                                   v_index_2_matrix_row[facet->getVertex(2)->index()]));
-    }
- 
-    // Record the row shifts
-    std::unordered_map<unsigned int, unsigned int> row_shifts;
-    for (unsigned int row = 0; row < matrix_triangles.size(); ++row) {
-        unsigned int shift = 0;
-        // How many facets are removed before this row?
-        for (unsigned int f_index : facets_to_remove) {
-            if (f_index_2_matrix_row.find(f_index) != f_index_2_matrix_row.end() && f_index_2_matrix_row[f_index] < row) {
-                shift++;
-            }
-        }
-        row_shifts[row] = shift;
-    }
-
-    // Create new matrix with removed rows
-    std::vector<Eigen::Vector3i> new_matrix;
-    new_matrix.reserve(matrix_triangles.size() - facets_to_remove.size());
-    
-    for (size_t row = 0; row < matrix_triangles.size(); ++row) {
-        // Check if this row should be kept
-        bool keep_row = true;
-        for (unsigned int f_index : facets_to_remove) {
-            if (f_index_2_matrix_row.find(f_index) != f_index_2_matrix_row.end() && f_index_2_matrix_row[f_index] == row) {
-                keep_row = false;
-                break;
-            }
-        }
-        
-        if (keep_row) {
-            new_matrix.push_back(matrix_triangles[row]);
-        }
-    }
-
-    O3d_mesh->triangles_ = new_matrix;
-
-    // Update facet_index_2_matrix_row map
-    for (auto it = f_index_2_matrix_row.begin(); it != f_index_2_matrix_row.end();) {
-        if (std::find(facets_to_remove.begin(), facets_to_remove.end(), it->first) != facets_to_remove.end()) {
-            it = f_index_2_matrix_row.erase(it);
-        } else {
-            it->second -= row_shifts[it->second];
-            ++it;
-        }
-    }
 }

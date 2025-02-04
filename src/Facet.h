@@ -41,7 +41,7 @@ private:
     BallCenter *m_ball_center_ptr; // Pointer to the ball center. We should remove m_ball_center and only use m_ball_center_ptr later in the code.
 
     /** @brief unique index for this facet */
-    unsigned int m_index;
+    size_t m_index;
 
 public: // constructor+destructor
     /** @brief constructor*/
@@ -54,7 +54,7 @@ public: // constructor+destructor
      * @param ball_center center of the empty interior
      * ball incident to the three vertices
      */
-    Facet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &ball_center);
+    Facet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &ball_center, unsigned int index);
 
     /** @brief constructor from an edge and a vertex
      * prerequisite edge has at most one adjacent facet
@@ -70,7 +70,7 @@ public: // constructor+destructor
      * @param ball_center center of the empty interior ball
      * incident to the three vertices
      */
-    Facet(Edge *edge, Vertex *vertex, const Point &ball_center);
+    Facet(Edge *edge, Vertex *vertex, const Point &ball_center, unsigned int index);
 
     /** @brief destructor*/
     ~Facet();
@@ -110,8 +110,6 @@ public: // accessors + modifiers
      */
     Vertex *getVertex(unsigned int index);
 
-    void setIndex(unsigned int index);
-
 private:
     static std::set<Edge *> sb_recordedNewBoundaryEdges;
 
@@ -127,8 +125,6 @@ public:
     int getVertexIndex(const Vertex *v) const;
 
     bool isRightOrientation() const;
-
-    unsigned int getIndex() const;
 
 };
 

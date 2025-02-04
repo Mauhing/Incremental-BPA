@@ -98,6 +98,8 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Octree creation
+    time_t start, end;
+    std::time(&start);
 
     Point origin;
     double size;
@@ -150,9 +152,6 @@ int main(int argc, char **argv)
                            std::ref(task_in_progress));
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
-
-    time_t start, end;
-    std::time(&start);
 
     // enter looping phase
     size_t max_batch_index  = batch_data.size();
@@ -208,12 +207,6 @@ int main(int argc, char **argv)
         }
 #endif
     }
-
-    std::time(&end);
-    double seconds = std::difftime(end, start);
-    int minutes = static_cast<int>(seconds) / 60;
-    seconds = std::fmod(seconds, 60.0);
-    std::cout << "Time taken: " << minutes << " minutes " << seconds << " seconds" << std::endl;
 
     // wait for terminal input
     //std::cout << "Press Enter to exit..." << std::endl;
