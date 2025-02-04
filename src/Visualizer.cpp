@@ -83,51 +83,34 @@ void Visualizer::visualizationThread(
             break;
         }
 
-        // Wait for new facet with timeout
-        {
-            std::unique_lock<std::mutex> lock(o3d_mesh_mutex, std::defer_lock);
-            if (lock.try_lock())
-            { // Only proceed if we got the lock
-                // if (mesher.hasNewFacet())
-                if (true)
-                {
 
-                    // Shader
-                    //o3d_mesh->ComputeVertexNormals();
-                    //o3d_mesh->ComputeTriangleNormals(); 
-
-                    if (task_in_progress) {
-                        renderMainMesh(mesher.getFacets(), o3d_mesh);
-                        renderReceivedVertices(received_vertices, debug_point);
-                        renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
-
-                        // Shader
-                        //o3d_mesh->ComputeVertexNormals();
-                        //o3d_mesh->ComputeTriangleNormals(); 
-
-                        //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
+        if (task_in_progress) {
+            renderMainMesh(mesher.getFacets(), o3d_mesh);
+            renderReceivedVertices(received_vertices, debug_point);
+            renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
 
 
-                        task_in_progress = false;
-                        need_2_update = true;
-                        cv_debug_visualization.notify_one(); 
-                    }
+            //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                }
-            }
+            task_in_progress = false;
+            need_2_update = true;
+            cv_debug_visualization.notify_one(); 
         }
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         if (need_2_update) {
+            //Shader
+            o3d_mesh->ComputeVertexNormals();
+            o3d_mesh->ComputeTriangleNormals(); 
+
             visualizer.UpdateGeometry(o3d_mesh);
             visualizer.UpdateGeometry(debug_edge);
             visualizer.UpdateGeometry(debug_point);
-            mesher.clearNewFacetFlag();
             need_2_update = false;
         }
         visualizer.UpdateRender();
     }
-
     visualizer.DestroyVisualizerWindow();
 }
 
