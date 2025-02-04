@@ -389,9 +389,6 @@ private: // auxilliary methods for performing the triangulation
     bool computeBallCenter(const Vertex &v1, const Vertex &v2,
                            const Vertex &v3, Point &center) const;
 
-    bool computeBallCenterUsingOrderOfVertices(const Vertex &v1, const Vertex &v2,
-                                               const Vertex &v3, Point &center) const;
-
     /** @brief  compute a normal direction coherent with the
      * three points normals
      * @param v1 first triangle vertex

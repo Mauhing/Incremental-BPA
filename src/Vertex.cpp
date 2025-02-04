@@ -236,10 +236,10 @@ ostream &operator<<(ostream &out, const Vertex &v)
 }
 
 //"this" is the source and test is the target
-Vertex *Vertex::findBorder(Vertex *test)
+Vertex *Vertex::findBorder(Vertex *target)
 {
-    Edge *e0 = getLinkingEdge(test);
-    Facet *facet = e0->getFacet1();
+    Edge *e0 = getLinkingEdge(target);
+    Facet *boundary_facet = e0->getFacet1();
 
     Edge_set::iterator ei = m_adjacentEdges.begin();
     Vertex *candidate = nullptr;
@@ -262,13 +262,13 @@ Vertex *Vertex::findBorder(Vertex *test)
             continue;
         }
 
-        if (facet->hasVertex(v))
+        if (boundary_facet->hasVertex(v))
         {
             ++ei;
             continue;
         }
 
-        Edge *e = v->getLinkingEdge(test);
+        Edge *e = v->getLinkingEdge(target);
         if (e == nullptr)
         {
             ++ei;
@@ -276,7 +276,7 @@ Vertex *Vertex::findBorder(Vertex *test)
         }
 
         // if((e->getType()!=0)||(e->getSource()!=test))
-        if ((e->getType() != Edge::BORDER) || (e->getSource() != test))
+        if ((e->getType() != Edge::BORDER) || (e->getSource() != target))
         {
             ++ei;
             continue;

@@ -32,9 +32,15 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center, unsig
     Edge *e0 = v0->getLinkingEdge(v1);
     if (e0 == nullptr)
     {
-        // It is the Facet class own the edge object.
         e0 = new Edge(v0, v1);
     }
+    #ifdef _DEBUG
+    else {
+        std::cerr << "Edge is not nullptr" << std::endl;
+        std::cerr << "This function is only meant for creating seed triangles" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif 
     e0->addAdjacentFacet(this);
 
     Edge *e1 = v1->getLinkingEdge(v2);
@@ -42,6 +48,13 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center, unsig
     {
         e1 = new Edge(v1, v2);
     }
+    #ifdef _DEBUG
+    else {
+        std::cerr << "Edge is not nullptr" << std::endl;
+        std::cerr << "This function is only meant for creating seed triangles" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif 
     e1->addAdjacentFacet(this);
 
     Edge *e2 = v2->getLinkingEdge(v0);
@@ -49,6 +62,13 @@ Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center, unsig
     {
         e2 = new Edge(v2, v0);
     }
+    #ifdef _DEBUG
+    else {
+        std::cerr << "Edge is not nullptr" << std::endl;
+        std::cerr << "This function is only meant for creating seed triangles" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif 
     e2->addAdjacentFacet(this);
 
     for (unsigned int i = 0; i < 3; i++)
@@ -101,10 +121,12 @@ Facet::Facet(Edge *edge, Vertex *vertex, const Point &ball_center, unsigned int 
         m_vertex[i]->updateType();
     }
 
+#ifdef _DEBUG
     if(!isRightOrientation()) {
         std::cerr << "Facet is not right oriented" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+#endif
 }
 
 Facet::~Facet()

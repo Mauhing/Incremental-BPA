@@ -379,56 +379,6 @@ bool Mesher::checkEmptyBallConfiguration(Vertex *v1, Vertex *v2, Vertex *v3,
     return true;
 }
 
-bool Mesher::computeBallCenterUsingOrderOfVertices(const Vertex &v1, const Vertex &v2,
-                                                   const Vertex &v3, Point &center) const
-{
-    // compute the circumcenter barycentric coordinates
-    double c = dist2(v2, v1);
-    double b = dist2(v1, v3);
-    double a = dist2(v3, v2);
-    double alpha = a * (b + c - a);
-    double beta = b * (a + c - b);
-    double gamma = c * (a + b - c);
-    double temp = alpha + beta + gamma;
-
-    if (temp < 1e-30) // aligned case
-        return false;
-
-    alpha = alpha / temp;
-    beta = beta / temp;
-    gamma = gamma / temp;
-
-    // computing the triangle circumcircle center
-    double x = alpha * v1.x() + beta * v2.x() + gamma * v3.x();
-    double y = alpha * v1.y() + beta * v2.y() + gamma * v3.y();
-    double z = alpha * v1.z() + beta * v2.z() + gamma * v3.z();
-
-    // computing the radius of the circumcircle
-    double sq_circumradius = a * b * c;
-
-    a = sqrt(a);
-    b = sqrt(b);
-    c = sqrt(c);
-
-    sq_circumradius = sq_circumradius /
-                      ((a + b + c) * (b + c - a) * (c + a - b) * (a + b - c));
-
-    // compute the ortogonal distance from the hypothetic center to the triangle
-    double height = m_sq_ball_radius - sq_circumradius;
-
-    // compute the normal of the three points
-    double nx, ny, nz = 0;
-
-    if (height >= 0.0)
-    {
-        computeNormal(v1, v2, v3, nx, ny, nz);
-        height = sqrt(height);
-        center = Point(x + height * nx, y + height * ny, z + height * nz);
-        return true;
-    }
-    return false;
-}
-
 bool Mesher::computeBallCenter(const Vertex &v1, const Vertex &v2,
                                const Vertex &v3, Point &center) const
 {
@@ -484,7 +434,11 @@ bool Mesher::computeBallCenter(const Vertex &v1, const Vertex &v2,
         center = Point(x + height * nx, y + height * ny, z + height * nz);
         return true;
     }
-    return false;
+    else
+    {
+        std::cout << "Height is negative" << std::endl;
+        return false;
+    }
 }
 
 // This function still use the normal of the input vertices.
@@ -894,11 +848,11 @@ void Mesher::fillHoles()
         }
 
         // computer ball center using order of vertices
+        // Beware that the fill hole does not use the normal vector of the vertices.
         Point center;
-        computeBallCenterUsingOrderOfVertices(*tgt, *src, *v, center);
-        // The new facet should be from target to source to mimic the half-edge data structure.
+        computeBallCenter(*tgt, *src, *v, center);
 
-        this->createAndAddFacet(tgt, src, v, center);
+        this->createAndAddFacet(*ei, v, center);
 
         ei = m_border_edges.erase(ei);
     }
@@ -1262,7 +1216,8 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     this->reconstruct();
 
     // Fill holes
-    // this->fillHoles();
+    std::cout << "Filling holes" << std::endl;
+    this->fillHoles();
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
 
