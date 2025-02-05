@@ -216,10 +216,13 @@ void TOctree<T>::checkSizeAndexpand(const T &pt)
         unsigned int x_insert_index = (x_in_box == PointRespectToBox::LEFT) ? 1 : 0;
         unsigned int y_insert_index = (y_in_box == PointRespectToBox::LEFT) ? 1 : 0;
         unsigned int z_insert_index = (z_in_box == PointRespectToBox::LEFT) ? 1 : 0;
+
+#ifdef _DEBUG
         std::cout << "\033[35mExpanding octree\033[0m" << std::endl;
         std::cout << "\033[35mType: " << (std::is_same<T, Vertex>::value ? "Vertex" : 
                                  std::is_same<T, BallCenter>::value ? "BallCenter" : 
                                  "Unknown") << "\033[0m" << std::endl;
+#endif
         // At this stage, n_max will be minimum 1.
         // this for loop can not be parallelized
         for (unsigned int i = 0; i < n_max; ++i)
@@ -421,7 +424,9 @@ void TOctree<T>::debugPrintStats()
     std::cout << "Size of a leaf node: " << current->getSize() << std::endl;
     std::cout << "Depth of a leaf node: " << current->getDepth() << std::endl;
 }
+#endif
 
+#ifdef _DEBUG
 template <class T>
 template <typename U>
 TOctree<U> TOctree<T>::debugCopySkeleton() const

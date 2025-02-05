@@ -127,7 +127,7 @@ bool Edge::removeAdjacentFacet(Facet *facet)
         m_facet1 = m_facet2;
         m_facet2 = nullptr;
         if (m_facet1 != nullptr) {
-            alignWithFacet1();
+            aligningWithFacet1();
         }
         setType(EdgeType::FRONT);
         return true;
@@ -235,23 +235,6 @@ Facet *Edge::anotherFacet(const Facet *f) const
     return nullptr;
 }
 
-#ifdef _DEBUG
-unsigned int Edge::debugGetNumAdjacentFacets() const
-{
-    if (m_facet1 == nullptr && m_facet2 == nullptr)
-        return 0;
-    if (m_facet1 != nullptr && m_facet2 == nullptr)
-        return 1;
-    if (m_facet1 != nullptr && m_facet2 != nullptr)
-        return 2;
-#ifdef _DEBUG
-    std::cerr << "m_facet2 is not nullptr and m_facet1 is nullptr" << std::endl;
-    std::cerr << "This is violating the function assumption" << std::endl;
-    std::exit(EXIT_FAILURE);
-#endif
-}
-#endif
-
 void Edge::flipOrientation()
 {
     Vertex *temp = m_src;
@@ -259,7 +242,7 @@ void Edge::flipOrientation()
     m_tgt = temp;
 }
 
-bool Edge::alignWithFacet1()
+bool Edge::aligningWithFacet1()
 {
     Facet *facet = m_facet1;
     

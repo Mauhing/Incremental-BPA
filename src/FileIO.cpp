@@ -35,7 +35,6 @@ FileIO::~FileIO()
 
 std::string FileIO::baseOutputFilename;
 
-#ifdef _DEBUG
 bool FileIO::debugSavePoints(const char *filename, OctreeVertices &octree)
 {
     ofstream out;
@@ -52,7 +51,6 @@ bool FileIO::debugSavePoints(const char *filename, OctreeVertices &octree)
 
     return true;
 }
-#endif
 
 bool FileIO::debugSavePLY(const char *output_filename, Mesher &mesher)
 {
@@ -383,7 +381,6 @@ std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
     return input_vertices;
 }
 
-#ifdef _DEBUG
 bool FileIO::debugSaveLineset(const char *output_filename, const Edge_star_list &border_edges)
 {
     std::string filename = baseOutputFilename + output_filename;
@@ -407,7 +404,6 @@ bool FileIO::debugSaveLineset(const char *output_filename, const Edge_star_list 
     out.close(); // close the file
     return true;
 }
-#endif
 
 bool FileIO::debugSaveBallCenters(const char *output_filename, const Point_UnOrdSet &ball_centers, const double &radius)
 {

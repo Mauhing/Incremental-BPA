@@ -379,13 +379,12 @@ bool Visualizer::integrityCheck(const std::shared_ptr<open3d::geometry::Triangle
 
 void Visualizer::renderIncremental(const std::unordered_set<unsigned int> &facets_to_remove, const std::unordered_set<Facet*> &facets_to_add, std::unordered_map<unsigned int, unsigned int> &f_index_2_matrix_row, std::unordered_map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh) {
     // Some assumptions:
-    // 1. facets_to_remove and facets_to_add are disjoint. This mean they do not share the same facet index.
     #ifdef _DEBUG
     for (unsigned int f_index : facets_to_remove) {
         for (Facet* facet_add : facets_to_add) {
             if (f_index == facet_add->getIndex()) {
-                std::cout << "Facets to remove and add has same index" << std::endl;
-                throw std::runtime_error("Facets to remove and add has same index");
+                std::cerr << "Facets to remove and add has same index" << std::endl;
+                std::exit(EXIT_FAILURE);
             }
         }
     }

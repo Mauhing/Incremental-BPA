@@ -185,10 +185,6 @@ public:
     template <typename U>
     TOctree<U> debugCopySkeleton() const;
 
-    /**
-     * @brief print the mean number of points per non
-     * empty cell at each level
-     */
     void debugPrintStats();
 #endif
 

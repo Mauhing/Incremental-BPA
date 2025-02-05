@@ -144,12 +144,7 @@ public: // accessors+modifiers
 
   void flipOrientation();
 
-  bool alignWithFacet1();
-
-#ifdef _DEBUG
-public: // use for debug
-  unsigned int debugGetNumAdjacentFacets() const;
-#endif
+  bool aligningWithFacet1();
 };
 
 #endif

@@ -479,7 +479,6 @@ public: // Detect and remove Disk-Fan singular Fan
 
 private: // Check non-manifold vertices
 
-
     Facet_UnOrdSet m_fresh_facets;
 
     void addFreshFacet(Facet *facet)
@@ -536,16 +535,12 @@ public:
         return m_border_edges;
     }
 
+// Debugging methods
 #ifdef _DEBUG
-public: // Sanity check
-    void debugCheckOrientation() const;
-
+public:
     void mesh_integrityCheck();
-
     void checkDegenerateTriangle(Facet* facet) const;
-
     void checkFacetsOrientation() const;  
-
     void checkOctreeIntegrity();
 
 #endif

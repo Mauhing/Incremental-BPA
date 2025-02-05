@@ -77,7 +77,6 @@ private:
 public:
     static void setBaseOutputFilename(const std::string &filename);
 
-#ifdef _DEBUG
 public: // debug
     /** @brief save triangulation
      * @param filename name of the file to save to
@@ -93,7 +92,6 @@ public: // debug
     static bool debugSaveBallCenters(const char *filename, const Point_UnOrdSet &ball_centers, const double &radius);
 
     static bool debugSavePoints(const char *filename, const Point_UnOrdSet &vertices_inside_balls);
-#endif
 };
 
 #endif

@@ -583,7 +583,7 @@ void Mesher::expandTriangulation()
         }
 #endif
 
-        bool isFlipped = edge->alignWithFacet1();
+        bool isFlipped = edge->aligningWithFacet1();
         if (isFlipped)
         {
             std::cout << "Flipped orientation of edge to align with facet 1" << std::endl;
@@ -960,10 +960,9 @@ void Mesher::removeFacet(Facet *facet)
 template <typename SetType>
 void Mesher::removeFacets(SetType &facets)
 {
-    #ifdef _DEBUG
+    // Perform compile time check
     static_assert(std::is_same_v<typename SetType::value_type, Facet*>,
                      "SetType must contain Facet pointers");
-    #endif
 
     for (auto facet : facets)
     {
@@ -1015,25 +1014,6 @@ bool sameOrientation(int i, Facet *query_facet)
         std::exit(EXIT_FAILURE);
 
         return false;
-    }
-}
-
-void Mesher::debugCheckOrientation() const
-{
-    for (auto facet : m_facets)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            if (sameOrientation(i, facet))
-            {
-                continue;
-            }
-            else
-            {
-                std::cerr << "Error: The orientation of the facet is incorrect." << std::endl;
-                std::exit(EXIT_FAILURE);
-            }
-        }
     }
 }
 
@@ -1157,13 +1137,6 @@ void Mesher::resetBoundaryEdges()
         m_edge_front.push_back(e);
     }
     m_border_edges.clear();
-
-#ifdef _DEBUG
-    if (m_edge_front.size() == 0)
-    {
-        std::cerr << "\033[1;31mWarning: No front edges found after further reconstruction. This is ok if this is the first batch.\033[0m" << std::endl;
-    }
-#endif
 }
 
 void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
@@ -1367,7 +1340,6 @@ bool Mesher::removeDiskFanSingular()
         }
     }
 
-    #ifdef _DEBUG
     // check any facet to be removed that will deplicate.
     std::set<Facet *> facets_to_be_removed;
     for (VertexDiskFanInfo &vertex_disk_fan_info : disk_fan_vertices)
@@ -1376,17 +1348,11 @@ bool Mesher::removeDiskFanSingular()
         {
             for (Facet *facet : fan_facets)
             {
-                #ifdef _DEBUG
-                //if (facets_to_be_removed.find(facet) != facets_to_be_removed.end()) {
-                //    std::cerr << "\033[1;31mError: Facet already marked for removal\033[0m" << std::endl;
-                //    std::exit(EXIT_FAILURE);
-                //}
-                #endif
+
                 facets_to_be_removed.insert(facet);
             }
         }
     }
-    #endif
 
     for (Facet *facet : facets_to_be_removed)
     {                        
@@ -1479,6 +1445,28 @@ void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
     addFacet(facet);
 }
 
+void Mesher::clearBatchFacets()
+{
+    m_batch_facets_removed.clear();
+    m_batch_facets_added.clear();
+}
+
+void Mesher::removeFromAddBatchFacet(Facet* facet)
+{
+    m_batch_facets_added.erase(facet);
+}
+
+const std::unordered_set<Facet *> &Mesher::getBatchFacetsAdded() const
+{
+    return m_batch_facets_added;
+}
+
+const std::unordered_set<unsigned int> &Mesher::getBatchFacetsRemoved() const
+{
+    return m_batch_facets_removed;
+}
+
+#ifdef _DEBUG
 void Mesher::checkDegenerateTriangle(Facet* facet) const
 {
         const Vertex *v1 = facet->getVertex(0);
@@ -1506,7 +1494,9 @@ void Mesher::checkDegenerateTriangle(Facet* facet) const
     }
 
 }
+#endif
 
+#ifdef _DEBUG
 void Mesher::checkFacetsOrientation() const
 {
     for (Facet* facet : m_facets)
@@ -1518,7 +1508,9 @@ void Mesher::checkFacetsOrientation() const
         }
     }
 }
+#endif
 
+#ifdef _DEBUG
 void Mesher::checkOctreeIntegrity()
 {
     std::cout << "Checking octree vertices integrity" << std::endl;
@@ -1527,24 +1519,4 @@ void Mesher::checkOctreeIntegrity()
     std::cout << "Checking octree ball centers integrity" << std::endl;
     m_octree_ball_centers->integrityCheck();
 }
-
-void Mesher::clearBatchFacets()
-{
-    m_batch_facets_removed.clear();
-    m_batch_facets_added.clear();
-}
-
-void Mesher::removeFromAddBatchFacet(Facet* facet)
-{
-    m_batch_facets_added.erase(facet);
-}
-
-const std::unordered_set<Facet *> &Mesher::getBatchFacetsAdded() const
-{
-    return m_batch_facets_added;
-}
-
-const std::unordered_set<unsigned int> &Mesher::getBatchFacetsRemoved() const
-{
-    return m_batch_facets_removed;
-}
+#endif
