@@ -469,23 +469,6 @@ private:
 public: // Boundaries computation
     bool removeFanFanSingular();
 
-private: // For Open3D rendering
-    bool m_slow_visualization;
-    std::mutex *visualization_mutex;
-    bool new_facet_added;
-
-public: // Open3D rendering
-    void setVisualizationSync(std::mutex *mutex)
-    {
-        visualization_mutex = mutex;
-    }
-
-    void clearNewFacetFlag() { new_facet_added = false; }
-    void setSlowVisualization(bool slow)
-    {
-        m_slow_visualization = slow;
-    }
-
 public: // Detect and remove Disk-Fan singular Fan
     bool removeDiskFanSingular();
 
@@ -556,8 +539,6 @@ public:
 #ifdef _DEBUG
 public: // Sanity check
     void debugCheckOrientation() const;
-
-    void mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const;
 
     void mesh_integrityCheck();
 

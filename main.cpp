@@ -74,7 +74,6 @@ int main(int argc, char **argv)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Read the input file
-    bool ok;
     std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
@@ -136,7 +135,6 @@ int main(int argc, char **argv)
 
     std::mutex o3d_mesh_mutex;
     std::atomic<bool> should_exit(false);
-    mesher.setVisualizationSync(&o3d_mesh_mutex);
 
     std::condition_variable cv_debug_visualization;
     bool task_in_progress(false);
@@ -183,15 +181,7 @@ int main(int argc, char **argv)
             }
         }
 
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // Set slow visualization flag when at batch 8
-        // if (batch_index == 8) {
-        //    mesher.setSlowVisualization(true);  // Add this method to Mesher
-        //} else {
-        //    mesher.setSlowVisualization(false);
-        //}
-        mesher.setSlowVisualization(false);
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
         mesher.batchReconstruct(vertices);
 

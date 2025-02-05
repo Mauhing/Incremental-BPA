@@ -45,8 +45,7 @@
 
 const double PI = 3.1415926535;
 
-Mesher::Mesher() : visualization_mutex(nullptr),
-                   new_facet_added(false)
+Mesher::Mesher()
 {
     m_octree_vertices = nullptr;
     m_iterator_vertices = nullptr;
@@ -59,8 +58,6 @@ Mesher::Mesher() : visualization_mutex(nullptr),
 
 Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator_vertices,
                OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator)
-    : visualization_mutex(nullptr),
-      new_facet_added(false)
 {
     m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
@@ -772,7 +769,6 @@ void Mesher::addFacet(Facet *f)
     BallCenter *ball_center = m_octree_ball_centers->checkSizeAndaddPoint(BallCenter(temp_ball_center, f));
     f->setBallCenterPtr(ball_center);
 
-    new_facet_added = true;
     m_batch_facets_added.insert(f);
 }
 
@@ -1123,7 +1119,6 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices)
 
     std::cout << "Removing collision facets (after computeCollisionFacets)" << std::endl;
     {
-        std::lock_guard<std::mutex> lock(*visualization_mutex);
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove the collision facets
         this->removeFacets(collision_facets); // This function is very wrong
@@ -1309,13 +1304,7 @@ bool Mesher::removeFanFanSingular()
                 singular_facets.insert(f);
             }
         }
-
-        // remove the singular facets
-        {
-            std::lock_guard<std::mutex> lock(*visualization_mutex);
-            this->removeFacets(singular_facets);
-
-        }
+        this->removeFacets(singular_facets);
     }
     return found_fan_fan_vertex;
 }
@@ -1399,110 +1388,14 @@ bool Mesher::removeDiskFanSingular()
     }
     #endif
 
-    {
-        std::lock_guard<std::mutex> lock(*visualization_mutex);
-        // Remove the redundant facets
-        for (Facet *facet : facets_to_be_removed)
-        {                        
-            std::cout << "Removing facet in DiskFan: " << facet->getVertex(0)->x() << " " << facet->getVertex(0)->y() << " " << facet->getVertex(0)->z() << std::endl;
-            //this->removeRedundantDiskFanFacet(facet);
-            this->removeFacet(facet);
- 
-        }
+    for (Facet *facet : facets_to_be_removed)
+    {                        
+        std::cout << "Removing facet in DiskFan: " << facet->getVertex(0)->x() << " " << facet->getVertex(0)->y() << " " << facet->getVertex(0)->z() << std::endl;
+        //this->removeRedundantDiskFanFacet(facet);
+        this->removeFacet(facet);
 
-}
-
+    }
     return found_disk_fan_vertex;
-}
-
-void Mesher::mesh_integrityCheck(std::vector<ColorVertex> &debug_vertices) const
-{
-    // make a share object of o3d_mesh
-    std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-
-    Visualizer::renderMainMesh(this->getFacets(), o3d_mesh);
-
-    // is it vertex manifold?
-    bool is_vertex_manifold = o3d_mesh->IsVertexManifold();
-    if (!is_vertex_manifold)
-    {
-        std::cout << "Mesh is not vertex manifold" << std::endl;
-        // Get all the non-manifold vertices
-        std::vector<int> non_manifold_vertices = o3d_mesh->GetNonManifoldVertices();
-
-        // Print number of non-manifold vertices
-        std::cout << "Number of non-manifold vertices: " << non_manifold_vertices.size() << std::endl;
-        for (size_t i = 0; i < non_manifold_vertices.size(); i++)
-        {
-            Eigen::Vector3d v = o3d_mesh->vertices_[non_manifold_vertices[i]];
-            
-            // the constructor is Vertex(double x, double y, double z, double nx, double ny, double nz)
-            //debug_vertices.push_back(ColorVertex(Vertex(v.x(), v.y(), v.z(), 0, 0, 0), Eigen::Vector3d(1.0, 0.0, 0.0)));
-            std::cout << "Non-manifold vertex " << i << ": " << v.x() << " " << v.y() << " " << v.z() << std::endl;
-        }
-         
-        std::exit(EXIT_FAILURE);
-    }
-
-    // check o3d_mesh properties
-    // is it edge manifold?
-    bool allow_boundary_edges = true;
-    bool is_edge_manifold = o3d_mesh->IsEdgeManifold(allow_boundary_edges);
-    if (!is_edge_manifold)
-    {
-        // get non-manifold edges
-        std::vector<Eigen::Vector2i> non_manifold_edges = o3d_mesh->GetNonManifoldEdges(allow_boundary_edges);
-        // print non-manifold edges
-        std::cout << "Non-manifold edges: " << non_manifold_edges.size() << std::endl;
-        // print top 10 non-manifold edges
-        for (size_t i = 0; i < non_manifold_edges.size(); i++)
-        {
-            std::cout << "Non-manifold edge " << i << ": " << non_manifold_edges[i][0] << " " << non_manifold_edges[i][1] << std::endl;
-        }
-        std::cerr << "Error: The mesh is not edge manifold" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    // is it orientable?
-    bool is_orientable = o3d_mesh->IsOrientable();
-    if (!is_orientable)
-    {
-        std::cerr << "Error: The mesh is not orientable" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    // Check if mesh has self-intersections
-    bool has_self_intersections = o3d_mesh->IsSelfIntersecting();
-    if (has_self_intersections) {
-        // Get self-intersecting triangles
-        std::vector<Eigen::Vector2i> intersecting_triangles = o3d_mesh->GetSelfIntersectingTriangles();
-        
-        // Print the intersecting triangle pairs
-        std::cout << "Self-intersecting triangle pairs:" << std::endl;
-        for (const auto& pair : intersecting_triangles) {
-            std::cout << "Triangle " << pair[0] << " intersects with triangle " << pair[1] << std::endl;
-            
-            // Print vertices of first triangle
-            std::cout << "  Triangle " << pair[0] << " vertices:" << std::endl;
-            for (int i = 0; i < 3; i++) {
-                int vertex_idx = o3d_mesh->triangles_[pair[0]][i];
-                Eigen::Vector3d vertex = o3d_mesh->vertices_[vertex_idx];
-                std::cout << "    v" << vertex_idx << ": (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")" << std::endl;
-            }
-
-            // Print vertices of second triangle  
-            std::cout << "  Triangle " << pair[1] << " vertices:" << std::endl;
-            for (int i = 0; i < 3; i++) {
-                int vertex_idx = o3d_mesh->triangles_[pair[1]][i];
-                Eigen::Vector3d vertex = o3d_mesh->vertices_[vertex_idx];
-                std::cout << "    v" << vertex_idx << ": (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")" << std::endl;
-            }
-            std::cout << std::endl;
-        }
-        std::cerr << "Error: The mesh has self-intersections" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-    return;
 }
 
 void Mesher::mesh_integrityCheck()
@@ -1574,40 +1467,16 @@ void Mesher::mesh_integrityCheck()
 
 void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
 {
-    std::lock_guard<std::mutex> lock(*visualization_mutex);
     Facet *facet = new Facet(v1, v2, v3, center, m_facet_idx);
     m_facet_idx++;
-
     addFacet(facet); 
-
-    if (m_slow_visualization)
-    {
-        // Release mutex before sleep to allow visualization updates
-        visualization_mutex->unlock();
-        // std::cout << "Press enter to continue" << std::endl;
-        // std::cin.get();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        visualization_mutex->lock();
-    }
 }
 
 void Mesher::createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center)
 {
-    std::lock_guard<std::mutex> lock(*visualization_mutex);
     Facet *facet = new Facet(edge, vertex, center, m_facet_idx);
     m_facet_idx++;
-
     addFacet(facet);
-
-    if (m_slow_visualization)
-    {
-        // Release mutex before sleep to allow visualization updates
-        visualization_mutex->unlock();
-        // std::cout << "Press enter to continue" << std::endl;
-        // std::cin.get();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        visualization_mutex->lock();
-    }
 }
 
 void Mesher::checkDegenerateTriangle(Facet* facet) const
