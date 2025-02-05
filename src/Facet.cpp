@@ -174,12 +174,15 @@ Vertex *Facet::nextVertex(const Vertex *v) const
     for (int i = 0; i < 3; i++)
     {
         if (m_vertex[i] == v)
+        {
             return m_vertex[(i + 1) % 3];
+        }
     }
 #ifdef _DEBUG
     std::cerr << "Vertex not found in facet" << std::endl;
     std::exit(EXIT_FAILURE);
 #endif
+    return nullptr;
 }
 
 Vertex *Facet::previousVertex(const Vertex *v) const
@@ -187,12 +190,15 @@ Vertex *Facet::previousVertex(const Vertex *v) const
     for (int i = 0; i < 3; i++)
     {
         if (m_vertex[i] == v)
+        {
             return m_vertex[(i + 2) % 3];
+        }
     }
 #ifdef _DEBUG
     std::cerr << "Vertex not found in facet" << std::endl;
     std::exit(EXIT_FAILURE);
 #endif
+    return nullptr;
 }
 
 int Facet::getVertexIndex(const Vertex *v) const

@@ -1364,6 +1364,7 @@ bool Mesher::removeDiskFanSingular()
     return found_disk_fan_vertex;
 }
 
+#ifdef _DEBUG
 void Mesher::mesh_integrityCheck()
 {
     // make a share object of o3d_mesh
@@ -1430,6 +1431,7 @@ void Mesher::mesh_integrityCheck()
 
     return;
 }
+#endif
 
 void Mesher::createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center)
 {

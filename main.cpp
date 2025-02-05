@@ -179,7 +179,9 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
+        #ifdef _DEBUG
         //mesher.mesh_integrityCheck();
+        #endif
         
         {
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
