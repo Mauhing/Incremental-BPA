@@ -97,8 +97,6 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Octree creation
-    time_t start, end;
-    std::time(&start);
 
     Point origin;
     double size;
@@ -208,25 +206,36 @@ int main(int argc, char **argv)
     should_exit = true;
     vis_thread.join();
 
+    #ifdef _DEBUG
     if (!FileIO::saveMeshDebug("_final.txt", mesher))
     {
         std::cerr << "Pb saving the mesh; exiting." << std::endl;
         return EXIT_FAILURE;
     }
     std::cout << "Mesh saved in" << "_final.txt" << std::endl;
+    #endif
 
     // Open3D save ply
+    // time it
+    time_t start_o3d, end_o3d;
+    std::time(&start_o3d);
     bool o3d_save_ply = true;
     if (o3d_save_ply)
     {
         std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
         Visualizer::renderMainMesh(mesher.getFacets(), o3d_mesh);
-        open3d::io::WriteTriangleMeshToPLY("new_final.ply", *o3d_mesh, false, false, false, false, false, true);
+        open3d::io::WriteTriangleMeshToPLY("Final_mesh.ply", *o3d_mesh, false, false, false, false, false, true);
         std::cout << "Mesh saved in" << "new_final.ply" << std::endl;
     }
     else
     {
         std::cout << "O3d ply file not saved" << std::endl;
     }
+    std::time(&end_o3d);
+    double seconds_o3d = std::difftime(end_o3d, start_o3d);
+    int minutes_o3d = static_cast<int>(seconds_o3d) / 60;
+    seconds_o3d = std::fmod(seconds_o3d, 60.0);
+    std::cout << "Time taken: " << minutes_o3d << " minutes " << seconds_o3d << " seconds" << std::endl;
+
     return EXIT_SUCCESS;
 }
