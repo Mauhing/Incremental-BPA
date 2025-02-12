@@ -42,6 +42,7 @@
 #include <memory>
 #include <algorithm>
 #include "Visualizer.h"
+#include "Region.h"
 
 const double PI = 3.1415926535;
 
@@ -1468,6 +1469,161 @@ const std::unordered_set<unsigned int> &Mesher::getBatchFacetsRemoved() const
     return m_batch_facets_removed;
 }
 
+static std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> extract_edge_connected_elements(const std::unordered_set<Edge*> &edges_ungrouped)
+{
+    // Future optimization:
+    // One should use the handness of the mesh since our mesh is always orientable. 
+    Edge* edge_start = *edges_ungrouped.begin();
+
+    std::unordered_set<Edge*> queue;
+    queue.insert(edge_start);
+
+    std::unordered_set<Edge*> edges_grouped;
+    std::unordered_set<Facet*> facets_grouped;
+    while (queue.size() > 0)
+    {
+        //pop the first edge
+        Edge* edge_current = *queue.begin();
+        queue.erase(edge_current);
+        edges_grouped.insert(edge_current);
+
+        //Facet 1
+        Facet* facet1 = edge_current->getFacet1();
+        #ifdef _DEBUG
+        if (facet1 == nullptr)
+        {
+            std::cerr << "Error: The facet1 is nullptr" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        #endif
+        facets_grouped.insert(facet1); 
+        std::set<Edge*> edges_facet1 = facet1->getEdges();
+        for (Edge* edge : edges_facet1)
+        {
+            if (edges_ungrouped.find(edge) != edges_ungrouped.end())
+            {
+                queue.insert(edge);
+            }
+        }
+
+        //Facet 2
+        Facet* facet2 = edge_current->getFacet2();
+        if (facet2 != nullptr)
+        {
+            facets_grouped.insert(facet2);
+            std::set<Edge*> edges_facet2 = facet2->getEdges();
+            for (Edge* edge : edges_facet2)
+            {
+                if (edges_ungrouped.find(edge) != edges_ungrouped.end())
+                {
+                    queue.insert(edge);
+                }
+            }
+        }
+    }
+    return std::make_pair(facets_grouped, edges_grouped);
+}
+
+static Region constructRegion(std::unordered_set<Edge*> &r_bEdges, std::unordered_set<Facet*> &r_Facets)
+{
+
+    std::vector<Boundary> boundaries;
+    std::vector<double> sq_lengths;
+    unsigned int max_sq_length_index = 0;
+    double max_sq_length = 0;
+
+    // Construct boundaries
+    while (r_bEdges.size() > 0)
+    {
+        Boundary boundary;
+        Edge* edge_start = *r_bEdges.begin();
+        Edge* edge_current = edge_start;
+
+        while(true)
+        {
+            boundary.addEdge(edge_current);
+            Edge* edge_next = edge_current->findNextBoundaryEdge();
+            if (edge_next == edge_start)
+            {
+                break;
+            }
+            else
+            {
+                edge_current = edge_next;
+            }
+        }
+        boundary.setOrdered(true);
+        boundary.setSqLength();
+
+        boundaries.push_back(boundary);
+        sq_lengths.push_back(boundary.getSqLength());
+        
+        if (boundary.getSqLength() > max_sq_length)
+        {
+            max_sq_length = boundary.getSqLength();
+            max_sq_length_index = static_cast<unsigned int>(boundaries.size()) - 1;
+        }
+
+        for (Edge* edge : boundary.getEdges())
+        {
+            r_bEdges.erase(edge);
+        }
+    }
+    Boundary max_boundary = boundaries.at(max_sq_length_index); 
+
+    // remove the max_boundary from the boundaries
+    boundaries.erase(boundaries.begin() + max_sq_length_index);
+    std::list<Boundary> holes(boundaries.begin(), boundaries.end());
+    
+    return Region(r_Facets, max_boundary, holes); 
+}
+
+void Mesher::calculateRegions()
+{
+    std::list<Region> regions;
+    std::unordered_set<Edge*> bEdges(m_border_edges.begin(), m_border_edges.end());
+
+    while (bEdges.size() > 0)
+    { 
+        std::unordered_set<Facet*> r_Facets;
+        std::unordered_set<Edge*> r_bEdges;
+        std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> result = ::extract_edge_connected_elements(bEdges);
+        r_Facets = result.first;
+        r_bEdges = result.second; 
+        
+        // remove the edges that are grouped
+        for (Edge* edge : bEdges)
+        {
+            bEdges.erase(edge);
+        } 
+
+        Region region = ::constructRegion(r_bEdges, r_Facets);
+        regions.push_back(region);
+    }
+    
+    // print total number of regions
+    std::cout << "Total number of regions: " << regions.size() << std::endl;
+    
+    // find the max sq_length region index
+    double max_sq_length = 0;
+    std::list<Region>::iterator max_sq_length_region = regions.begin();
+    for (std::list<Region>::iterator it = regions.begin(); it != regions.end(); it++)
+    {
+        if (it->getSqLength() > max_sq_length)
+        {
+            max_sq_length = it->getSqLength();
+            max_sq_length_region = it;
+        }
+    }
+
+    m_main_region = *max_sq_length_region;   
+    // print the main region
+    std::cout << "Main region: " << m_main_region.getSqLength() << std::endl;
+    std::cout << "Main region facets: " << m_main_region.getNumFacets() << std::endl;
+}
+
+
+
 #ifdef _DEBUG
 void Mesher::checkDegenerateTriangle(Facet* facet) const
 {
@@ -1522,3 +1678,4 @@ void Mesher::checkOctreeIntegrity()
     m_octree_ball_centers->integrityCheck();
 }
 #endif
+

@@ -177,6 +177,8 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
+        //mesher.calculateRegions();
+
         #ifdef _DEBUG
         //mesher.mesh_integrityCheck();
         #endif
@@ -191,6 +193,7 @@ int main(int argc, char **argv)
             cv_debug_visualization.wait(lock, [&task_in_progress]{ return !task_in_progress; });
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
+        
     }
 
     std::time(&end_batch);
@@ -205,7 +208,6 @@ int main(int argc, char **argv)
 
     should_exit = true;
     vis_thread.join();
-
     #ifdef _DEBUG
     if (!FileIO::saveMeshDebug("_final.txt", mesher))
     {

@@ -264,3 +264,42 @@ bool Edge::aligningWithFacet1()
         return true;
     } 
 }
+
+Edge* Edge::findNextBoundaryEdge()
+{
+    #ifdef _DEBUG
+    if (m_facet2 != nullptr)
+    {
+        std::cerr << "Edge::findNextBoundaryEdge() - Edge is not a boundary edge" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
+    std::set<Edge*> tgt_adjacent_edges(m_tgt->adjacentEdges()); // copy constructor
+    tgt_adjacent_edges.erase(this);
+    
+    std::set<Edge*> boundary_edges;
+    for (Edge* edge : tgt_adjacent_edges)
+    {
+        if (edge->getType() != EdgeType::INNER)
+        {
+            boundary_edges.insert(edge);
+        }
+    }
+    #ifdef _DEBUG
+    if (boundary_edges.size() > 1)
+    {
+        std::cerr << "Non-manifold vertex" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    #endif
+    return *boundary_edges.begin();
+}
+
+double Edge::getSqLength() const
+{
+    double x = m_src->x() - m_tgt->x();
+    double y = m_src->y() - m_tgt->y();
+    double z = m_src->z() - m_tgt->z();
+
+    return (x*x + y*y + z*z);
+}

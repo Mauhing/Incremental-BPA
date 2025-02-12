@@ -127,7 +127,8 @@ public:
     bool isRightOrientation() const;
 
     unsigned int getIndex() const;
-
+    
+    std::set<Edge*> getEdges();
 };
 
 #endif

@@ -145,6 +145,11 @@ public: // accessors+modifiers
   void flipOrientation();
 
   bool aligningWithFacet1();
+
+  Edge* findNextBoundaryEdge();
+
+  double getSqLength() const;
+
 };
 
 #endif

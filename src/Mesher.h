@@ -47,6 +47,7 @@
 #include "types.h"
 #include <open3d/Open3D.h>
 #include <functional>
+#include "Region.h"
 
 struct ColorVertex
 {
@@ -196,6 +197,8 @@ protected: // class members
 
 
     std::vector<Vertex *> m_fresh_vertices;
+
+    Region m_main_region;
 
 public: // constructor-destructor
     /** @brief default constructor*/
@@ -534,6 +537,9 @@ public:
     {
         return m_border_edges;
     }
+
+public:
+    void calculateRegions();
 
 // Debugging methods
 #ifdef _DEBUG

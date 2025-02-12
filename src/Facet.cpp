@@ -255,3 +255,13 @@ unsigned int Facet::getIndex() const
 {
     return m_index;
 }
+
+std::set<Edge*> Facet::getEdges()
+{
+    std::set<Edge*> edges;
+    for (int i = 0; i < 3; i++)
+    {
+        edges.insert(m_vertex[i]->getLinkingEdge(m_vertex[(i + 1) % 3]));
+    }
+    return edges;
+}
