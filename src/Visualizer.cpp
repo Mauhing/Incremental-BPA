@@ -4,6 +4,7 @@
 #include <open3d/Open3D.h>
 #include "Visualizer.h"
 #include "types.h"
+#include <GLFW/glfw3.h>
 
 void Visualizer::visualizationThread(
     Mesher &mesher,
@@ -14,8 +15,29 @@ void Visualizer::visualizationThread(
     bool &task_in_progress)
 {
     // Create a visualizer object
-    open3d::visualization::Visualizer visualizer;
+    open3d::visualization::VisualizerWithKeyCallback visualizer;
     visualizer.CreateVisualizerWindow("Open3D Mesh Viewer", 800, 450);
+
+    // Create a shared pointer to store the mesh
+    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    // Add initial mesh data
+    {
+        std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
+        renderMainMesh(mesher.getFacets(), o3d_mesh);
+    }
+    visualizer.AddGeometry(o3d_mesh);
+
+    //// Register the key callback after o3d_mesh is created
+    //visualizer.RegisterKeyCallback(GLFW_KEY_T,
+    //    [&o3d_mesh](open3d::visualization::Visualizer* vis) -> bool {
+    //        bool saved = open3d::io::WriteTriangleMeshToPLY("temp_mesh.ply", *o3d_mesh, false, false, false, false, false, true);
+    //        if (saved) {
+    //            std::cout << "Mesh saved to temp_mesh.ply" << std::endl;
+    //        } else {
+    //            std::cout << "Failed to save mesh" << std::endl;
+    //        }
+    //        return true;
+    //    });
 
     auto device = open3d::core::Device("CUDA:0"); // Use first CUDA device
     // Check if the requested device is available
@@ -42,15 +64,6 @@ void Visualizer::visualizationThread(
     // Store the color we want to maintain
     const Eigen::Vector3d golden_color(1.0, 0.7, 0.0);
 
-    // Create a shared pointer to store the mesh
-    auto o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-    // Add initial mesh data
-    {
-        std::lock_guard<std::mutex> lock(o3d_mesh_mutex);
-        renderMainMesh(mesher.getFacets(), o3d_mesh);
-    }
-    visualizer.AddGeometry(o3d_mesh);
-
     // add debug vertices, debug facets, debug edges
     auto debug_facet = std::make_shared<open3d::geometry::TriangleMesh>();
     auto debug_edge = std::make_shared<open3d::geometry::LineSet>();
@@ -75,6 +88,7 @@ void Visualizer::visualizationThread(
     std::unordered_map<unsigned int, unsigned int> v_index_2_matrix_row;
 
     bool need_2_update = false;
+
     while (!should_exit)
     {
         if (!visualizer.PollEvents())

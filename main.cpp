@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        //mesher.calculateRegions();
+        mesher.calculateRegions();
 
         #ifdef _DEBUG
         //mesher.mesh_integrityCheck();

@@ -1469,23 +1469,28 @@ const std::unordered_set<unsigned int> &Mesher::getBatchFacetsRemoved() const
     return m_batch_facets_removed;
 }
 
-static std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> extract_edge_connected_elements(const std::unordered_set<Edge*> &edges_ungrouped)
+static std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> extract_edge_connected_elements(const std::unordered_set<Edge*> &bEdges)
 {
     // Future optimization:
     // One should use the handness of the mesh since our mesh is always orientable. 
-    Edge* edge_start = *edges_ungrouped.begin();
+    Edge* edge_start = *bEdges.begin();
 
-    std::unordered_set<Edge*> queue;
-    queue.insert(edge_start);
+    std::unordered_set<Edge*> need_to_be_examinated;
+    std::unordered_set<Edge*> examined;
+    need_to_be_examinated.insert(edge_start);
 
-    std::unordered_set<Edge*> edges_grouped;
-    std::unordered_set<Facet*> facets_grouped;
-    while (queue.size() > 0)
+    std::unordered_set<Edge*> r_bEdges;
+    std::unordered_set<Facet*> r_Facets;
+    while (need_to_be_examinated.size() > 0)
     {
         //pop the first edge
-        Edge* edge_current = *queue.begin();
-        queue.erase(edge_current);
-        edges_grouped.insert(edge_current);
+        Edge* edge_current = *need_to_be_examinated.begin();
+        need_to_be_examinated.erase(edge_current);
+        examined.insert(edge_current);
+        if (edge_current->getType() == Edge::BORDER)
+        {
+            r_bEdges.insert(edge_current);
+        }
 
         //Facet 1
         Facet* facet1 = edge_current->getFacet1();
@@ -1496,13 +1501,20 @@ static std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> extract_
             std::exit(EXIT_FAILURE);
         }
         #endif
-        facets_grouped.insert(facet1); 
+
+        r_Facets.insert(facet1); 
         std::set<Edge*> edges_facet1 = facet1->getEdges();
         for (Edge* edge : edges_facet1)
         {
-            if (edges_ungrouped.find(edge) != edges_ungrouped.end())
+            // if edge is border, then add it to r_bEdges
+            if (edge->getType() == Edge::BORDER)
             {
-                queue.insert(edge);
+                r_bEdges.insert(edge);
+            }
+            // if edge is not examined, then add it to need_to_be_examinated
+            if (examined.find(edge) == examined.end())
+            {
+                need_to_be_examinated.insert(edge);
             }
         }
 
@@ -1510,18 +1522,24 @@ static std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> extract_
         Facet* facet2 = edge_current->getFacet2();
         if (facet2 != nullptr)
         {
-            facets_grouped.insert(facet2);
+            r_Facets.insert(facet2);
             std::set<Edge*> edges_facet2 = facet2->getEdges();
             for (Edge* edge : edges_facet2)
             {
-                if (edges_ungrouped.find(edge) != edges_ungrouped.end())
+                // if edge is border, then add it to r_bEdges
+                if (edge->getType() == Edge::BORDER)
                 {
-                    queue.insert(edge);
+                    r_bEdges.insert(edge);
+                }
+                // if edge is not examined, then add it to need_to_be_examinated
+                if (examined.find(edge) == examined.end())
+                {
+                    need_to_be_examinated.insert(edge);
                 }
             }
         }
     }
-    return std::make_pair(facets_grouped, edges_grouped);
+    return std::make_pair(r_Facets, r_bEdges);
 }
 
 static Region constructRegion(std::unordered_set<Edge*> &r_bEdges, std::unordered_set<Facet*> &r_Facets)
@@ -1582,9 +1600,12 @@ void Mesher::calculateRegions()
 {
     std::list<Region> regions;
     std::unordered_set<Edge*> bEdges(m_border_edges.begin(), m_border_edges.end());
-
+    unsigned int loop_count = 0;
     while (bEdges.size() > 0)
     { 
+        // print loop count
+        std::cout << "Loop count: " << loop_count << std::endl;
+        loop_count++;
         std::unordered_set<Facet*> r_Facets;
         std::unordered_set<Edge*> r_bEdges;
         std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> result = ::extract_edge_connected_elements(bEdges);
@@ -1592,7 +1613,7 @@ void Mesher::calculateRegions()
         r_bEdges = result.second; 
         
         // remove the edges that are grouped
-        for (Edge* edge : bEdges)
+        for (Edge* edge : r_bEdges)
         {
             bEdges.erase(edge);
         } 
