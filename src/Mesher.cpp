@@ -1618,8 +1618,84 @@ void Mesher::removeNonMainFacets()
     {
         removeFacet(facet);
     }
+
+    while (true)
+    {
+        // Remove singular vertices
+        bool found_fan_fan_vertex = this->removeFanFanSingular();
+        if (!found_fan_fan_vertex)
+        {
+            break;
+        }
+    }
 }
 
+static Boundary extract_boundary(Edge* edge_start, std::unordered_set<Edge*> &bEdges)
+{
+    // Assume orientated mesh with no non-manifold vertices
+    Vertex* vertex_start = edge_start->getSource();
+    Vertex* vertex_end = edge_start->getTarget(); 
+    bEdges.erase(edge_start);
+
+    Boundary boundary;
+    boundary.addEdge(edge_start);
+
+    bool loop_found = false;
+    while (!loop_found)
+    {
+        for (Edge* edge : bEdges)
+        {
+            if (edge->getSource() == vertex_end)
+            {
+                boundary.addEdge(edge);
+                bEdges.erase(edge);
+
+                vertex_end = edge->getTarget(); 
+                if (vertex_end == vertex_start)
+                {
+                    loop_found = true;
+                }
+                break;
+            }
+        }
+    }
+    return boundary; 
+}
+
+std::list<Boundary> Mesher::getBoundriesPurelyFromBoarder()
+{
+    std::list<Boundary> boundaries;
+    std::unordered_set<Edge*> bEdges(m_border_edges.begin(), m_border_edges.end());
+    while (bEdges.size() > 0)
+    {
+        Edge* edge_start = *bEdges.begin();
+        Boundary boundary = ::extract_boundary(edge_start, bEdges);
+        boundaries.push_back(boundary);
+    }
+    
+    // find max sq_length boundary
+    double max_sq_length = 0;
+    std::list<Boundary>::iterator max_sq_length_boundary = boundaries.begin();
+    for (std::list<Boundary>::iterator it = boundaries.begin(); it != boundaries.end(); it++)
+    {
+        it->setSqLength();
+        if (it->getSqLength() > max_sq_length)
+        {
+            max_sq_length = it->getSqLength();
+            max_sq_length_boundary = it;
+        }
+    }
+
+    // How this works?
+    // 1. *max_sq_length_boundary creates a COPY of the Boundary
+    // 2. erase() deletes the original Boundary from the list
+    // 3. push_front() inserts the COPY at the front
+    Boundary boundary_copy = *max_sq_length_boundary;
+    boundaries.erase(max_sq_length_boundary);
+    boundaries.push_front(boundary_copy);
+
+    return boundaries;
+}
 
 #ifdef _DEBUG
 void Mesher::checkDegenerateTriangle(Facet* facet) const

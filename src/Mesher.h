@@ -539,6 +539,8 @@ public:
     void setMainRegion();
     
     void removeNonMainFacets();
+    
+    std::list<Boundary> getBoundriesPurelyFromBoarder();
 
 // Debugging methods
 #ifdef _DEBUG

@@ -176,11 +176,10 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        if (batch_index == 5) {
+        if (batch_index == 50) {
             mesher.setMainRegion();
             mesher.removeNonMainFacets();
         }
-
         #ifdef _DEBUG
         //mesher.mesh_integrityCheck();
         #endif
@@ -205,8 +204,8 @@ int main(int argc, char **argv)
     std::cout << "Time taken: " << minutes_batch << " minutes " << seconds_batch << " seconds" << std::endl;
 
     // wait for terminal input
-    //std::cout << "Press Enter to exit..." << std::endl;
-    //std::cin.get();
+    std::cout << "Press Enter to exit..." << std::endl;
+    std::cin.get();
 
     should_exit = true;
     vis_thread.join();

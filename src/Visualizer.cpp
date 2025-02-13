@@ -100,11 +100,13 @@ void Visualizer::visualizationThread(
 
         if (task_in_progress) {
             renderMainMesh(mesher.getFacets(), o3d_mesh);
-            renderReceivedVertices(received_vertices, debug_point);
-            renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
-
-
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
+
+            renderReceivedVertices(received_vertices, debug_point);
+            //renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+             
+            std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
+            renderBoundaries(boundaries, debug_edge);
 
             task_in_progress = false;
             need_2_update = true;
@@ -469,5 +471,51 @@ void Visualizer::renderIncremental(const std::unordered_set<unsigned int> &facet
             it->second -= row_shifts[it->second];
             ++it;
         }
+    }
+}
+
+void Visualizer::renderBoundaries(const std::list<Boundary> &boundaries, std::shared_ptr<open3d::geometry::LineSet> &line) {
+
+    line->points_.clear();
+    line->colors_.clear();
+    line->lines_.clear();
+
+    std::unordered_map<Vertex*, int> vertex_to_index;
+    int current_index = 0;
+    
+    // First pass - build vertex index map
+    for (auto boundary : boundaries) {
+        for (auto edge : boundary.getEdges()) {
+            if (vertex_to_index.find(edge->getSource()) == vertex_to_index.end()) {
+                vertex_to_index[edge->getSource()] = current_index++;
+            }
+            if (vertex_to_index.find(edge->getTarget()) == vertex_to_index.end()) {
+                vertex_to_index[edge->getTarget()] = current_index++;
+            }
+        }
+    }
+
+    // Add vertices
+    line->points_.resize(vertex_to_index.size());
+    for (const auto& [vertex, index] : vertex_to_index) {
+        line->points_[index] = Eigen::Vector3d(vertex->x(), vertex->y(), vertex->z());
+    }
+
+    // Add lines. First boundary blue, rest red
+    bool is_first_boundary = true;
+    for (const auto& boundary : boundaries) {
+        for (const auto& edge : boundary.getEdges()) {
+            line->lines_.push_back(Eigen::Vector2i(vertex_to_index[edge->getSource()], vertex_to_index[edge->getTarget()]));
+            if (is_first_boundary) {
+                line->colors_.push_back(Eigen::Vector3d(0.0, 1.0, 0.0)); // Green for first boundary
+            } 
+            else if (boundary.getSqLength() < 10) {
+                line->colors_.push_back(Eigen::Vector3d(0.0, 0.0, 1.0)); // Blue for rest
+            }
+            else {
+                line->colors_.push_back(Eigen::Vector3d(1.0, 0.0, 0.0)); // Red for rest
+            }
+        }
+        is_first_boundary = false;
     }
 }
