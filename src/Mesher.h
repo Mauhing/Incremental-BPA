@@ -174,9 +174,6 @@ protected: // class members
     /** @brief list of created triangles*/
     Facet_star_list m_facets;
 
-    /** @brief list of vertices*/
-    Vertex_star_list m_vertices;
-
     /** @brief list of border edges*/
     Edge_star_list m_border_edges;
 
@@ -539,7 +536,9 @@ public:
     }
 
 public:
-    void calculateRegions();
+    void setMainRegion();
+    
+    void removeNonMainFacets();
 
 // Debugging methods
 #ifdef _DEBUG

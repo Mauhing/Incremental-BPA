@@ -93,7 +93,6 @@ Mesher::~Mesher()
     }
     facets_to_delete.clear();
 
-    m_vertices.clear();
     m_vertice_idx = 1;
     m_facet_idx = 1;
 }
@@ -102,11 +101,6 @@ void Mesher::setBallRadius(double r)
 {
     m_ball_radius = r;
     m_sq_ball_radius = r * r;
-}
-
-unsigned int Mesher::nVertices() const
-{
-    return static_cast<unsigned int>(m_vertices.size());
 }
 
 unsigned int Mesher::nFacets() const
@@ -785,7 +779,6 @@ void Mesher::addVertex(Vertex *v)
     else if (v->index() == 0)
     {
         v->setIndex(m_vertice_idx);
-        m_vertices.push_back(v);
         m_vertice_idx++;
     }
     else
@@ -798,15 +791,6 @@ void Mesher::addVertex(Vertex *v)
     }
 }
 
-std::list<Vertex *>::const_iterator Mesher::vertices_begin() const
-{
-    return m_vertices.begin();
-}
-
-std::list<Vertex *>::const_iterator Mesher::vertices_end() const
-{
-    return m_vertices.end();
-}
 std::list<Facet *>::const_iterator Mesher::facets_begin() const
 {
     return m_facets.begin();
@@ -875,8 +859,6 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
         // Update node
         // Update the vertices set of the node.
         node_points.erase(v);
-        // Remove the vertex from the mesh.
-        m_vertices.remove(v);
 // Retrieve the index of the vertex.
 #ifdef _DEBUG
         if (v->index() != 0)
@@ -892,9 +874,6 @@ void Mesher::removeOrphanAndUpdate(TOctreeNode<Vertex> *node)
 
 void Mesher::exileVertex(Vertex *vertex)
 {
-    //m_recycle_vertices_idx.insert(vertex->index());
-    m_vertices.remove(vertex);
-
     // clear the vertex
     vertex->setType(Vertex::VertexType::ORPHAN);
     vertex->setIndex(0);
@@ -1021,8 +1000,7 @@ bool sameOrientation(int i, Facet *query_facet)
 void Mesher::debugPrintStats()
 {
     std::cout << ">>>>>>>>" << std::endl;
-    std::cout << "Reconstructed mesh: " << this->nVertices()
-              << " vertices; " << this->nFacets() << " facets. ";
+    std::cout << "Reconstructed mesh: "<< this->nFacets() << " facets. ";
     std::cout << this->nBorderEdges() << " border edges" << std::endl;
     std::cout << "<<<<<<<<" << std::endl;
 }
@@ -1078,13 +1056,11 @@ void Mesher::expandOctree(const std::list<Vertex> &vertices)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Expand the ballcenters octree
     // std::cout << "Vertices size: " << vertices.size() << std::endl;
-    std::cout << "check octree ball centers need to expand" << std::endl;
     for (auto &vertex : vertices)
     {
         BallCenter ball_center(vertex, nullptr);
         m_octree_ball_centers->checkSizeAndexpand(ball_center);
     }
-    std::cout << "check octree vertices need to expand" << std::endl;
     for (auto &vertex : vertices)
     {
         m_octree_vertices->checkSizeAndexpand(vertex);
@@ -1098,13 +1074,11 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices)
     // Collection of collision facets
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
 
-    std::cout << "Removing collision facets (after computeCollisionFacets)" << std::endl;
     {
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove the collision facets
         this->removeFacets(collision_facets); // This function is very wrong
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        std::cout << "collision_facets size: " << collision_facets.size() << std::endl;
     }
 }
 
@@ -1146,26 +1120,21 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     clearBatchFacets();
 
     // Expand the octree
-    std::cout << "Expanding octree" << std::endl;
     this->expandOctree(vertices);
 
     // Add points to the octree
-    std::cout << "Adding points to the octree" << std::endl;
     this->addPointsToOctreeVertices(vertices);
 
     // Downsample the octree
-    std::cout << "Downsampling the octree" << std::endl;
     std::list<Vertex*> recruited_points = this->m_iterator_vertices->downSample();
 
     std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
 
     // Check and remove collision facets
-    std::cout << "Removing collision facets" << std::endl;
     this->checkAndRemoveCollisionFacets(recruited_points);
 
     // Removing collision facets may create fanfan singular
     // Therefore, we need to remove fanfan singular first
-    std::cout << "Removing fanfan singular" << std::endl;
     while (true)
     {
         // Remove singular vertices
@@ -1177,19 +1146,15 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     }
     
     // Reset boundary edges to edge_front
-    std::cout << "Resetting boundary edges" << std::endl;
     this->resetBoundaryEdges();
 
     // Further reconstruction
-    std::cout << "Reconstructing" << std::endl;
     this->reconstruct();
 
     // Fill holes
-    std::cout << "Filling holes" << std::endl;
     this->fillHoles();
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
-
     std::cout << "Removing fanfan and disk fan singular" << std::endl;
     while (true)
     {
@@ -1596,16 +1561,12 @@ static Region constructRegion(std::unordered_set<Edge*> &r_bEdges, std::unordere
     return Region(r_Facets, max_boundary, holes); 
 }
 
-void Mesher::calculateRegions()
+void Mesher::setMainRegion()
 {
     std::list<Region> regions;
     std::unordered_set<Edge*> bEdges(m_border_edges.begin(), m_border_edges.end());
-    unsigned int loop_count = 0;
     while (bEdges.size() > 0)
     { 
-        // print loop count
-        std::cout << "Loop count: " << loop_count << std::endl;
-        loop_count++;
         std::unordered_set<Facet*> r_Facets;
         std::unordered_set<Edge*> r_bEdges;
         std::pair<std::unordered_set<Facet*>, std::unordered_set<Edge*>> result = ::extract_edge_connected_elements(bEdges);
@@ -1643,6 +1604,21 @@ void Mesher::calculateRegions()
     std::cout << "Main region facets: " << m_main_region.getNumFacets() << std::endl;
 }
 
+void Mesher::removeNonMainFacets()
+{
+    std::unordered_set<Facet*> main_facets = m_main_region.getFacets();
+    std::unordered_set<Facet*> facets_to_be_removed(m_facets.begin(), m_facets.end());
+
+    for (Facet* facet : main_facets)
+    {
+        facets_to_be_removed.erase(facet);
+    } 
+
+    for (Facet* facet : facets_to_be_removed)
+    {
+        removeFacet(facet);
+    }
+}
 
 
 #ifdef _DEBUG

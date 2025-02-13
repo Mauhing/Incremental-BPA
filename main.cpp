@@ -166,7 +166,6 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Load batch of point cloud
-        std::cout << "Remove overlape vertices in next batch" << std::endl;
         std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -177,7 +176,10 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        mesher.calculateRegions();
+        if (batch_index == 5) {
+            mesher.setMainRegion();
+            mesher.removeNonMainFacets();
+        }
 
         #ifdef _DEBUG
         //mesher.mesh_integrityCheck();
