@@ -53,7 +53,7 @@ public:
                                   double min_radius = -1);
 
     // added by mauhing
-    static std::vector<std::string> readIntoFileBatch(const char *filename);
+    static std::vector<std::string> readIntoFileBatch_PointOnly(const char *filename);
 
     static bool saveMeshDebug(const char *filename, Mesher &mesher);
 

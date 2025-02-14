@@ -77,11 +77,11 @@ int main(int argc, char **argv)
     std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
-    // std::vector<string> batch_data = FileIO::readIntoFileBatch(infile.c_str());
+    // std::vector<string> batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
     std::vector<string> batch_data;
     try
     {
-        batch_data = FileIO::readIntoFileBatch(infile.c_str());
+        batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
         if (batch_data.empty())
         {
             std::cerr << "Error: No data read from file" << std::endl;

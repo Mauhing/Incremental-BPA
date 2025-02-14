@@ -157,7 +157,7 @@ void FileIO::saveContent(OctreeNodeV *node, ofstream &f)
 }
 
 // add by mauhing
-std::vector<string> FileIO::readIntoFileBatch(const char *filenames)
+std::vector<string> FileIO::readIntoFileBatch_PointOnly(const char *filenames)
 {
     if (!filenames)
     {
