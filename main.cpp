@@ -37,6 +37,11 @@
 #include <mutex>
 #include <atomic>
 
+std::condition_variable cv_debug_visualization;
+bool rendering_in_progress(false);
+std::mutex o3d_mesh_mutex;
+std::atomic<bool> should_exit(false);
+
 /**
  * @brief main function for the ball pivoting reconstruction
  * @param argc
@@ -125,11 +130,7 @@ int main(int argc, char **argv)
     // Create shared data structures and synchronization primitives
     std::cout << "Main Thread ID: " << std::this_thread::get_id() << std::endl;
 
-    std::mutex o3d_mesh_mutex;
-    std::atomic<bool> should_exit(false);
 
-    std::condition_variable cv_debug_visualization;
-    bool rendering_in_progress(false);
 
     std::vector<ColorVertex> received_vertices;
 
@@ -186,11 +187,12 @@ int main(int argc, char **argv)
             std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
             std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
             
-            cv_debug_visualization.wait(lock, [&rendering_in_progress]{ return !rendering_in_progress; });
+            bool& ref = rendering_in_progress;  // Create a local reference
+            cv_debug_visualization.wait(lock, [&ref]{ return !ref; });
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
-        std::cout << "Press Enter to exit..." << std::endl;
-        std::cin.get();
+        //std::cout << "Press Enter to exit..." << std::endl;
+        //std::cin.get();
         
     }
 

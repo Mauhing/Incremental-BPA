@@ -103,10 +103,10 @@ void Visualizer::visualizationThread(
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 
             renderReceivedVertices(received_vertices, debug_point);
-            //renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
              
-            std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
-            renderBoundaries(boundaries, debug_edge);
+            renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+            //std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
+            //renderBoundaries(boundaries, debug_edge);
 
             rendering_in_progress = false;
             need_2_update = true;

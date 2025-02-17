@@ -549,6 +549,7 @@ public:
     void checkDegenerateTriangle(Facet* facet) const;
     void checkFacetsOrientation() const;  
     void checkOctreeIntegrity();
+    void updateRender();
 
 #endif
 

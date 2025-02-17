@@ -1130,6 +1130,9 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
 
+    std::cout << "Before checkAndRemoveCollisionFacets" << std::endl;
+    this->updateRender();
+
     // Check and remove collision facets
     this->checkAndRemoveCollisionFacets(recruited_points);
 
@@ -1144,6 +1147,8 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
             break;
         }
     }
+    std::cout << "After removeFanFanSingular" << std::endl;
+    this->updateRender();
     
     // Reset boundary edges to edge_front
     this->resetBoundaryEdges();
@@ -1153,6 +1158,9 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     // Fill holes
     this->fillHoles();
+
+    std::cout << "After fillHoles" << std::endl;
+    this->updateRender();
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
     std::cout << "Removing fanfan and disk fan singular" << std::endl;
@@ -1168,6 +1176,8 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
             break;
         }
     }
+    std::cout << "After removeFanFanSingular and removeDiskFanSingular" << std::endl;
+    this->updateRender();
 
     std::cout << "Clearing" << std::endl;
     // Clear fresh facets
@@ -1748,3 +1758,25 @@ void Mesher::checkOctreeIntegrity()
 }
 #endif
 
+
+
+#ifdef _DEBUG
+extern std::condition_variable cv_debug_visualization;
+extern bool rendering_in_progress;
+extern std::mutex o3d_mesh_mutex;
+void Mesher::updateRender()
+{
+    std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
+    rendering_in_progress = true;
+    cv_debug_visualization.notify_one();
+    std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
+    std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
+    
+    bool& ref = rendering_in_progress;  // Create a local reference
+    cv_debug_visualization.wait(lock, [&ref]{ return !ref; });
+    std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
+
+    std::cout << "Press Enter to exit..." << std::endl;
+    std::cin.get();
+}
+#endif
