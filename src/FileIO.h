@@ -22,8 +22,8 @@
 
 #include "Octree.h"
 #include "Mesher.h"
-
 #include "types.h"
+#include "FileParsePose.h"
 
 /**
  * @class FileIO
@@ -54,13 +54,17 @@ public:
 
     // added by mauhing
     static std::vector<std::string> readIntoFileBatch_PointOnly(const char *filename);
+    
+    static std::vector<SensorFrame> readIntoFileBatch(const char *filename);
 
     static bool saveMeshDebug(const char *filename, Mesher &mesher);
 
     static bool saveMeshDebug(const char *filename, const std::list<Facet *> &facets);
 
-    static std::tuple<Point, double, unsigned int> originAndDepth(const string &batch_data, double min_radius);
+    static std::tuple<Point, double, unsigned int> originAndDepth_depricated(const string &batch_data, double min_radius);
 
+    static std::tuple<Point, double, unsigned int> originAndDepth(const std::vector<SensorFrame> &sensor_frames, double min_radius);
+    
 private:
     /** @brief save all vertices contained in a node
      * @param node node to save from
@@ -69,7 +73,8 @@ private:
     static void saveContent(OctreeNodeV *node, std::ofstream &f);
 
 public:
-    static std::list<Vertex> readFromBatchToList(const string &batch_data);
+    static std::list<Vertex> readFromBatchToList_depricated(const string &batch_data);
+    static std::list<Vertex> readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size);
 
 private:
     static std::string baseOutputFilename;

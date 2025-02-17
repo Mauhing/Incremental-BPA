@@ -78,22 +78,16 @@ int main(int argc, char **argv)
 
     // Turn the whole data into batch data
     // std::vector<string> batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
-    std::vector<string> batch_data;
-    try
+
+    //batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
+    std::vector<SensorFrame> sensor_frames = FileIO::readIntoFileBatch(infile.c_str());
+    if (sensor_frames.empty())
     {
-        batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
-        if (batch_data.empty())
-        {
-            std::cerr << "Error: No data read from file" << std::endl;
-            return EXIT_FAILURE;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error reading file: " << e.what() << std::endl;
+        std::cerr << "Error: No data read from file" << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << "batch_data size: " << batch_data.size() << std::endl;
+
+    std::cout << "sensor_frames size: " << sensor_frames.size() << std::endl;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Octree creation
@@ -101,8 +95,8 @@ int main(int argc, char **argv)
     Point origin;
     double size;
     unsigned int depth;
-    std::tie(origin, size, depth) = FileIO::originAndDepth(batch_data[0], radius);
-
+    //std::tie(origin, size, depth) = FileIO::originAndDepth_depricated(batch_data[0], radius); 
+    std::tie(origin, size, depth) = FileIO::originAndDepth(sensor_frames, radius); 
 
     const int max_orphan_points_per_node = 1;
 
@@ -153,8 +147,9 @@ int main(int argc, char **argv)
     // time it
     time_t start_batch, end_batch;
     std::time(&start_batch);
-    size_t max_batch_index  = batch_data.size();
-    for (size_t batch_index = 0; batch_index < max_batch_index; batch_index++)
+    size_t max_batch_index  = sensor_frames.size();
+    size_t batch_size = 10;
+    for (size_t batch_index = 0; batch_index < max_batch_index; batch_index += batch_size)
     {
         if (should_exit)
         { // Check if visualization window was closed
@@ -166,7 +161,7 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Load batch of point cloud
-        std::list<Vertex> vertices = FileIO::readFromBatchToList(batch_data[batch_index]);
+        std::list<Vertex> vertices = FileIO::readFromBatchToList(sensor_frames, batch_index, batch_size);
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         received_vertices.clear();
@@ -194,6 +189,8 @@ int main(int argc, char **argv)
             cv_debug_visualization.wait(lock, [&task_in_progress]{ return !task_in_progress; });
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
+        std::cout << "Press Enter to exit..." << std::endl;
+        std::cin.get();
         
     }
 

@@ -205,7 +205,7 @@ std::vector<string> FileIO::readIntoFileBatch_PointOnly(const char *filenames)
     return batch_data;
 }
 
-std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const string &batch_data, double min_radius)
+std::tuple<Point, double, unsigned int> FileIO::originAndDepth_depricated(const string &batch_data, double min_radius)
 {
     double x, y, z, nx, ny, nz;
     istringstream batch_data_in(batch_data);
@@ -356,7 +356,7 @@ bool FileIO::saveMeshDebug(const char *output_filename, const std::list<Facet *>
     return true;
 }
 
-std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
+std::list<Vertex> FileIO::readFromBatchToList_depricated(const string &batch_data)
 {
     // batch data has format:
     // x y z nx ny nz
@@ -380,6 +380,26 @@ std::list<Vertex> FileIO::readFromBatchToList(const string &batch_data)
 
     return input_vertices;
 }
+ 
+ std::list<Vertex> FileIO::readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size)
+ {
+    list<Vertex> input_vertices;
+
+    for (size_t i = 0; i < batch_size; i++) {
+        const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
+        const std::vector<Point3D> &points = sensor_frames[batch_index + i].points;
+        for (const auto &point : points) {
+            // Each point also have normal. it is calculated by (tx, ty, tz) - (xi, yi, zi) and normalize it.
+            double tx = pose(0, 3);
+            double ty = pose(1, 3);
+            double tz = pose(2, 3);
+            Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
+    
+            input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
+        }
+    }
+    return input_vertices;
+ }
 
 bool FileIO::debugSaveLineset(const char *output_filename, const Edge_star_list &border_edges)
 {
@@ -462,4 +482,68 @@ bool FileIO::debugSavePoints(const char *output_filename, const Point_UnOrdSet &
 void FileIO::setBaseOutputFilename(const std::string &filename)
 {
     baseOutputFilename = filename;
+}
+
+std::vector<SensorFrame> FileIO::readIntoFileBatch(const char *filename)
+{
+    return OfflineDataParser::parseFile(filename);
+} 
+
+std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const std::vector<SensorFrame> &sensor_frames, double min_radius)
+{
+    // take the first frame as the origin
+    const SensorFrame &first_frame = sensor_frames[0];
+    //const Eigen::Matrix<double, 3, 4> &pose = first_frame.pose;
+    const std::vector<Point3D> &points = first_frame.points;
+
+    // calculate the origin
+    Eigen::MatrixXd points_matrix(points.size(), 3);
+    for(size_t i = 0; i < points.size(); i++) {
+        points_matrix(i, 0) = points[i].x;
+        points_matrix(i, 1) = points[i].y; 
+        points_matrix(i, 2) = points[i].z;
+    }
+
+    Eigen::Vector3d min_xyz = points_matrix.colwise().minCoeff();
+    Eigen::Vector3d max_xyz = points_matrix.colwise().maxCoeff();
+
+    double xmin = min_xyz(0);
+    double ymin = min_xyz(1); 
+    double zmin = min_xyz(2);
+    double xmax = max_xyz(0);
+    double ymax = max_xyz(1);
+    double zmax = max_xyz(2);
+
+    double lx = xmax - xmin;
+    double ly = ymax - ymin;
+    double lz = zmax - zmin;
+
+    // Get size of one of the largest dimension
+    double size = lx > ly ? lx : ly;
+    size = size > lz ? size : lz;
+
+    size = 1.1 * size;
+    double margin;
+
+    unsigned int depth = 0;
+    if (min_radius > 0)
+    {
+        depth = (unsigned int)ceil(log2(size / (min_radius)));
+        double adapted_size = pow2(depth) * min_radius;
+        margin = 0.5 * (adapted_size - size);
+        size = adapted_size;
+    }
+    else
+    {
+        std::cerr << "Warning: min_radius has to bigger than 0" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // The orgin of the octree is the lower left corner (2D) of the bounding box
+    double ox = xmin - margin;
+    double oy = ymin - margin;
+    double oz = zmin - margin;
+    Point origin(ox, oy, oz);
+
+    return std::tuple<Point, double, unsigned int>(origin, size, depth);
 }

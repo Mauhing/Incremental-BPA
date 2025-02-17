@@ -1179,12 +1179,8 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Clear debug render facets
     this->clearDebugRender();
 
-    bool clearOrphanVertices = true;
-    if (clearOrphanVertices)
-        // Clear orphan vertices
-        this->clearOrphanVertices();
-    else
-        std::cout << "\033[31mNot clearing orphan vertices\033[0m" << std::endl;
+    // Clear orphan vertices
+    //this->clearOrphanVertices();
 }
 
 bool Mesher::removeFanFanSingular()
