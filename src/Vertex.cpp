@@ -31,7 +31,7 @@ Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
 }
 
 Vertex::~Vertex()
-{
+{    
     m_index = 0;
     m_adjacentEdges.clear();
     m_adjacentFacets.clear();
@@ -427,4 +427,13 @@ std::pair<bool, Facet_set> Vertex::extractConnectedFacets(const Facet_set &facet
 #endif
     }
     return std::make_pair(is_disk_facet_set, connected_facets);
+}
+
+void Vertex::remove_and_delete()
+{
+    if (m_octreeNodeLeaf != nullptr)
+    {
+        m_octreeNodeLeaf->removeElement(this);
+    }
+    delete this;
 }

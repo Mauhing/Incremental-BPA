@@ -433,9 +433,10 @@ public: // For incremental rendering
     void removeFromAddBatchFacet(Facet* facet);
 
 public:
-    template <typename SetType>
+    template <typename SetType, bool exile = false>
     void removeFacets(SetType &boundary_facets);
 
+    template <bool exile = false>
     void removeFacet(Facet *facet);
 
     void removeOrphanAndUpdate(TOctreeNode<Vertex> *node);

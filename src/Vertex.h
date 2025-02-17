@@ -220,6 +220,8 @@ public: // added by mauhing
 
     VertexDiskFanInfo getDiskFan();
 
+    void remove_and_delete();
+
 private:
     std::pair<bool, Facet_set> extractConnectedFacets(const Facet_set &facets) const;   
 

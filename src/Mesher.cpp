@@ -880,6 +880,7 @@ void Mesher::exileVertex(Vertex *vertex)
     vertex->clearAdjacentEdgesAndFacets();
 }
 
+template <bool exile = false>
 void Mesher::removeFacet(Facet *facet)
 {
     Vertex *vertex[3];
@@ -924,7 +925,14 @@ void Mesher::removeFacet(Facet *facet)
         v->updateType();
         if (v->adjacentFacets().size() == 0)
         {
-            exileVertex(v);
+            if constexpr (exile)
+            {
+                exileVertex(v);
+            }
+            else
+            {
+                v->remove_and_delete();
+            }
         }
     }
 
@@ -937,7 +945,7 @@ void Mesher::removeFacet(Facet *facet)
     delete facet;
 }
 
-template <typename SetType>
+template <typename SetType, bool exile = false>
 void Mesher::removeFacets(SetType &facets)
 {
     // Perform compile time check
@@ -946,7 +954,7 @@ void Mesher::removeFacets(SetType &facets)
 
     for (auto facet : facets)
     {
-        removeFacet(facet);
+        removeFacet<exile>(facet);
     }
 }
 
@@ -1073,11 +1081,10 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Collection of collision facets
     Facet_set collision_facets = this->computeCollisionFacets(vertices);
-
     {
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove the collision facets
-        this->removeFacets(collision_facets); // This function is very wrong
+        this->removeFacets<Facet_set, true>(collision_facets); // This function is very wrong
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     }
 }
@@ -1130,8 +1137,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
 
     std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
 
-    std::cout << "Before checkAndRemoveCollisionFacets" << std::endl;
-    this->updateRender();
+    //this->updateRender();
 
     // Check and remove collision facets
     this->checkAndRemoveCollisionFacets(recruited_points);
@@ -1147,8 +1153,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
             break;
         }
     }
-    std::cout << "After removeFanFanSingular" << std::endl;
-    this->updateRender();
+    //this->updateRender();
     
     // Reset boundary edges to edge_front
     this->resetBoundaryEdges();
@@ -1159,8 +1164,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Fill holes
     this->fillHoles();
 
-    std::cout << "After fillHoles" << std::endl;
-    this->updateRender();
+    //this->updateRender();
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
     std::cout << "Removing fanfan and disk fan singular" << std::endl;
@@ -1176,8 +1180,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
             break;
         }
     }
-    std::cout << "After removeFanFanSingular and removeDiskFanSingular" << std::endl;
-    this->updateRender();
+    //this->updateRender();
 
     std::cout << "Clearing" << std::endl;
     // Clear fresh facets
