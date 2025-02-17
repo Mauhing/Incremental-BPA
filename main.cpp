@@ -41,6 +41,7 @@ std::condition_variable cv_debug_visualization;
 bool rendering_in_progress(false);
 std::mutex o3d_mesh_mutex;
 std::atomic<bool> should_exit(false);
+Eigen::Matrix<double, 3, 4> robot_pose;
 
 /**
  * @brief main function for the ball pivoting reconstruction
@@ -140,7 +141,8 @@ int main(int argc, char **argv)
                            std::ref(should_exit),
                            std::ref(received_vertices),
                            std::ref(cv_debug_visualization),
-                           std::ref(rendering_in_progress));
+                           std::ref(rendering_in_progress),
+                           std::ref(robot_pose));
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
@@ -162,7 +164,9 @@ int main(int argc, char **argv)
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Load batch of point cloud
-        std::list<Vertex> vertices = FileIO::readFromBatchToList(sensor_frames, batch_index, batch_size);
+        std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> vertices_and_pose = FileIO::readFromBatchToList(sensor_frames, batch_index, batch_size);
+        std::list<Vertex> vertices = vertices_and_pose.first;
+        robot_pose = vertices_and_pose.second;
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         received_vertices.clear();

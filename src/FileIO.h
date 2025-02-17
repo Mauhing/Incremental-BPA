@@ -74,7 +74,7 @@ private:
 
 public:
     static std::list<Vertex> readFromBatchToList_depricated(const string &batch_data);
-    static std::list<Vertex> readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size);
+    static std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size);
 
 private:
     static std::string baseOutputFilename;

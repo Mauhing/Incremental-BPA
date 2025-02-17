@@ -381,7 +381,7 @@ std::list<Vertex> FileIO::readFromBatchToList_depricated(const string &batch_dat
     return input_vertices;
 }
  
- std::list<Vertex> FileIO::readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size)
+ std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> FileIO::readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size)
  {
     list<Vertex> input_vertices;
 
@@ -398,7 +398,10 @@ std::list<Vertex> FileIO::readFromBatchToList_depricated(const string &batch_dat
             input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
         }
     }
-    return input_vertices;
+
+    const Eigen::Matrix<double, 3, 4> pose = sensor_frames[batch_index + size_t(batch_size/2)].pose;
+    
+    return std::make_pair(input_vertices, pose);
  }
 
 bool FileIO::debugSaveLineset(const char *output_filename, const Edge_star_list &border_edges)
