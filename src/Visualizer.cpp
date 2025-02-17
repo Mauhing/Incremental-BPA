@@ -12,7 +12,7 @@ void Visualizer::visualizationThread(
     std::atomic<bool> &should_exit,
     std::vector<ColorVertex> &received_vertices,
     std::condition_variable &cv_debug_visualization,
-    bool &task_in_progress)
+    bool &rendering_in_progress)
 {
     // Create a visualizer object
     open3d::visualization::VisualizerWithKeyCallback visualizer;
@@ -98,7 +98,7 @@ void Visualizer::visualizationThread(
         }
 
 
-        if (task_in_progress) {
+        if (rendering_in_progress) {
             renderMainMesh(mesher.getFacets(), o3d_mesh);
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 
@@ -108,7 +108,7 @@ void Visualizer::visualizationThread(
             std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
             renderBoundaries(boundaries, debug_edge);
 
-            task_in_progress = false;
+            rendering_in_progress = false;
             need_2_update = true;
             cv_debug_visualization.notify_one(); 
         }

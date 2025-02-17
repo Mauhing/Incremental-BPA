@@ -129,7 +129,7 @@ int main(int argc, char **argv)
     std::atomic<bool> should_exit(false);
 
     std::condition_variable cv_debug_visualization;
-    bool task_in_progress(false);
+    bool rendering_in_progress(false);
 
     std::vector<ColorVertex> received_vertices;
 
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
                            std::ref(should_exit),
                            std::ref(received_vertices),
                            std::ref(cv_debug_visualization),
-                           std::ref(task_in_progress));
+                           std::ref(rendering_in_progress));
 
     std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
 
@@ -181,12 +181,12 @@ int main(int argc, char **argv)
         
         {
             std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
-            task_in_progress = true;
+            rendering_in_progress = true;
             cv_debug_visualization.notify_one();
             std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
             std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
             
-            cv_debug_visualization.wait(lock, [&task_in_progress]{ return !task_in_progress; });
+            cv_debug_visualization.wait(lock, [&rendering_in_progress]{ return !rendering_in_progress; });
             std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
         }
         std::cout << "Press Enter to exit..." << std::endl;
