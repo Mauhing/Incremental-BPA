@@ -55,32 +55,30 @@ int main(int argc, char **argv)
     // Parse the command line
     ProgramOptions options = parseCommandLine(argc, argv);
 
-    // Use the parsed options
-    std::cout << "Input files: " << options.input_infiles << std::endl;
-    std::cout << "Output file: " << options.outfile << std::endl;
-    std::cout << "Radii: ";
-    for (const auto &radius : options.radii)
-    {
-        std::cout << radius << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "Parallel flag: " << (options.parallel_flag ? "true" : "false") << std::endl;
+    //std::exit(EXIT_SUCCESS);
 
-    double radius = -1;
-    if (options.radii.size() > 0)
-    {
-        options.radii.sort();
-        radius = options.radii.front();
-    }
+    // Use the parsed options
+    std::cout << "Input file: " << options.input_file << std::endl;
+    std::cout << "Output file: " << options.output_file << std::endl;
+    std::cout << "Radius: " << options.radius << std::endl;
+    std::cout << "Max orphan points per voxel: " << options.max_orphan_per_voxel << std::endl;
+    std::cout << "Reading per batch: " << options.reading_per_batch << std::endl;
+    std::cout << "Policy main mesh: " << (options.policy_main_mesh ? "true" : "false") << std::endl;
+    std::cout << "Policy main mesh activation batch number: " << options.policy_main_mesh_activation_batch_number << std::endl;
+    
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the base output filename
-    FileIO::setBaseOutputFilename(options.outfile.erase(options.outfile.find(".ply"), 4));
+    FileIO::setBaseOutputFilename(options.output_file.erase(options.output_file.find(".ply"), 4));
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
+    // Get the radius value from the program options
+    double radius = options.radius;
+    // Get the input filename from the program options 
+    std::string infile = options.input_file;
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Read the input file
-    std::string infile = options.input_infiles;
 
     // Turn the whole data into batch data
     // std::vector<string> batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
@@ -176,7 +174,7 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        if (batch_index == 50) {
+        if (batch_index == options.policy_main_mesh_activation_batch_number) {
             mesher.setMainRegion();
             mesher.removeNonMainFacets();
         }
@@ -243,5 +241,6 @@ int main(int argc, char **argv)
     seconds_o3d = std::fmod(seconds_o3d, 60.0);
     std::cout << "Time taken: " << minutes_o3d << " minutes " << seconds_o3d << " seconds" << std::endl;
 
+    std::cout << "Program is terminating. It takes a while. Please be patient." << std::endl;
     return EXIT_SUCCESS;
 }

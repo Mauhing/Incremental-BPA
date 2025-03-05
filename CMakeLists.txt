@@ -5,7 +5,27 @@ project(ballpivoting)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Option to choose between Debug and Release
+# First compile yaml-cpp with ABI=0 in Debug mode (since your main project is in Debug)
+set(YAML_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/yaml-cpp-0.8.0")
+set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "yaml-cpp build shared library" FORCE)
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "yaml-cpp build tests" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "yaml-cpp build tools" FORCE)
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "yaml-cpp build contrib" FORCE)
+
+# Set Debug build type for yaml-cpp before adding subdirectory
+set(CMAKE_BUILD_TYPE_ORIG ${CMAKE_BUILD_TYPE})
+set(CMAKE_BUILD_TYPE Debug)
+
+# Build yaml-cpp with ABI=0
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_subdirectory(${YAML_CPP_DIR} EXCLUDE_FROM_ALL)
+
+# Restore original build type
+set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_ORIG})
+
+message(STATUS "YAML library location: ${CMAKE_BINARY_DIR}/third_party/yaml-cpp-0.8.0/libyaml-cpp.a")
+
+# Now continue with main project in Debug mode
 option(BUILD_DEBUG "Build in Debug mode" ON)
 
 # Export compile commands for IDE support
@@ -64,37 +84,21 @@ add_executable(ballpivoting
 # Add compile definitions for debug mode
 target_compile_definitions(ballpivoting PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 
-# Only add libc++ flags if using Clang
-if(USE_CLANG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -L/usr/lib/llvm-10/lib")
-endif()
 
-# Add Open3D include directories
-#target_include_directories(ballpivoting PRIVATE ${Open3D_INCLUDE_DIRS})
-
-# Move this BEFORE add_subdirectory(src)
+# Update include directories to include yaml-cpp headers
 target_include_directories(ballpivoting PRIVATE 
     ${Open3D_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${YAML_CPP_DIR}/include
 )
 
-# Link against Open3D libraries
-target_link_libraries(ballpivoting PRIVATE ${Open3D_LIBRARIES})
-
-# Add compile definitions required by Open3D
-target_compile_definitions(ballpivoting PRIVATE ${Open3D_DEFINITIONS})
-
-# Set rpath for the executable
-set_target_properties(ballpivoting PROPERTIES
-    INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-pre-cxx11-abi-0.18.0/lib"
-    BUILD_WITH_INSTALL_RPATH TRUE
+target_link_libraries(ballpivoting PRIVATE 
+    yaml-cpp
 )
 
 # Find pthread
 find_package(Threads REQUIRED)
-# Link against Open3D libraries
-target_link_libraries(ballpivoting PRIVATE ${Open3D_LIBRARIES})
+
 # Link against Open3D libraries and pthread
 target_link_libraries(ballpivoting PRIVATE 
     ${Open3D_LIBRARIES}
