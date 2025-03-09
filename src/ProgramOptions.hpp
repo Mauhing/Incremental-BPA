@@ -16,11 +16,11 @@ struct ProgramOptions
 
     double radius;
 
-    unsigned int max_orphan_per_voxel;
-    unsigned int reading_per_batch;
+    int max_orphan_per_voxel;
+    int reading_per_batch;
     
     bool policy_main_mesh;
-    unsigned int policy_main_mesh_activation_batch_number;
+    int policy_main_mesh_activation_batch_number;
 };
 
 ProgramOptions parseConfigFile(const std::string &config_file)
@@ -50,19 +50,19 @@ ProgramOptions parseConfigFile(const std::string &config_file)
     }
 
     if (config["max_orphan_per_voxel"]) {
-        options.max_orphan_per_voxel = config["max_orphan_per_voxel"].as<unsigned int>();
+        options.max_orphan_per_voxel = config["max_orphan_per_voxel"].as<int>();
     }
 
     if (config["reading_per_batch"]) {
-        options.reading_per_batch = config["reading_per_batch"].as<unsigned int>();
+        options.reading_per_batch = config["reading_per_batch"].as<int>();
     }
 
-    if (config["policy_main_mesh"]["enabled"]) {
-        options.policy_main_mesh = config["policy_main_mesh"]["enabled"].as<bool>();
+    if (config["one_mesh_policy"]["enabled"]) {
+        options.policy_main_mesh = config["one_mesh_policy"]["enabled"].as<bool>();
     }
 
-    if (config["policy_main_mesh"]["activation_batch_number"]) {
-        options.policy_main_mesh_activation_batch_number = config["policy_main_mesh"]["activation_batch_number"].as<unsigned int>();
+    if (config["one_mesh_policy"]["activation_batch_number"]) {
+        options.policy_main_mesh_activation_batch_number = config["one_mesh_policy"]["activation_batch_number"].as<int>();
     }
     
     return options;
