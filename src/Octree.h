@@ -94,9 +94,16 @@ public: // accessors and modifiers
      */
     TOctreeNode<T> *getRoot() const;
 
-    // copy constructor
+    /**
+     * @brief copy constructor
+     * @param other the octree to copy
+     */
     TOctree(const TOctree &other);
 
+    /**
+     * @brief get the maximum number of points per node
+     * @return the maximum number of points per node
+     */
     unsigned int getMaxPoints() const;
 
 public: // adding points
@@ -109,7 +116,9 @@ public: // adding points
 
     /**
      * @brief Adding a point to the octree
+     * It is going to alocate a new point in the octree. This is why we need to return a pointer to the point.
      * @param pt point to add
+     * @return pointer to the point
      */
     T *addPoint(const T &pt);
 
@@ -135,9 +144,18 @@ public: // adding points
     void getNodes(unsigned int depth, TOctreeNode<T> *starting_node,
                   std::vector<std::vector<TOctreeNode<T> *>> &node_collection);
 
-    T *checkSizeAndaddPoint(const T &pt);
-
+    /**
+     * @brief check the size of the octree and expand it if necessary
+     * @param pt point to check
+     */
     void checkSizeAndexpand(const T &pt);
+
+    /**
+     * @brief add a point to the octree and check the size of the octree and expand it if necessary
+     * @param pt point to add
+     * @return pointer to the point
+     */
+    T *checkSizeAndaddPoint(const T &pt);
 
 protected:
     /**
@@ -146,7 +164,6 @@ protected:
      * and the root is at level n. The leaf nodes are at level 0.
      */
     unsigned int m_root_depth;
-
 
     /**
      * @brief Origin of the octree
@@ -176,22 +193,47 @@ protected:
     const int m_max_points;
 
 private: // helper functions to make another function shorter
+    /**
+     * @brief expand all nodes in the octree
+     * @param level depth of the octree
+     * @param x_insert_index x coordinate of the point to insert
+     * @param y_insert_index y coordinate of the point to insert
+     * @param z_insert_index z coordinate of the point to insert
+     */
     void expandAllNodeLoc(unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
 
+    /**
+     * @brief update the location of the node
+     * @param node node to update
+     * @param level depth of the octree
+     * @param x_insert_index x coordinate of the point to insert
+     * @param y_insert_index y coordinate of the point to insert
+     * @param z_insert_index z coordinate of the point to insert
+     */
     void updateNodeLoc(TOctreeNode<T> *node, unsigned int level, unsigned int x_insert_index, unsigned int y_insert_index, unsigned int z_insert_index);
-
 #ifdef _DEBUG
 public:
-    template <typename U>
-    TOctree<U> debugCopySkeleton() const;
-
+    /**
+     * @brief print the statistics of the octree
+     */
     void debugPrintStats();
 #endif
 
+#ifdef _DEBUG
    public:
+   /**
+    * @brief check the integrity of the octree
+    * It checks the points contained in the octree is actually in the octree.
+    * It is only used for debugging.
+    */
    void integrityCheck();
+#endif
 };
 
+/*
+Why is the implementation in the hpp file?
+Template Code Generation: Templates in C++ are not actual code - they are blueprints that the compiler uses to generate code when a specific type is used. This process is called template instantiation.
+*/ 
 #include "Octree.hpp"
 
 #endif

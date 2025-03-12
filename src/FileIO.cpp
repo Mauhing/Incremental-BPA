@@ -45,7 +45,7 @@ bool FileIO::debugSavePoints(const char *filename, OctreeVertices &octree)
         return false;
 
     OctreeNodeV *node = octree.getRoot();
-    saveContent(node, out);
+    debugSaveContent(node, out);
 
     out.close();
 
@@ -130,13 +130,13 @@ bool FileIO::debugSavePoints(const char *filename, OctreeVertices &octree)
 //    return true;
 //}
 
-void FileIO::saveContent(OctreeNodeV *node, ofstream &f)
+void FileIO::debugSaveContent(OctreeNodeV *node, ofstream &f)
 {
     if (node->getDepth() != 0)
     {
         for (int i = 0; i < 8; i++)
             if (node->getChild(i) != nullptr)
-                saveContent(node->getChild(i), f);
+                debugSaveContent(node->getChild(i), f);
     }
     else if (node->getNpts() != 0)
     {
@@ -154,125 +154,6 @@ void FileIO::saveContent(OctreeNodeV *node, ofstream &f)
             f << *v << std::endl;
         }
     }
-}
-
-// add by mauhing
-std::vector<string> FileIO::readIntoFileBatch_PointOnly(const char *filenames)
-{
-    if (!filenames)
-    {
-        throw std::invalid_argument("Null filename provided");
-    }
-
-    // get the filename first.
-    std::string filename = filenames;
-    std::vector<string> batch_data;
-
-    std::ifstream whole_data(filename);
-    if (!whole_data.is_open())
-    {
-        throw std::runtime_error("Could not open file: " + filename);
-    }
-
-    // read the file line by line.
-    std::string line;
-    std::string temp_data;
-    while (std::getline(whole_data, line))
-    {
-        // if the line did not start with ===, we add it into temp_data
-        if (line.substr(0, 3) != "===")
-        {
-            temp_data += line + "\n";
-        }
-        if (line.substr(0, 3) == "===")
-        {
-            batch_data.push_back(temp_data);
-            temp_data = "";
-        }
-        // if next line is empty, we add the last temp_data into batch_data
-        if (whole_data.peek() == '\n')
-        {
-            batch_data.push_back(temp_data);
-            temp_data = "";
-        }
-        if (whole_data.eof())
-        {
-            batch_data.push_back(temp_data);
-        }
-    }
-
-    whole_data.close();
-    return batch_data;
-}
-
-std::tuple<Point, double, unsigned int> FileIO::originAndDepth_depricated(const string &batch_data, double min_radius)
-{
-    double x, y, z, nx, ny, nz;
-    istringstream batch_data_in(batch_data);
-    batch_data_in >> x >> y >> z >> nx >> ny >> nz;
-
-    list<Vertex> input_vertices;
-    input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
-
-    // >>> initialize bounding box
-    double xmin, ymin, zmin, xmax, ymax, zmax;
-    xmin = xmax = x;
-    ymin = ymax = y;
-    zmin = zmax = z;
-    // <<<
-
-    // >>> read the rest of the file and find the bounding box
-    while (batch_data_in >> x >> y >> z >> nx >> ny >> nz)
-    {
-        input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
-
-        xmin = x < xmin ? x : xmin;
-        xmax = x > xmax ? x : xmax;
-        ymin = y < ymin ? y : ymin;
-        ymax = y > ymax ? y : ymax;
-        zmin = z < zmin ? z : zmin;
-        zmax = z > zmax ? z : zmax;
-    }
-    // <<<
-    std::cout << input_vertices.size() << " points read" << std::endl;
-
-    double lx = xmax - xmin;
-    double ly = ymax - ymin;
-    double lz = zmax - zmin;
-
-    // Get size of one of the largest dimension
-    double size = lx > ly ? lx : ly;
-    size = size > lz ? size : lz;
-
-    size = 1.1 * size;
-    double margin;
-
-    unsigned int depth = 0;
-    if (min_radius > 0)
-    {
-        depth = (unsigned int)ceil(log2(size / (min_radius)));
-        double adapted_size = pow2(depth) * min_radius;
-        margin = 0.5 * (adapted_size - size);
-        size = adapted_size;
-    }
-    else
-    {
-        std::cerr << "Warning: min_radius has to bigger than 0" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    // The orgin of the octree is the lower left corner (2D) of the bounding box
-    double ox = xmin - margin;
-    double oy = ymin - margin;
-    double oz = zmin - margin;
-    Point origin(ox, oy, oz);
-
-    return std::tuple<Point, double, unsigned int>(origin, size, depth);
-}
-
-bool FileIO::saveMeshDebug(const char *filename, Mesher &mesher)
-{
-    return saveMeshDebug(filename, mesher.getFacets());
 }
 
 bool FileIO::saveMeshDebug(const char *output_filename, const std::list<Facet *> &facets)
@@ -356,53 +237,29 @@ bool FileIO::saveMeshDebug(const char *output_filename, const std::list<Facet *>
     return true;
 }
 
-std::list<Vertex> FileIO::readFromBatchToList_depricated(const string &batch_data)
-{
-    // batch data has format:
-    // x y z nx ny nz
-    // x y z nx ny nz
-    // ...
-
-    double x, y, z, nx, ny, nz;
-    istringstream batch_data_in(batch_data);
-    batch_data_in >> x >> y >> z >> nx >> ny >> nz;
-
-    list<Vertex> input_vertices;
-    input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
-
-    // >>> read the rest of the file and find the bounding box
-    while (batch_data_in >> x >> y >> z >> nx >> ny >> nz)
-    {
-        input_vertices.push_back(Vertex(x, y, z, nx, ny, nz));
-    }
-    // <<<
-    std::cout << input_vertices.size() << " points read" << std::endl;
-
-    return input_vertices;
-}
  
- std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> FileIO::readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size)
- {
-    list<Vertex> input_vertices;
+std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> FileIO::readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size)
+{
+list<Vertex> input_vertices;
 
-    for (size_t i = 0; i < batch_size; i++) {
-        const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
-        const std::vector<Point3D> &points = sensor_frames[batch_index + i].points;
-        for (const auto &point : points) {
-            // Each point also have normal. it is calculated by (tx, ty, tz) - (xi, yi, zi) and normalize it.
-            double tx = pose(0, 3);
-            double ty = pose(1, 3);
-            double tz = pose(2, 3);
-            Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
-    
-            input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
-        }
+for (size_t i = 0; i < batch_size; i++) {
+    const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
+    const std::vector<Point3D> &points = sensor_frames[batch_index + i].points;
+    for (const auto &point : points) {
+        // Each point also have normal. it is calculated by (tx, ty, tz) - (xi, yi, zi) and normalize it.
+        double tx = pose(0, 3);
+        double ty = pose(1, 3);
+        double tz = pose(2, 3);
+        Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
+
+        input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
     }
+}
 
-    const Eigen::Matrix<double, 3, 4> pose = sensor_frames[batch_index + size_t(batch_size/2)].pose;
-    
-    return std::make_pair(input_vertices, pose);
- }
+const Eigen::Matrix<double, 3, 4> pose = sensor_frames[batch_index + size_t(batch_size/2)].pose;
+
+return std::make_pair(input_vertices, pose);
+}
 
 bool FileIO::debugSaveLineset(const char *output_filename, const Edge_star_list &border_edges)
 {

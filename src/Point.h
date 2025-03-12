@@ -69,11 +69,23 @@ public:
      */
     Point& operator=(const Point& other);
 
+    /**
+     * @brief set the octree node leaf
+     * This function does nothing. It exists to ensure default implementation of the function.
+     * This function is meant to be overridden by the derived classes.
+     * @param node octree node
+     */
     void setOctreeNodeLeaf(TOctreeNode<Point> *node)
     {
         (void)node; // Mark the parameter as unused
     };
 
+    /**
+     * @brief output operator
+     * @param out output stream
+     * @param v point
+     * @return output stream
+     */
     friend std::ostream &operator<<(std::ostream &out, const Point &v);
 
 private:

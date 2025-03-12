@@ -116,38 +116,6 @@ bool Vertex::isCompatibleWith(const Edge &e) const
     return false;
 }
 
-bool Vertex::isCompatibleWith(const Vertex &v1, const Vertex &v2) const
-{
-
-    // By defualt, we assume that the v0, v1, v2 form a postive vector compare to all normals.
-
-    double ntx, nty, ntz;
-
-    // cross_product(x() - v1.x(), y() - v1.y(), z() - v1.z(),
-    //               v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
-    //               ntx, nty, ntz);
-    cross_product(v1.x() - x(), v1.y() - y(), v1.z() - z(),
-                  v2.x() - v1.x(), v2.y() - v1.y(), v2.z() - v1.z(),
-                  ntx, nty, ntz);
-    normalize(ntx, nty, ntz);
-
-    // Flip the normal such that it aligns with *this vertex.
-    if (ntx * nx() + nty * ny() + ntz * nz() < -1e-16)
-    {
-        ntx = -ntx;
-        nty = -nty;
-        ntz = -ntz;
-        std::cout << "Flipped the normal." << std::endl;
-    }
-    // ntx, nty, ntz is now the normal of the plane defined by *this, v1 and v2.
-
-    if ((ntx * v1.nx() + nty * v1.ny() + ntz * v1.nz() > -1e-16) && (ntx * v2.nx() + nty * v2.ny() + ntz * v2.nz() > -1e-16))
-        return true;
-
-    return false;
-}
-
-// added by mauhing
 bool Vertex::isCompatibleWithAndHandnessCheck(const Vertex &v1, const Vertex &v2, bool &changeHandness) const
 {
     changeHandness = false;

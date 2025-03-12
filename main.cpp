@@ -82,9 +82,7 @@ int main(int argc, char **argv)
     // Read the input file
 
     // Turn the whole data into batch data
-    // std::vector<string> batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
 
-    //batch_data = FileIO::readIntoFileBatch_PointOnly(infile.c_str());
     std::vector<SensorFrame> sensor_frames = FileIO::readIntoFileBatch(infile.c_str());
     if (sensor_frames.empty())
     {
@@ -175,7 +173,7 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        if (batch_index == options.policy_main_mesh_activation_batch_number) {
+        if (batch_index == static_cast<size_t>(options.policy_main_mesh_activation_batch_number)) {
             //std::cout << "Setting main region" << std::endl;
             //std::this_thread::sleep_for(std::chrono::seconds(10));
             mesher.setMainRegion();
@@ -214,14 +212,6 @@ int main(int argc, char **argv)
 
     should_exit = true;
     vis_thread.join();
-    #ifdef _DEBUG
-    if (!FileIO::saveMeshDebug("_final.txt", mesher))
-    {
-        std::cerr << "Pb saving the mesh; exiting." << std::endl;
-        return EXIT_FAILURE;
-    }
-    std::cout << "Mesh saved in" << "_final.txt" << std::endl;
-    #endif
 
     // Open3D save ply
     // time it
@@ -239,6 +229,8 @@ int main(int argc, char **argv)
     {
         std::cout << "O3d ply file not saved" << std::endl;
     }
+
+    // Print the time taken to save the mesh
     std::time(&end_o3d);
     double seconds_o3d = std::difftime(end_o3d, start_o3d);
     int minutes_o3d = static_cast<int>(seconds_o3d) / 60;

@@ -267,7 +267,6 @@ bool Mesher::trySeed(Vertex &v)
                 continue;
             }
             // >>>
-            // continue tommorrow with adding the flipIndex part.
             Vertex *v0 = &v;
             Vertex *v1 = &vtest;
             Vertex *v2 = candidate;
@@ -285,7 +284,6 @@ bool Mesher::trySeed(Vertex &v)
             e1 = v.getLinkingEdge(candidate);
             e2 = vtest.getLinkingEdge(candidate);
             e3 = v.getLinkingEdge(&vtest);
-
 
             if (e1->getType() == Edge::FRONT)
                 m_edge_front.push_front(e1);

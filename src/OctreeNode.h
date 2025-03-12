@@ -107,8 +107,11 @@ protected:
      * (empty if the node is not a leaf)
      */
     std::unordered_set<T *> m_points;
-    // list<T> m_points; // It stores vertices, not pointers to vertices.
 
+    /**
+     * @brief buffer of points contained in the node
+     * When the downsampling is done, this container will have no points.
+     */
     std::unordered_set<T *> m_points_buffer;
 
 public:
@@ -281,16 +284,6 @@ public:
     // typename std::list<T>::iterator points_end();
     typename std::unordered_set<T *>::const_iterator points_end();
 
-    /** @brief get a const pointer to the list of points
-     * @return const pointer to the beginning of the list
-     */
-    // typename std::list<T>::const_iterator points_begin() const;
-
-    /** @brief get a const pointer to the end of the list of points
-     * @return const pointer to the end of 'points'
-     */
-    // typename std::list<T>::const_iterator points_end() const;
-
     /** @brief add a point to the list of points included in the cell
      * PREREQUISITE: the node is a leaf in the octree
      * @param pt point to add
@@ -304,12 +297,27 @@ public:
      */
     TOctreeNode<T> *initializeChild(unsigned int index, Point origin);
 
+    /** @brief get the points contained in the node
+     * @return the points contained in the node
+     */
     std::unordered_set<T *> &GetPoints();
 
+    /**
+     * @brief remove a point from the node
+     */
     void removeElement(T *element);
 
+    /**
+     * @brief check if the node is a leaf
+     * @return true if the node is a leaf
+     */
     bool isLeaf() const;
 
+    /**
+     * @brief downsample the node
+     * @param max_points maximum number of points in the node
+     * @param recruited_points vector of points to recruit
+     */
     void downSample(const int max_points, std::vector<T*> &recruited_points); 
 
     /**
@@ -318,6 +326,9 @@ public:
      */
     unsigned int getOrdinalPositionForChild() const;
 
+    /**
+     * @brief check if all points are in the volume
+     */
     void checkAllPointsInVolume();
 };
 

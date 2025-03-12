@@ -34,17 +34,22 @@ public: // constructor+destructor
     /** @brief constructor from coordinates and facet*/
     BallCenter(double x, double y, double z, Facet *facet);
 
+    /** @brief constructor from point and facet*/
     BallCenter(const Point &point, Facet *facet);
 
     /** @brief default destrictor*/
     ~BallCenter();
 
-    // copy constructor
+    /** @brief copy constructor*/
     BallCenter(const BallCenter &other);
 
 public: // accessors + modifiers
+    /** @brief set the octree node*/
     void setOctreeNodeLeaf(TOctreeNode<BallCenter> *node);
 
+    /** @brief get the facet
+     * @return the facet
+     */
     Facet *getFacet() const;
 };
 #endif

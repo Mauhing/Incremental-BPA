@@ -22,6 +22,7 @@
 #include "Vertex.h"
 #include <iostream>
 
+// forward declaration
 class Facet;
 
 /**
@@ -30,6 +31,7 @@ class Facet;
  *
  * An edge stores pointers to its two end-vertices and its two adjacent facets
  * along with its type (inner, front or border)
+ * The edge also has orientation, which is the direction of the edge
  */
 class Edge
 {
@@ -58,7 +60,6 @@ private: // properties
 
   /** @brief edge type (0: border, 1: front edge, 2: inner edge)*/
   EdgeType m_type;
-  // int m_type;
 
 public:
   // constructor+destructor
@@ -84,11 +85,6 @@ public: // accessors+modifiers
   @return target vertex
   */
   Vertex *getTarget() const;
-
-  /** @brief recompute orientation
-   * to be called after adding a first facet to the edge
-   */
-  void updateOrientation();
 
   /** @brief access facet 1
    * @return facet 1
@@ -116,6 +112,7 @@ public: // accessors+modifiers
 
   /** @brief remove a facet adjacent to an edge
    * Prerequisite the facet actually contains the edge
+   * This function also ensure the orientation of the edge is correct
    * @param facet the facet to remove
    * @return true if the facet was successfully removed, false otherwise
    */
@@ -131,23 +128,35 @@ public: // accessors+modifiers
    * @return type of the edge (0,1,2)
    */
   EdgeType getType() const;
-  // int getType() const;
 
   /** @brief set edge type
-   * @param type (0,1,2)
+   * @param type BORDER, FRONT or INNER
    */
-  // void setType(int type);
-
   void setType(EdgeType type);
 
+  /** @brief get the other facet of the edge another then the one given as argument
+   * @param f the facet
+   * @return the other facet if it exists, nullptr otherwise
+   */
   Facet *anotherFacet(const Facet *f) const;
 
+  /** @brief flip the orientation of the edge
+   */
   void flipOrientation();
 
+  /** @brief check if the edge is aligning with the facet
+   * @return if true, flip is needed, otherwise no flip is needed
+   */
   bool aligningWithFacet1();
 
+  /** @brief find the next boundary edge
+   * @return the next boundary edge
+   */
   Edge* findNextBoundaryEdge();
 
+  /** @brief get the square length of the edge
+   * @return the square length of the edge
+   */
   double getSqLength() const;
 
 };

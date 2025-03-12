@@ -28,8 +28,10 @@ class Vertex;
 class Edge;
 class Facet;
 
-using namespace std;
 
+/**
+ * @brief type of reconstruction
+ */
 enum ReconstructionType
 {
     EXPANSION,
@@ -46,7 +48,7 @@ enum ReconstructionType
  * @return common element if any, nullptr if none
  */
 template <class T>
-T getCommonElement(const set<T> &set1, const set<T> &set2)
+T getCommonElement(const std::set<T> &set1, const std::set<T> &set2)
 {
 
     // Let be a little careful here.
@@ -57,10 +59,10 @@ T getCommonElement(const set<T> &set1, const set<T> &set2)
     if (set1.empty() || set2.empty())
         return nullptr;
 
-    typename set<T>::const_iterator it1 = set1.begin();
-    typename set<T>::const_iterator it1End = set1.end();
-    typename set<T>::const_iterator it2 = set2.begin();
-    typename set<T>::const_iterator it2End = set2.end();
+    typename std::set<T>::const_iterator it1 = set1.begin();
+    typename std::set<T>::const_iterator it1End = set1.end();
+    typename std::set<T>::const_iterator it2 = set2.begin();
+    typename std::set<T>::const_iterator it2End = set2.end();
 
     if (*it1 > *set2.rbegin() || *it2 > *set1.rbegin())
         return nullptr;
@@ -145,6 +147,12 @@ inline static void normalize(double &vx, double &vy, double &vz)
     vz = vz * t;
 }
 
+/**
+ * @brief check if an element is not in a set
+ * @param element element to check
+ * @param mySet set to check
+ * @return true if the element is not in the set, false otherwise
+ */
 namespace utilities
 {
     template <typename K>

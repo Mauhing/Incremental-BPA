@@ -41,46 +41,35 @@ public:
     /** @brief destructor*/
     ~FileIO();
 
-public:
-    /** @brief read points from a file
-     * @param filename name of the file to read points from
-     * @param octree to sort and store the points in
-     * @param min_radius if positive, create the octree such that
-     * the smallest cell has size 2*min_radius
-     * @return false if the file could not be opened
-     */
-    static bool readAndSortPoints(const char *filename, OctreeVertices &octree,
-                                  double min_radius = -1);
-
-    // added by mauhing
-    static std::vector<std::string> readIntoFileBatch_PointOnly(const char *filename);
-    
-    static std::vector<SensorFrame> readIntoFileBatch(const char *filename);
-
-    static bool saveMeshDebug(const char *filename, Mesher &mesher);
-
-    static bool saveMeshDebug(const char *filename, const std::list<Facet *> &facets);
-
-    static std::tuple<Point, double, unsigned int> originAndDepth_depricated(const string &batch_data, double min_radius);
-
-    static std::tuple<Point, double, unsigned int> originAndDepth(const std::vector<SensorFrame> &sensor_frames, double min_radius);
-    
-private:
-    /** @brief save all vertices contained in a node
-     * @param node node to save from
-     * @param f stream to save to
-     */
-    static void saveContent(OctreeNodeV *node, std::ofstream &f);
-
-public:
-    static std::list<Vertex> readFromBatchToList_depricated(const string &batch_data);
-    static std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size);
-
 private:
     static std::string baseOutputFilename;
 
 public:
     static void setBaseOutputFilename(const std::string &filename);
+
+public:
+    /** @brief read points and poses from a file
+     * @param filename name of the file to read points from
+     * @return the points and poses
+     */ 
+    static std::vector<SensorFrame> readIntoFileBatch(const char *filename);
+
+    /** @brief get the origin and depth of the points
+     * @param sensor_frames the sensor frames
+     * @param min_radius the minimum radius
+     * @return the origin and depth
+     */
+    static std::tuple<Point, double, unsigned int> originAndDepth(const std::vector<SensorFrame> &sensor_frames, double min_radius);
+    
+
+public:
+    /** @brief read points and poses from a file
+     * @param sensor_frames the sensor frames
+     * @param batch_index the batch index
+     * @param batch_size the batch size
+     * @return the points and poses
+     */
+    static std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size);
 
 public: // debug
     /** @brief save triangulation
@@ -88,15 +77,43 @@ public: // debug
      * @param mesher name of the mesher to save vertices and facets from
      * @return false if something went wrong
      */
-    static bool debugSavePLY(const char *filename, Mesher &mesher);
-
     static bool debugSaveLineset(const char *filename, const Edge_star_list &border_edges);
 
+    /** @brief save points
+     * @param filename name of the file to save to
+     * @param octree the octree to save
+     * @return false if something went wrong
+     */
     static bool debugSavePoints(const char *filename, OctreeVertices &octree);
 
+    /** @brief save ball centers
+     * @param filename name of the file to save to
+     * @param ball_centers the ball centers to save
+     * @param radius the radius of the ball
+     * @return false if something went wrong
+     */
     static bool debugSaveBallCenters(const char *filename, const Point_UnOrdSet &ball_centers, const double &radius);
 
+    /** @brief save points inside balls
+     * @param filename name of the file to save to
+     * @param vertices_inside_balls the points inside balls to save
+     * @return false if something went wrong
+     */
     static bool debugSavePoints(const char *filename, const Point_UnOrdSet &vertices_inside_balls);
+
+    /** @brief save the mesh in a ply file
+     * @param filename name of the file to save the mesh to
+     * @param facets the facets to save
+     * @return false if the file could not be opened
+     */
+    static bool saveMeshDebug(const char *filename, const std::list<Facet *> &facets);
+
+private:
+    /** @brief save all vertices contained in a node
+     * @param node node to save from
+     * @param f stream to save to
+     */
+    static void debugSaveContent(OctreeNodeV *node, std::ofstream &f);
 };
 
 #endif

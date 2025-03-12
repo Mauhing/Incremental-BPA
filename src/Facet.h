@@ -82,21 +82,10 @@ public: // accessors + modifiers
      */
     Vertex *vertex(unsigned int index) const;
 
-    /** @brief get edge opposite to vertex i
-     * @param index index of the edge
-     * @return edge
-     */
-    Edge *edge(unsigned int index) const;
-
     /** @brief get facet center
      * @return ball center
      */
     const Point &getBallCenter() const;
-
-    /** @brief set Ball center
-     * @param point ball center point
-     */
-    void setBallCenter(Point &point);
 
     /** @brief test if contains vertex
      * @param vertex test vertex
@@ -110,25 +99,48 @@ public: // accessors + modifiers
      */
     Vertex *getVertex(unsigned int index);
 
-private:
-    static std::set<Edge *> sb_recordedNewBoundaryEdges;
-
 public:
-
+    /** @brief set the ball center pointer
+     * @param ball_center_ptr pointer to the ball center
+     */
     void setBallCenterPtr(BallCenter *ball_center_ptr);
 
-public:
+    /** @brief get the next vertex
+     * it follows the orientation of the facet
+     * @param v the vertex
+     * @return the next vertex
+     */
     Vertex *nextVertex(const Vertex *v) const;
 
+    /** @brief get the next vertex
+     * it follows the orientation of the facet, in reverse order.
+     * @param v the vertex
+     * @return the previous vertex
+     */
     Vertex *previousVertex(const Vertex *v) const;
 
+    /** @brief get the index of the vertex
+     * @param v the vertex
+     * @return the index of the vertex. It is 0, 1 or 2. -1 if the vertex is not found.
+     */
     int getVertexIndex(const Vertex *v) const;
 
-    bool isRightOrientation() const;
-
+    /** @brief get the index of the facet
+     * @return the index of the facet
+     */
     unsigned int getIndex() const;
-    
+
+    /** @brief get the edges of the facet
+     * @return the edges of the facet
+     */
     std::set<Edge*> getEdges();
+
+#ifdef _DEBUG
+    /** @brief check if the facet is oriented correctly. This is a debug function.
+     * @return true if the facet is oriented correctly, false otherwise
+     */
+    bool isRightOrientation() const;
+#endif
 };
 
 #endif

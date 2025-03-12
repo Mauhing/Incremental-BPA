@@ -428,24 +428,8 @@ void TOctree<T>::debugPrintStats()
 
 #ifdef _DEBUG
 template <class T>
-template <typename U>
-TOctree<U> TOctree<T>::debugCopySkeleton() const
-{
-    TOctree<U> new_octree;
-    new_octree.setDepth(m_root_depth);
-    Point origin = m_origin;
-    new_octree.initialize(origin, m_size);
-    return new_octree;
-}
-
-template <class T>
 TOctree<T>::TOctree(const TOctree<T> &other)
 {
-    std::cout << "Copy constructor called" << std::endl;
-    std::cout << "Copy constructor called" << std::endl;
-    std::cout << "Copy constructor called" << std::endl;
-    std::cout << "Copy constructor called" << std::endl;
-    std::cout << "Copy constructor called" << std::endl;
     std::cout << "Copy constructor called" << std::endl;
     this->setDepth(other.getDepth());
     Point origin = other.getOrigin();
@@ -453,13 +437,16 @@ TOctree<T>::TOctree(const TOctree<T> &other)
 }
 #endif
 
+#ifdef _DEBUG
 template <class T>
 void TOctree<T>::integrityCheck()
 {
     TOctreeNode<T> *root = getRoot(); 
     checkIntegrity(root);
 }
+#endif
 
+#ifdef _DEBUG
 template <class T>
 static void checkIntegrity(TOctreeNode<T> *node)
 {
@@ -532,3 +519,5 @@ static void checkIntegrity(TOctreeNode<T> *childnode, Point suspect_origin, doub
 }
 
 #endif
+
+#endif //OCTREE_HPP

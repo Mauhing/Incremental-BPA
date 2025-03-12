@@ -25,15 +25,9 @@
 #include "Point.h"
 #include "types.h"
 #include "utilities.h"
-// #include "OctreeNode.h"
 
-// class Edge;
-// class Facet;
-// class OctreeNodeV;
 template <typename T>
 class TOctreeNode; // Forward declaration
-
-//using namespace std;
 
 struct VertexDiskFanInfo
 {
@@ -55,6 +49,9 @@ struct VertexDiskFanInfo
 class Vertex : public Point
 {
 public:
+    /**
+     * @brief type of vertex
+     */
     enum VertexType : unsigned int
     {
         ORPHAN = 0,
@@ -84,9 +81,9 @@ private: // properties
     unsigned int m_index;
 
     /** @brief tag: 0 if orphan, 1 if on front, 2 if inner*/
-    // unsigned int m_type;
     VertexType m_type;
 
+    /** @brief pointer to the octree node leaf*/
     TOctreeNode<Vertex> *m_octreeNodeLeaf;
 
 public: // constructor+destructor
@@ -162,18 +159,13 @@ public: // accessors + modifiers
      * */
     double nz() const;
 
-    /** @brief test if three points are compatible
-     *
-     * test that their normals have positive scalar product with
-     * the normal to the facet formed by those three points
-     * (useful to find a seed triangle)
-     * @param v1 first test vertex
-     * @param v2 second test vertex
-     * @return true if the points are compatible
+    /**
+     * @brief check if two vertices are compatible with each other and if the normal is compatible with the edge
+     * @param v1 first vertex
+     * @param v2 second vertex
+     * @param changeHandness true if we need to change the order of the vertices, false otherwise
+     * @return true if the vertices are compatible, false otherwise
      */
-    bool isCompatibleWith(const Vertex &v1, const Vertex &v2) const;
-
-    // added by mauhing
     bool isCompatibleWithAndHandnessCheck(const Vertex &v1, const Vertex &v2, bool &changeHandness) const;
 
     /** @brief test if a vertex is compatible with an oriented edge
@@ -209,21 +201,40 @@ public: // accessors + modifiers
      */
     Vertex *findBorder(Vertex *test);
 
+    /** @brief set the octree node leaf
+     * @param node octree node leaf
+     */
     void setOctreeNodeLeaf(TOctreeNode<Vertex> *node);
 
-public: // added by mauhing
+public: 
+    /** @brief get the set of adjacent facets
+     * @return set of adjacent facets
+     */
     const Facet_set &adjacentFacets() const;
 
+    /** @brief clear the set of adjacent edges and facets
+     */
     void clearAdjacentEdgesAndFacets();
 
+    /** @brief check if the vertex has a disk
+     * @return true if the vertex has a disk, false otherwise
+     */
     bool hasDisk();
 
+    /** @brief get the disk fan information
+     * @return disk fan information
+     */
     VertexDiskFanInfo getDiskFan();
 
+    /** @brief remove and delete the vertex
+     */
     void remove_and_delete();
 
 private:
-    std::pair<bool, Facet_set> extractConnectedFacets(const Facet_set &facets) const;   
-
+    /** @brief extract connected facets
+     * @param facets set of facets
+     * @return pair of boolean and set of facets
+     */
+    std::pair<bool, Facet_set> extractConnectedFacets(const Facet_set &facets) const;
 };
 #endif

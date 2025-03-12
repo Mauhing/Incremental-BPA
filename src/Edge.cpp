@@ -103,7 +103,6 @@ bool Edge::addAdjacentFacet(Facet *facet)
     if (m_facet1 == nullptr)
     {
         m_facet1 = facet;
-        //updateOrientation(); // TODO: check if this is necessary
         setType(EdgeType::FRONT);
         return true;
     }
@@ -115,7 +114,10 @@ bool Edge::addAdjacentFacet(Facet *facet)
         return true;
     }
 
-    std::cout << "Already two triangles" << endl;
+    #ifdef _DEBUG
+    std::cout << "Already two triangles" << std::endl;
+    std::exit(EXIT_FAILURE);
+    #endif
     return false;
 }
 
@@ -148,43 +150,6 @@ bool Edge::removeAdjacentFacet(Facet *facet)
     return false;
 }
 
-void Edge::updateOrientation()
-{
-    Vertex *opp = getOppositeVertex();
-#ifdef _DEBUG
-    if (opp == nullptr)
-    {
-        std::cerr << "\033[1;31mEdge::updateOrientation() - Opposite vertex is null\033[0m" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-#endif
-
-    double vx, vy, vz;
-
-    cross_product(m_tgt->x() - m_src->x(), m_tgt->y() - m_src->y(),
-                  m_tgt->z() - m_src->z(), opp->x() - m_src->x(),
-                  opp->y() - m_src->y(), opp->z() - m_src->z(),
-                  vx, vy, vz);
-    normalize(vx, vy, vz);
-
-    double nx, ny, nz;
-    nx = m_src->nx() + m_tgt->nx() + opp->nx();
-    ny = m_src->ny() + m_tgt->ny() + opp->ny();
-    nz = m_src->nz() + m_tgt->nz() + opp->nz();
-    normalize(nx, ny, nz);
-
-    if (vx * nx + vy * ny + vz * nz < 0)
-    {
-        Vertex *temp = m_src;
-        m_src = m_tgt;
-        m_tgt = temp;
-
-#ifdef _DEBUG
-        std::cerr << "\033[1;31mEdge::updateOrientation() - Edge flipped\033[0m" << std::endl;
-        std::exit(EXIT_FAILURE);
-#endif
-    }
-}
 
 bool Edge::hasVertex(Vertex *vertex) const
 {
@@ -197,11 +162,6 @@ Edge::EdgeType Edge::getType() const
 {
     return m_type;
 }
-
-// void Edge::setType(int type)
-//{
-//     m_type = type;
-// }
 
 void Edge::setType(EdgeType type)
 {
@@ -255,11 +215,12 @@ bool Edge::aligningWithFacet1()
 
     if ((facetSourceIndex + 1) % 3 == facetTargetIndex)
     {
-        // This is good.
+        // No flip needed
         return false;
     }
     else
     {
+        // Flip needed
         flipOrientation();
         return true;
     } 

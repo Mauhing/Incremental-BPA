@@ -20,7 +20,6 @@
 #include "BallCenter.h"
 
 // Initialize the static member.
-//std::set<Edge *> Facet::sb_recordedNewBoundaryEdges;
 
 Facet::Facet(Vertex *v0, Vertex *v1, Vertex *v2, const Point &ball_center, unsigned int index)
     : m_ball_center(ball_center), m_ball_center_ptr(nullptr), m_index(index)

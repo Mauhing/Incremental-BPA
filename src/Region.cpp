@@ -55,11 +55,10 @@ double Boundary::getSqLength() const
 
 Region::Region(const std::unordered_set<Facet*>& land, const Boundary& coast, const std::list<Boundary>& lakes)
 {
-    this->land = land;
-    this->coast = coast;
-    this->lakes = lakes;
-
-    this->sq_length = coast.getSqLength();
+    m_land = land;
+    m_coast = coast;
+    m_lakes = lakes;
+    m_sq_length = coast.getSqLength();
 }
 
 Region::~Region()
@@ -69,32 +68,32 @@ Region::~Region()
 
 Region::Region(const Region& other)
 {
-    this->land = other.land;
-    this->coast = other.coast;
-    this->lakes = other.lakes;
-    this->sq_length = other.sq_length;
+    m_land = other.m_land;
+    m_coast = other.m_coast;
+    m_lakes = other.m_lakes;
+    m_sq_length = other.m_sq_length;
 }
 
 Region& Region::operator=(const Region& other)
 {
-    this->land = other.land;
-    this->coast = other.coast;
-    this->lakes = other.lakes;
-    this->sq_length = other.sq_length;
+    m_land = other.m_land;
+    m_coast = other.m_coast;
+    m_lakes = other.m_lakes;
+    m_sq_length = other.m_sq_length;
     return *this;
 }
 
 double Region::getSqLength() const
 {
-    return sq_length;
+    return m_sq_length;
 }
 
 unsigned int Region::getNumFacets() const
 {
-    return static_cast<unsigned int>(land.size());
+    return static_cast<unsigned int>(m_land.size());
 }
 
 std::unordered_set<Facet*> Region::getFacets() const
 {
-    return land;
+    return m_land;
 }
