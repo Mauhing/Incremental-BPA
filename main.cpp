@@ -66,6 +66,8 @@ int main(int argc, char **argv)
     std::cout << "Policy main mesh: " << (options.policy_main_mesh ? "true" : "false") << std::endl;
     std::cout << "Policy main mesh activation batch number: " << options.policy_main_mesh_activation_batch_number << std::endl;
     
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the base output filename
     FileIO::setBaseOutputFilename(options.output_file.erase(options.output_file.find(".ply"), 4));
@@ -173,9 +175,9 @@ int main(int argc, char **argv)
 
         mesher.batchReconstruct(vertices);
 
-        if (batch_index == 10) {
-            std::cout << "Setting main region" << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+        if (batch_index == options.policy_main_mesh_activation_batch_number) {
+            //std::cout << "Setting main region" << std::endl;
+            //std::this_thread::sleep_for(std::chrono::seconds(10));
             mesher.setMainRegion();
             mesher.removeNonMainFacets();
         }
@@ -197,7 +199,7 @@ int main(int argc, char **argv)
         //std::cout << "Press Enter to exit..." << std::endl;
         //std::cin.get();
         // sleep for 1 second 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        //std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     std::time(&end_batch);

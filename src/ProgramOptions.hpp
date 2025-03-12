@@ -92,7 +92,8 @@ ProgramOptions parseCommandLine(int argc, char **argv)
             }
         }
     }
-    else {
+    else 
+    {
         // Reset optind to parse arguments again
         optind = 1;
         
@@ -102,8 +103,8 @@ ProgramOptions parseCommandLine(int argc, char **argv)
             switch (c)
             {
             case 'i':
-            options.input_file = optarg;
-            break;
+                options.input_file = optarg;
+                break;
             case 'o':
                 options.output_file = optarg;
                 break;
