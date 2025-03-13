@@ -1082,7 +1082,7 @@ void Mesher::checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices)
     {
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Remove the collision facets
-        this->removeFacets<Facet_set, true>(collision_facets); // This function is very wrong
+        this->removeFacets<Facet_set, true>(collision_facets); 
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     }
 }
@@ -1099,10 +1099,6 @@ void Mesher::addPointsToOctreeVertices(const std::list<Vertex> &vertices)
     }
 }
 
-const std::vector<Vertex *> &Mesher::getFreshVertices() const
-{
-    return m_fresh_vertices;
-}
 
 void Mesher::clearFreshVertices()
 {
@@ -1187,11 +1183,13 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     // Clear fresh vertices
     this->clearFreshVertices();
 
+    // Clear orphan vertices
+    this->clearOrphanVertices();
+
+#ifdef _DEBUG
     // Clear debug render facets
     this->clearDebugRender();
-
-    // Clear orphan vertices
-    //this->clearOrphanVertices();
+#endif
 }
 
 bool Mesher::removeFanFanSingular()

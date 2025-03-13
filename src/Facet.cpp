@@ -214,6 +214,7 @@ int Facet::getVertexIndex(const Vertex *v) const
     return -1;
 }
 
+#ifdef _DEBUG
 bool Facet::isRightOrientation() const
 {
     // Get adjacent facets through each edge
@@ -222,12 +223,10 @@ bool Facet::isRightOrientation() const
         Vertex* v2 = m_vertex[(i+1)%3];
         Edge* edge = v1->getLinkingEdge(v2);
 
-#ifdef _DEBUG
         if(edge == nullptr) {
             std::cerr << "Edge is nullptr" << std::endl;
             std::exit(EXIT_FAILURE);
         }
-#endif
 
         Facet* adjacent = edge->anotherFacet(this);
         if(adjacent == nullptr) {
@@ -249,6 +248,7 @@ bool Facet::isRightOrientation() const
     return true;
     
 }
+#endif
 
 unsigned int Facet::getIndex() const
 {

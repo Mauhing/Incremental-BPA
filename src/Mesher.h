@@ -192,9 +192,12 @@ protected: // class members
     /** @brief number of current index facet*/
     unsigned int m_facet_idx;
 
-
+    /** @brief list of fresh vertices*
+     * @details New triangle mesh in the current batch reconstruction
+     */
     std::vector<Vertex *> m_fresh_vertices;
 
+    /** @brief main region*/
     Region m_main_region;
 
 public: // constructor-destructor
@@ -222,14 +225,6 @@ public: // reconstruction methods
      */
     void reconstruct(const std::list<double> &radii);
 
-    // void cont_reconstruct();
-    // void cont_reconstruct(const std::list<double> &radii);
-
-    /** @brief parallel triangulation
-     * @param radii a vector of radius
-     */
-    void parallelReconstruct(std::list<double> &radii);
-
     /** @brief fill the triangular holes that remain due to wrong
      * normal orientation
      * (post-processing methods)
@@ -255,21 +250,6 @@ public: // accessors+modifyers
      */
     void setBallRadius(double r);
 
-    /** @brief get ball radius
-     * @return ball radius
-     */
-    double getBallRadius() const;
-
-    /** @brief get square ball radius
-     * @return square ball radius
-     */
-    double getSquareBallRadius() const;
-
-    /** @brief get the number of vertices
-     * @return number of mesh vertices
-     */
-    unsigned int nVertices() const;
-
     /** @brief get the number of facets
      * @return number of mesh facets
      */
@@ -279,10 +259,6 @@ public: // accessors+modifyers
      * @return number of border edges
      */
     unsigned int nBorderEdges() const;
-
-    // unsigned int getNumBallCenters() const;
-
-    // const Point_UnOrdSet& getBallCenters() const;
 
     /** @brief get access to the mesh vertices
      * @return begin iterator of the vertices
@@ -304,8 +280,8 @@ public: // accessors+modifyers
      */
     Facet_star_list::const_iterator facets_end() const;
 
-    const std::vector<Vertex *> &getFreshVertices() const;
-
+    /** @brief clear the vertices of the current batch reconstruction
+     */
     void clearFreshVertices();
 
 private: // auxilliary methods for performing the triangulation
@@ -343,15 +319,13 @@ private: // auxilliary methods for performing the triangulation
      * @param v3 third vertex
      * @param neighbors the set of 2r neighbors of v1
      * @param center center of the facet circumsphere if it exists
-     * @return true if the facet is valid, false otherwose
+     * @param changeHandness true if we need to change the handness of the facet
+     * @return true if the facet is valid, false otherwise
      */
-    // bool tryTriangleSeed(Vertex *v1,Vertex *v2, Vertex *v3,
-    //                      Neighbor_star_map &neighbors,
-    //                      Point &center) const;
     bool tryTriangleSeed(Vertex *v1, Vertex *v2, Vertex *v3,
                          Neighbor_star_map &neighbors,
                          Point &center,
-                         bool &flipIndex) const;
+                         bool &changeHandness) const;
 
     /** @brief expand the triangulation around each of the front edge*/
     void expandTriangulation();
@@ -422,8 +396,105 @@ private: // auxilliary methods for performing the triangulation
      */
     void changeRadius(double radius);
 
+public:
+    /** @brief remove facets*/
+    template <typename SetType, bool exile = false>
+    void removeFacets(SetType &boundary_facets);
+
+    /** @brief remove facet*/
+    template <bool exile = false>
+    void removeFacet(Facet *facet);
+
+    /** @brief remove orphan and update*/
+    void removeOrphanAndUpdate(TOctreeNode<Vertex> *node);
+
+    /** @brief get facets*/
+    const std::list<Facet *> &getFacets() const;
+
+    /** @brief debug print stats*/
+    void debugPrintStats();
+
+    /** @brief compute collision facets*/
+    Facet_set computeCollisionFacets(const std::list<Vertex *> &vertices);
+
+    /** @brief clear orphan vertices*/
+    void clearOrphanVertices();
+
+    /** @brief exile vertex*/
+    void exileVertex(Vertex *vertex);
+
+    /** @brief batch reconstruct*/
+    void batchReconstruct(const std::list<Vertex> &vertices);
+
+    /** @brief add points to octree vertices*/
+    void addPointsToOctreeVertices(const std::list<Vertex> &vertices);
+
+    /** @brief expand octree*/
+    void expandOctree(const std::list<Vertex> &vertices);
+
+    /** @brief check and remove collision facets*/
+    void checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices);
+
+private: // create facets
+    /** @brief create and add facet*/
+    void createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center);
+
+    /** @brief create and add facet*/
+    void createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center);
+
+private:
+    /** @brief reset boundary edges*/
+    void resetBoundaryEdges();
+
+public: // Disk-Fan singular
+    /** @brief remove disk-fan singular*/
+    bool removeFanFanSingular();
+
+public: // Detect and remove Disk-Fan singular Fan
+    /** @brief remove disk-fan singular*/
+    bool removeDiskFanSingular();
+
+    /** @brief clear fresh facets*/
+    void clearFreshFacets()
+    {
+        m_fresh_facets.clear();
+    }
+
+private: // Check non-manifold vertices
+    /** @brief list of fresh facets*/
+    Facet_UnOrdSet m_fresh_facets;
+
+    /** @brief add a fresh facet*/
+    void addFreshFacet(Facet *facet)
+    {
+        m_fresh_facets.insert(facet);
+    }
+
+public: // Boundaries computation
+    /**
+     * @brief Set the Main Region object
+     */
+    void setMainRegion();
+    
+    /**
+     * @brief Remove non-main facets
+     */
+    void removeNonMainFacets();
+    
+    /**
+     * @brief Get boundaries purely from boarder
+     * @return List of boundaries
+     */
+    std::list<Boundary> getBoundriesPurelyFromBoarder();
+
+// The incremental rendering is not used in the current implementation
+// However, I do not want to remove the code in case we want to use it in the future
 private: // For incremental rendering
+    /** @brief list of facets removed in the current batch reconstruction
+     */
     std::unordered_set<unsigned int> m_batch_facets_removed;
+    /** @brief list of facets added in the current batch reconstruction
+     */
     std::unordered_set<Facet *> m_batch_facets_added;
 
 public: // For incremental rendering
@@ -432,61 +503,18 @@ public: // For incremental rendering
     void clearBatchFacets();
     void removeFromAddBatchFacet(Facet* facet);
 
+
+// Debugging methods
+#ifdef _DEBUG
 public:
-    template <typename SetType, bool exile = false>
-    void removeFacets(SetType &boundary_facets);
+    void mesh_integrityCheck();
+    void checkDegenerateTriangle(Facet* facet) const;
+    void checkFacetsOrientation() const;  
+    void checkOctreeIntegrity();
+    void updateRender();
+#endif
 
-    template <bool exile = false>
-    void removeFacet(Facet *facet);
-
-    void removeOrphanAndUpdate(TOctreeNode<Vertex> *node);
-
-    const std::list<Facet *> &getFacets() const;
-
-    void debugPrintStats();
-
-    Facet_set computeCollisionFacets(const std::list<Vertex *> &vertices);
-
-    void clearOrphanVertices();
-
-    void exileVertex(Vertex *vertex);
-
-    void batchReconstruct(const std::list<Vertex> &vertices);
-
-    void addPointsToOctreeVertices(const std::list<Vertex> &vertices);
-
-    void expandOctree(const std::list<Vertex> &vertices);
-
-    void checkAndRemoveCollisionFacets(const std::list<Vertex*> &vertices);
-
-private: // create facets
-    void createAndAddFacet(Vertex *v1, Vertex *v2, Vertex *v3, const Point &center);
-
-    void createAndAddFacet(Edge *edge, Vertex *vertex, const Point &center);
-
-private:
-    void resetBoundaryEdges();
-
-public: // Boundaries computation
-    bool removeFanFanSingular();
-
-public: // Detect and remove Disk-Fan singular Fan
-    bool removeDiskFanSingular();
-
-    void clearFreshFacets()
-    {
-        m_fresh_facets.clear();
-    }
-
-private: // Check non-manifold vertices
-
-    Facet_UnOrdSet m_fresh_facets;
-
-    void addFreshFacet(Facet *facet)
-    {
-        m_fresh_facets.insert(facet);
-    }
-
+#ifdef _DEBUG
 private: // debug rendering
     mutable std::vector<ColorFacetPtr> m_debug_render_facets;
     mutable std::vector<ColorEdgePtr> m_debug_render_edges;
@@ -530,30 +558,11 @@ public:
         return m_debug_render_vertices;
     }
 
-public:
     const Edge_star_list& debugGetBorderEdges() const
     {
         return m_border_edges;
     }
-
-public:
-    void setMainRegion();
-    
-    void removeNonMainFacets();
-    
-    std::list<Boundary> getBoundriesPurelyFromBoarder();
-
-// Debugging methods
-#ifdef _DEBUG
-public:
-    void mesh_integrityCheck();
-    void checkDegenerateTriangle(Facet* facet) const;
-    void checkFacetsOrientation() const;  
-    void checkOctreeIntegrity();
-    void updateRender();
-
 #endif
-
 };
 
 #endif

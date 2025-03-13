@@ -108,17 +108,19 @@ void Visualizer::visualizationThread(
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 
             renderReceivedVertices(received_vertices, debug_point);
-             
-            //renderBorderEdges(mesher.debugGetBorderEdges(), debug_edge);
+
+            // the first boundary is the boundary with the largest square length
             std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
             renderBoundaries(boundaries, debug_edge);
 
             // rotation
             Eigen::Matrix3d rotation_trans;
             rotation_trans = previous_pose.block<3, 3>(0, 0).transpose();
+
             // translation
             Eigen::Vector3d translation_trans;
             translation_trans = -rotation_trans * previous_pose.block<3, 1>(0, 3);
+
             // back to origin
             Eigen::Matrix4d back_to_origin = Eigen::Matrix4d::Identity();
             back_to_origin.block<3, 3>(0, 0) = rotation_trans;
@@ -135,8 +137,8 @@ void Visualizer::visualizationThread(
             robot_pose_matrix.block<3, 1>(0, 3) = robot_pose.block<3, 1>(0, 3); 
  
             //print the robot pose matrix
-            std::cout << "Robot pose matrix:" << std::endl;
-            std::cout << robot_pose_matrix << std::endl;
+            //std::cout << "Robot pose matrix:" << std::endl;
+            //std::cout << robot_pose_matrix << std::endl;
 
             robot_pose_mesh->Transform(robot_pose_matrix);
             previous_pose = robot_pose_matrix;
