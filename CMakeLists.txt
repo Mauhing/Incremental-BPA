@@ -5,25 +5,30 @@ project(ballpivoting)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# First compile yaml-cpp with ABI=0 in Debug mode (since your main project is in Debug)
+# Add option for debug build first
+option(BUILD_DEBUG "Build in Debug mode" ON)
+
+# Set initial build type based on BUILD_DEBUG
+if(BUILD_DEBUG)
+    set(CMAKE_BUILD_TYPE Debug)
+else()
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# First compile yaml-cpp
 set(YAML_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/yaml-cpp-0.8.0")
 set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "yaml-cpp build shared library" FORCE)
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "yaml-cpp build tests" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "yaml-cpp build tools" FORCE)
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "yaml-cpp build contrib" FORCE)
 
-# Set Debug build type for yaml-cpp before adding subdirectory
-set(CMAKE_BUILD_TYPE_ORIG ${CMAKE_BUILD_TYPE})
-set(CMAKE_BUILD_TYPE Debug)
-
 # Build yaml-cpp with ABI=0
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 add_subdirectory(${YAML_CPP_DIR} EXCLUDE_FROM_ALL)
 
-# Restore original build type
-set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_ORIG})
-
-message(STATUS "YAML library location: ${CMAKE_BINARY_DIR}/third_party/yaml-cpp-0.8.0/libyaml-cpp.a")
+# Update the message to show the correct library name based on build type
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "YAML library location: ${CMAKE_BINARY_DIR}/third_party/yaml-cpp-0.8.0/lib$<$<CONFIG:Debug>:yaml-cppd>$<$<NOT:$<CONFIG:Debug>>:yaml-cpp>.a")
 
 # Now continue with main project in Debug mode
 option(BUILD_DEBUG "Build in Debug mode" ON)
