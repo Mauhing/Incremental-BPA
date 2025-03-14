@@ -36,34 +36,36 @@ ProgramOptions parseConfigFile(const std::string &config_file)
 
     YAML::Node config = YAML::LoadFile(config_file);
 
+    // Helper function to check and report missing options
+    auto checkRequired = [](const YAML::Node& node, const std::string& name) {
+        if (!node.IsDefined()) {
+            throw std::runtime_error("Required configuration option '" + name + "' is missing");
+        }
+    };
+
     // Read radius value
-    if (config["radius"]) {
-        options.radius = config["radius"].as<double>();
-    }
+    checkRequired(config["radius"], "radius");
+    options.radius = config["radius"].as<double>();
 
-    if (config["input_file"]) {
-        options.input_file = config["input_file"].as<std::string>();
-    }
+    checkRequired(config["input_file"], "input_file");
+    options.input_file = config["input_file"].as<std::string>();
 
-    if (config["output_file"]) {
-        options.output_file = config["output_file"].as<std::string>();
-    }
+    checkRequired(config["output_file"], "output_file");
+    options.output_file = config["output_file"].as<std::string>();
 
-    if (config["max_orphan_per_voxel"]) {
-        options.max_orphan_per_voxel = config["max_orphan_per_voxel"].as<int>();
-    }
+    checkRequired(config["max_orphan_per_voxel"], "max_orphan_per_voxel");
+    options.max_orphan_per_voxel = config["max_orphan_per_voxel"].as<int>();
 
-    if (config["reading_per_batch"]) {
-        options.reading_per_batch = config["reading_per_batch"].as<int>();
-    }
+    checkRequired(config["reading_per_batch"], "reading_per_batch");
+    options.reading_per_batch = config["reading_per_batch"].as<int>();
 
-    if (config["one_mesh_policy"]["enabled"]) {
-        options.policy_main_mesh = config["one_mesh_policy"]["enabled"].as<bool>();
-    }
+    // For nested options
+    checkRequired(config["one_mesh_policy"], "one_mesh_policy");
+    checkRequired(config["one_mesh_policy"]["enabled"], "one_mesh_policy.enabled");
+    options.policy_main_mesh = config["one_mesh_policy"]["enabled"].as<bool>();
 
-    if (config["one_mesh_policy"]["activation_batch_number"]) {
-        options.policy_main_mesh_activation_batch_number = config["one_mesh_policy"]["activation_batch_number"].as<int>();
-    }
+    checkRequired(config["one_mesh_policy"]["activation_batch_number"], "one_mesh_policy.activation_batch_number");
+    options.policy_main_mesh_activation_batch_number = config["one_mesh_policy"]["activation_batch_number"].as<int>();
     
     return options;
 }
