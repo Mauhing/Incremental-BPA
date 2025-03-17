@@ -487,12 +487,6 @@ public: // Boundaries computation
      */
     std::list<Boundary> getBoundriesPurelyFromBoarder();
 
-    /**
-     * @brief Maintain only one region
-     */
-    template <bool exile = false>
-    void maintainSingleRegion();
-
 // The incremental rendering is not used in the current implementation
 // However, I do not want to remove the code in case we want to use it in the future
 private: // For incremental rendering

@@ -94,6 +94,8 @@ void Visualizer::visualizationThread(
 
     bool need_2_update = false;
 
+    bool key_operation_performed = false;
+
     while (!should_exit)
     {
         if (!visualizer.PollEvents())
@@ -102,8 +104,24 @@ void Visualizer::visualizationThread(
             break;
         }
 
+        if (rendering_in_progress) {            
+            visualizer.RegisterKeyCallback(GLFW_KEY_T,
+                [&mesher, &rendering_in_progress, &key_operation_performed](open3d::visualization::Visualizer* vis) -> bool {
+                    if (rendering_in_progress) {
+                        mesher.calculateMainRegion();
+                        mesher.removeNonMainFacets();
+                        key_operation_performed = true;
+                        return true;
+                    }
+                    return false;
+                });
 
-        if (rendering_in_progress) {
+            // Process any pending key operations
+            visualizer.PollEvents();
+            if (key_operation_performed) {
+                key_operation_performed = false;
+            }
+
             renderMainMesh(mesher.getFacets(), o3d_mesh);
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 

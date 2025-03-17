@@ -177,6 +177,7 @@ int main(int argc, char **argv)
             mesher.calculateMainRegion();
             mesher.removeNonMainFacets();
         }
+
         #ifdef _DEBUG
         //mesher.mesh_integrityCheck();
         #endif

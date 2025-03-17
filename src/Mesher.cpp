@@ -1184,7 +1184,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     this->clearFreshVertices();
 
     // Clear orphan vertices
-    this->clearOrphanVertices();
+    //this->clearOrphanVertices();
 
 #ifdef _DEBUG
     // Clear debug render facets
@@ -1701,46 +1701,6 @@ std::list<Boundary> Mesher::getBoundriesPurelyFromBoarder()
 
     return boundaries;
 }
-
-template <bool exile>
-void Mesher::maintainSingleRegion()
-{
-    // This function is only run after the main region has been set
-    // It maintains only one region by extracting boundaries and constructing the main region
-    // Future optimization:
-    // 1. Do not calculate it twice which it is what happens now
-    std::list<Boundary> boundaries = this->getBoundriesPurelyFromBoarder(); // The first boundary is the main region
-    
-    if (boundaries.size() == 1)
-    {
-        return;
-    }
-
-    // Remove the first boundary, which is the main region
-    boundaries.erase(boundaries.begin());
-
-    // initialize the facets to be removed
-    std::unordered_set<Facet*> facets_to_be_removed;
-    
-    // For each boundary, find the connected facets and collect them.
-    for (Boundary boundary : boundaries)
-    {
-        std::unordered_set<Facet*> boundary_facets = boundary.getFacets();
-        // add boundary_facets to facets_to_be_removed
-        for (Facet* facet : boundary_facets)
-        {
-            facets_to_be_removed.insert(facet);
-        }
-    }
-
-    // remove the facets to be removed
-    for (Facet* facet : facets_to_be_removed)
-    {
-        removeFacet<exile>(facet);
-    }
-}
-
-template void Mesher::maintainSingleRegion<false>();
 
 #ifdef _DEBUG
 void Mesher::checkDegenerateTriangle(Facet* facet) const
