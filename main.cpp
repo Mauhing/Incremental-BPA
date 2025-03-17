@@ -101,9 +101,7 @@ int main(int argc, char **argv)
     //std::tie(origin, size, depth) = FileIO::originAndDepth_depricated(batch_data[0], radius); 
     std::tie(origin, size, depth) = FileIO::originAndDepth(sensor_frames, radius); 
 
-    const int max_orphan_points_per_node = 1;
-
-    OctreeVertices octree_vertices(max_orphan_points_per_node);
+    OctreeVertices octree_vertices(options.max_orphan_per_voxel);
     octree_vertices.setDepth(depth);
     octree_vertices.initialize(origin, size);
 
@@ -176,7 +174,7 @@ int main(int argc, char **argv)
         if (batch_index == static_cast<size_t>(options.policy_main_mesh_activation_batch_number)) {
             //std::cout << "Setting main region" << std::endl;
             //std::this_thread::sleep_for(std::chrono::seconds(10));
-            mesher.setMainRegion();
+            mesher.calculateMainRegion();
             mesher.removeNonMainFacets();
         }
         #ifdef _DEBUG
@@ -197,7 +195,7 @@ int main(int argc, char **argv)
         //std::cout << "Press Enter to exit..." << std::endl;
         //std::cin.get();
         // sleep for 1 second 
-        //std::this_thread::sleep_for(std::chrono::seconds(1));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::time(&end_batch);

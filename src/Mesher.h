@@ -474,7 +474,7 @@ public: // Boundaries computation
     /**
      * @brief Set the Main Region object
      */
-    void setMainRegion();
+    void calculateMainRegion();
     
     /**
      * @brief Remove non-main facets
@@ -486,6 +486,12 @@ public: // Boundaries computation
      * @return List of boundaries
      */
     std::list<Boundary> getBoundriesPurelyFromBoarder();
+
+    /**
+     * @brief Maintain only one region
+     */
+    template <bool exile = false>
+    void maintainSingleRegion();
 
 // The incremental rendering is not used in the current implementation
 // However, I do not want to remove the code in case we want to use it in the future

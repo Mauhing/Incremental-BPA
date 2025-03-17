@@ -53,6 +53,63 @@ double Boundary::getSqLength() const
     return m_sq_length;
 }
 
+std::unordered_set<Facet*> Boundary::getFacets() const
+{
+    // Future optimization:
+    // One should use the handness of the mesh since our mesh is always orientable. 
+    Edge* edge_start = *m_edges.begin();
+
+    std::unordered_set<Edge*> need_to_be_examinated;
+    std::unordered_set<Edge*> examined;
+    need_to_be_examinated.insert(edge_start);
+
+    std::unordered_set<Facet*> r_Facets;
+    while (need_to_be_examinated.size() > 0)
+    {
+        //pop the first edge
+        Edge* edge_current = *need_to_be_examinated.begin();
+        need_to_be_examinated.erase(edge_current);
+        examined.insert(edge_current);
+
+        //Facet 1
+        Facet* facet1 = edge_current->getFacet1();
+        #ifdef _DEBUG
+        if (facet1 == nullptr)
+        {
+            std::cerr << "Error: The facet1 is nullptr" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        #endif
+        r_Facets.insert(facet1); 
+        std::set<Edge*> edges_facet1 = facet1->getEdges();
+        for (Edge* edge : edges_facet1)
+        {
+            // if edge is not examined, then add it to need_to_be_examinated
+            if (examined.find(edge) == examined.end())
+            {
+                need_to_be_examinated.insert(edge);
+            }
+        }
+
+        //Facet 2
+        Facet* facet2 = edge_current->getFacet2();
+        if (facet2 != nullptr)
+        {
+            r_Facets.insert(facet2);
+            std::set<Edge*> edges_facet2 = facet2->getEdges();
+            for (Edge* edge : edges_facet2)
+            {
+                // if edge is not examined, then add it to need_to_be_examinated
+                if (examined.find(edge) == examined.end())
+                {
+                    need_to_be_examinated.insert(edge);
+                }
+            }
+        }
+    }
+    return r_Facets;
+}
+
 Region::Region(const std::unordered_set<Facet*>& land, const Boundary& coast, const std::list<Boundary>& lakes)
 {
     m_land = land;

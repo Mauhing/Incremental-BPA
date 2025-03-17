@@ -77,6 +77,12 @@ class Boundary
          * @return square length of the boundary
          */
         double getSqLength() const;
+
+        /**
+         * @brief get the facets of the boundary
+         * @return reference to the set of facets
+         */
+        std::unordered_set<Facet*> getFacets() const;
 };
 
 /**
