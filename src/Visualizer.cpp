@@ -94,7 +94,12 @@ void Visualizer::visualizationThread(
 
     bool need_2_update = false;
 
-    bool key_operation_performed = false;
+    bool key_pressed = false;
+    visualizer.RegisterKeyCallback(GLFW_KEY_T,
+        [&mesher, &key_pressed](open3d::visualization::Visualizer* vis) -> bool {
+            key_pressed = true;
+            return true;
+        });
 
     while (!should_exit)
     {
@@ -105,21 +110,12 @@ void Visualizer::visualizationThread(
         }
 
         if (rendering_in_progress) {            
-            visualizer.RegisterKeyCallback(GLFW_KEY_T,
-                [&mesher, &rendering_in_progress, &key_operation_performed](open3d::visualization::Visualizer* vis) -> bool {
-                    if (rendering_in_progress) {
-                        mesher.calculateMainRegion();
-                        mesher.removeNonMainFacets();
-                        key_operation_performed = true;
-                        return true;
-                    }
-                    return false;
-                });
-
-            // Process any pending key operations
             visualizer.PollEvents();
-            if (key_operation_performed) {
-                key_operation_performed = false;
+            if (key_pressed) {
+                std::cout << "Finding main region..." << std::endl;
+                mesher.calculateMainRegion();
+                mesher.removeNonMainFacets();
+                key_pressed = false;
             }
 
             renderMainMesh(mesher.getFacets(), o3d_mesh);
