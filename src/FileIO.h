@@ -59,7 +59,7 @@ public:
      * @param min_radius the minimum radius
      * @return the origin and depth
      */
-    static std::tuple<Point, double, unsigned int> originAndDepth(const std::vector<SensorFrame> &sensor_frames, double min_radius);
+    static std::tuple<Point, double, unsigned int> originAndDepth(const SensorFrame &sensor_frames, double min_radius);
     
 
 public:

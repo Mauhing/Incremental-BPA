@@ -71,6 +71,22 @@ Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator
     m_octree_ball_centers_iterator = octree_ball_centers_iterator;
 }
 
+void Mesher::initialize(const Point &origin, double size, unsigned int depth)
+{
+    double ball_radius = size / ((double)pow2(depth));
+
+    m_octree_vertices->setDepth(depth);
+    m_octree_vertices->initialize(origin, size);
+    m_iterator_vertices->setR(ball_radius);
+
+    m_octree_ball_centers->setDepth(depth);
+    m_octree_ball_centers->initialize(origin, size);
+    m_octree_ball_centers_iterator->setR(ball_radius);
+
+    m_ball_radius = ball_radius;
+    m_sq_ball_radius = ball_radius * ball_radius;
+}
+
 Mesher::~Mesher()
 {
     std::cout << "Mesher destructor" << std::endl;

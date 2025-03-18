@@ -244,6 +244,8 @@ public: // reconstruction methods
         const Edge *e2,
         const Vertex *candidate) const;
 
+    void initialize(const Point &origin, double size, unsigned int depth);
+
 public: // accessors+modifyers
     /** @brief set the ball radius
      * @param r ball radius

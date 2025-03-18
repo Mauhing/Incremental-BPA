@@ -96,7 +96,7 @@ void Visualizer::visualizationThread(
 
     bool key_pressed = false;
     visualizer.RegisterKeyCallback(GLFW_KEY_T,
-        [&mesher, &key_pressed](open3d::visualization::Visualizer* vis) -> bool {
+        [&mesher, &key_pressed](open3d::visualization::Visualizer*) -> bool {
             key_pressed = true;
             return true;
         });

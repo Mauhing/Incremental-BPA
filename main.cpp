@@ -95,27 +95,18 @@ int main(int argc, char **argv)
 
     // Octree creation
 
-    Point origin;
-    double size;
-    unsigned int depth;
-    //std::tie(origin, size, depth) = FileIO::originAndDepth_depricated(batch_data[0], radius); 
-    std::tie(origin, size, depth) = FileIO::originAndDepth(sensor_frames, radius); 
 
     OctreeVertices octree_vertices(options.max_orphan_per_voxel);
-    octree_vertices.setDepth(depth);
-    octree_vertices.initialize(origin, size);
-
+    //octree_vertices.setDepth(depth);
+    //octree_vertices.initialize(origin, size);
     OctreeIteratorVertices iterator_vertices(&octree_vertices);
-    iterator_vertices.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Create the ball centers octree and its iterator
     OctreeBallCenters octree_ball_centers(-1);
-    octree_ball_centers.setDepth(octree_vertices.getDepth());
-    octree_ball_centers.initialize(octree_vertices.getOrigin(), octree_vertices.getSize());
-
+    //octree_ball_centers.setDepth(depth);
+    //octree_ball_centers.initialize(origin, size);
     OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
-    octree_ball_centers_iterator.setR(radius);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Define the mesher
@@ -149,6 +140,16 @@ int main(int argc, char **argv)
     size_t batch_size = options.reading_per_batch;
     for (size_t batch_index = 0; batch_index < max_batch_index; batch_index += batch_size)
     {
+        if (batch_index == 0)
+        {
+            // Initialize the octree
+            Point origin;
+            double size;
+            unsigned int depth;
+            std::tie(origin, size, depth) = FileIO::originAndDepth(sensor_frames[0], radius); 
+            mesher.initialize(origin, size, depth);
+        }
+
         if (should_exit)
         { // Check if visualization window was closed
             break;

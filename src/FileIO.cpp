@@ -349,10 +349,11 @@ std::vector<SensorFrame> FileIO::readIntoFileBatch(const char *filename)
     return OfflineDataParser::parseFile(filename);
 } 
 
-std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const std::vector<SensorFrame> &sensor_frames, double min_radius)
+std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const SensorFrame &sensor_frames, double min_radius)
 {
     // take the first frame as the origin
-    const SensorFrame &first_frame = sensor_frames[0];
+    const SensorFrame &first_frame = sensor_frames;
+
     //const Eigen::Matrix<double, 3, 4> &pose = first_frame.pose;
     const std::vector<Point3D> &points = first_frame.points;
 
