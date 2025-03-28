@@ -1,0 +1,52 @@
+#ifndef RECONSTRUCTOR_H
+#define RECONSTRUCTOR_H
+
+#include "Mesher.h"
+#include "Octree.h"
+#include "OctreeIterator.h"
+#include "FileIO.h"
+#include "ProgramOptions.hpp"
+#include "Visualizer.h"
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+
+class Reconstructor
+{
+    private:
+    OctreeVertices m_octree_vertices;
+
+    OctreeIteratorVertices m_iterator_vertices;
+
+    OctreeBallCenters m_octree_ball_centers;
+
+    OctreeIteratorBallCenters m_iterator_ball_centers;
+
+    Mesher m_mesher;
+
+    double m_radius;
+
+    bool m_is_initialized;
+    
+    // Visualization related members
+    //std::condition_variable cv_debug_visualization;
+    //bool rendering_in_progress;
+    //std::mutex o3d_mesh_mutex;
+    //std::atomic<bool> should_exit;
+    //Eigen::Matrix<double, 3, 4> robot_pose;
+    //std::vector<ColorVertex> received_vertices;
+    //std::thread vis_thread;
+
+    void initialize(const std::list<Vertex>& vertices);
+    void processBatch(size_t batch_index, size_t batch_size, const std::vector<SensorFrame>& sensor_frames);
+
+    public:
+    Reconstructor(const ProgramOptions& options);
+    ~Reconstructor();
+    
+    void reconstruct(const std::list<Vertex>& vertices);
+    void saveMesh(const std::string& filename);
+};
+
+#endif
