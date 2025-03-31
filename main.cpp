@@ -31,6 +31,7 @@
 #include "src/types.h"
 #include "src/ProgramOptions.hpp"
 #include "src/Visualizer.h"
+#include "src/Reconstructor.h"
 
 #include <open3d/Open3D.h>
 #include <thread>
@@ -80,163 +81,32 @@ int main(int argc, char **argv)
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Read the input file
-
     // Turn the whole data into batch data
-
     std::vector<SensorFrame> sensor_frames = FileIO::readIntoFileBatch(infile.c_str());
+
     if (sensor_frames.empty())
     {
         std::cerr << "Error: No data read from file" << std::endl;
         return EXIT_FAILURE;
     }
-
-    std::cout << "sensor_frames size: " << sensor_frames.size() << std::endl;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // Initialize the reconstructor
+    Reconstructor reconstructor(options);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // Octree creation
-
-
-    OctreeVertices octree_vertices(options.max_orphan_per_voxel);
-    //octree_vertices.setDepth(depth);
-    //octree_vertices.initialize(origin, size);
-    OctreeIteratorVertices iterator_vertices(&octree_vertices);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // Create the ball centers octree and its iterator
-    OctreeBallCenters octree_ball_centers(-1);
-    //octree_ball_centers.setDepth(depth);
-    //octree_ball_centers.initialize(origin, size);
-    OctreeIteratorBallCenters octree_ball_centers_iterator(&octree_ball_centers);
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // Define the mesher
-    Mesher mesher(&octree_vertices, &iterator_vertices,
-                  &octree_ball_centers,
-                  &octree_ball_centers_iterator);
-
-    // Create shared data structures and synchronization primitives
-    std::cout << "Main Thread ID: " << std::this_thread::get_id() << std::endl;
-
-
-
-    std::vector<ColorVertex> received_vertices;
-
-    std::thread vis_thread(Visualizer::visualizationThread,
-                           std::ref(mesher),
-                           std::ref(o3d_mesh_mutex),
-                           std::ref(should_exit),
-                           std::ref(received_vertices),
-                           std::ref(cv_debug_visualization),
-                           std::ref(rendering_in_progress),
-                           std::ref(robot_pose));
-
-    std::cout << "Visualization Thread ID: " << vis_thread.get_id() << std::endl;
-
-    // enter looping phase
-    // time it
-    time_t start_batch, end_batch;
-    std::time(&start_batch);
-    size_t max_batch_index  = sensor_frames.size();
-    size_t batch_size = options.reading_per_batch;
-    for (size_t batch_index = 0; batch_index < max_batch_index; batch_index += batch_size)
-    {
-        if (batch_index == 0)
-        {
-            // Initialize the octree
-            Point origin;
-            double size;
-            unsigned int depth;
-            std::tie(origin, size, depth) = FileIO::originAndDepth(sensor_frames[0], radius); 
-            mesher.initialize(origin, size, depth);
-        }
-
-        if (should_exit)
-        { // Check if visualization window was closed
-            break;
-        }
-
-        std::cout << "----------------------------------------" << std::endl;
-        std::cout << "Processing batch " << batch_index << std::endl;
-
+    for (size_t i = 0; i < sensor_frames.size(); i++) {
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Load batch of point cloud
-        std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> vertices_and_pose = FileIO::readFromBatchToList(sensor_frames, batch_index, batch_size);
+        std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> vertices_and_pose = FileIO::readFromBatchToList(sensor_frames, i, 1);
         std::list<Vertex> vertices = vertices_and_pose.first;
         robot_pose = vertices_and_pose.second;
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-        received_vertices.clear();
-        for (const auto& v : vertices) {
-            received_vertices.emplace_back(v, Eigen::Vector3d(0.0, 1.0, 0.0)); // Green
-        }
-
-        mesher.batchReconstruct(vertices);
-
-        if (batch_index == static_cast<size_t>(options.policy_main_mesh_activation_batch_number)) {
-            //std::cout << "Setting main region" << std::endl;
-            //std::this_thread::sleep_for(std::chrono::seconds(10));
-            mesher.calculateMainRegion();
-            mesher.removeNonMainFacets();
-        }
-
-        #ifdef _DEBUG
-        //mesher.mesh_integrityCheck();
-        #endif
-        
-        {
-            std::unique_lock<std::mutex> lock(o3d_mesh_mutex);
-            rendering_in_progress = true;
-            cv_debug_visualization.notify_one();
-            std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
-            std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;
-            
-            bool& ref = rendering_in_progress;  // Create a local reference
-            cv_debug_visualization.wait(lock, [&ref]{ return !ref; });
-            std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
-        }
-        //std::cout << "Press Enter to exit..." << std::endl;
-        //std::cin.get();
-        // sleep for 1 second 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        reconstructor.reconstruct(robot_pose, vertices);
     }
 
-    std::time(&end_batch);
-    double seconds_batch = std::difftime(end_batch, start_batch);
-    int minutes_batch = static_cast<int>(seconds_batch) / 60;
-    seconds_batch = std::fmod(seconds_batch, 60.0);
-    std::cout << "Time taken: " << minutes_batch << " minutes " << seconds_batch << " seconds" << std::endl;
-
-    // wait for terminal input
-    std::cout << "Press Enter to exit..." << std::endl;
-    std::cin.get();
-
-    should_exit = true;
-    vis_thread.join();
-
-    // Open3D save ply
-    // time it
-    time_t start_o3d, end_o3d;
-    std::time(&start_o3d);
-    bool o3d_save_ply = true;
-    if (o3d_save_ply)
-    {
-        std::shared_ptr<open3d::geometry::TriangleMesh> o3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
-        Visualizer::renderMainMesh(mesher.getFacets(), o3d_mesh);
-        open3d::io::WriteTriangleMeshToPLY("Final_mesh.ply", *o3d_mesh, false, false, false, false, false, true);
-        std::cout << "Mesh saved in" << "new_final.ply" << std::endl;
-    }
-    else
-    {
-        std::cout << "O3d ply file not saved" << std::endl;
-    }
-
-    // Print the time taken to save the mesh
-    std::time(&end_o3d);
-    double seconds_o3d = std::difftime(end_o3d, start_o3d);
-    int minutes_o3d = static_cast<int>(seconds_o3d) / 60;
-    seconds_o3d = std::fmod(seconds_o3d, 60.0);
-    std::cout << "Time taken: " << minutes_o3d << " minutes " << seconds_o3d << " seconds" << std::endl;
-
-    std::cout << "Program is terminating. It takes a while. Please be patient." << std::endl;
     return EXIT_SUCCESS;
 }

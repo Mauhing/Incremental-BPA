@@ -54,13 +54,66 @@ public:
      */ 
     static std::vector<SensorFrame> readIntoFileBatch(const char *filename);
 
-    /** @brief get the origin and depth of the points
-     * @param sensor_frames the sensor frames
-     * @param min_radius the minimum radius
-     * @return the origin and depth
-     */
-    static std::tuple<Point, double, unsigned int> originAndDepth(const SensorFrame &sensor_frames, double min_radius);
-    
+    template <typename T>
+    static std::tuple<Point, double, unsigned int> originAndDepth(
+        const std::list<T>& points,
+        double min_radius, 
+        typename std::enable_if<std::is_base_of<Point, T>::value>::type* = nullptr)
+    {
+        Eigen::MatrixXd points_matrix(points.size(), 3);
+        size_t i = 0;
+        for(auto &point : points) {
+            points_matrix(i, 0) = point.x();
+            points_matrix(i, 1) = point.y(); 
+            points_matrix(i, 2) = point.z();
+            i++;
+        }
+
+        Eigen::Vector3d min_xyz = points_matrix.colwise().minCoeff();
+        Eigen::Vector3d max_xyz = points_matrix.colwise().maxCoeff();
+
+        double xmin = min_xyz(0);
+        double ymin = min_xyz(1); 
+        double zmin = min_xyz(2);
+        double xmax = max_xyz(0);
+        double ymax = max_xyz(1);
+        double zmax = max_xyz(2);
+
+        double lx = xmax - xmin;
+        double ly = ymax - ymin;
+        double lz = zmax - zmin;
+
+        // Get size of one of the largest dimension
+        double size = lx > ly ? lx : ly;
+        size = size > lz ? size : lz;
+
+        size = 1.1 * size;
+        double margin;
+
+        unsigned int depth = 0;
+        if (min_radius > 0)
+        {
+            depth = (unsigned int)ceil(log2(size / (min_radius)));
+            double adapted_size = pow2(depth) * min_radius;
+            margin = 0.5 * (adapted_size - size);
+            size = adapted_size;
+        }
+        else
+        {
+            std::cerr << "Warning: min_radius has to bigger than 0" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+
+        // The orgin of the octree is the lower left corner (2D) of the bounding box
+        double ox = xmin - margin;
+        double oy = ymin - margin;
+        double oz = zmin - margin;
+        Point origin(ox, oy, oz);
+
+        return std::tuple<Point, double, unsigned int>(origin, size, depth);
+
+    }
+
 
 public:
     /** @brief read points and poses from a file

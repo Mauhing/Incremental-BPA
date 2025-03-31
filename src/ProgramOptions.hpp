@@ -23,7 +23,7 @@ struct ProgramOptions
     int policy_main_mesh_activation_batch_number;
 };
 
-ProgramOptions parseConfigFile(const std::string &config_file)
+inline ProgramOptions parseConfigFile(const std::string &config_file)
 {
     ProgramOptions options;
     
@@ -70,7 +70,7 @@ ProgramOptions parseConfigFile(const std::string &config_file)
     return options;
 }
 
-ProgramOptions parseCommandLine(int argc, char **argv)
+inline ProgramOptions parseCommandLine(int argc, char **argv)
 {
     ProgramOptions options;
     int c;

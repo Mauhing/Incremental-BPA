@@ -6,8 +6,8 @@ m_iterator_vertices(&m_octree_vertices),
 m_octree_ball_centers(-1),
 m_iterator_ball_centers(&m_octree_ball_centers),
 m_mesher(&m_octree_vertices, &m_iterator_vertices, &m_octree_ball_centers, &m_iterator_ball_centers),
-m_is_initialized(false),
-m_radius(options.radius)
+m_radius(options.radius),
+m_is_initialized(false)
 {
     unsigned int max_orphan_per_voxel = options.max_orphan_per_voxel;
     unsigned int reading_per_batch = options.reading_per_batch;
@@ -19,7 +19,7 @@ Reconstructor::~Reconstructor()
 {
 }
 
-void Reconstructor::reconstruct(const std::list<Vertex>& vertices)
+void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const std::list<Vertex>& vertices )
 {
     if (!m_is_initialized)
     {
@@ -28,6 +28,9 @@ void Reconstructor::reconstruct(const std::list<Vertex>& vertices)
     }
     
     m_mesher.batchReconstruct(vertices);
+    
+    // Avoid unused parameter warning
+    (void)pose; // I will fix this later
 }
 
 void Reconstructor::initialize(const std::list<Vertex>& vertices)
@@ -36,6 +39,7 @@ void Reconstructor::initialize(const std::list<Vertex>& vertices)
     Point origin;
     double size;
     unsigned int depth;
+    
     std::tie(origin, size, depth) = FileIO::originAndDepth(vertices, m_radius);
     m_mesher.initialize(origin, size, depth);
 }
