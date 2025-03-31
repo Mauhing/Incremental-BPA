@@ -561,6 +561,29 @@ static bool isGoodOrentationWithTarget(Edge *sideFrontEdge, Vertex *Target, Vert
     return isGoodOrentation;
 }
 
+static bool isGoodOrentationHoleFilling(Edge* edge1, Edge* edge2, Edge* edge3)
+{
+    Vertex* v1Source = edge1->getSource();
+    Vertex* v1Target = edge1->getTarget();
+
+    Vertex* v2Source = edge2->getSource();
+    Vertex* v2Target = edge2->getTarget();
+
+    Vertex* v3Source = edge3->getSource();
+    Vertex* v3Target = edge3->getTarget();
+
+    bool loop;
+    if (v1Target == v3Source && v3Target == v2Source && v2Target == v1Source)
+    {
+        loop = true;
+    }
+    else
+    {
+        loop = false;
+    }
+    return loop;
+}
+
 void Mesher::expandTriangulation()
 {
     while (!m_edge_front.empty())
@@ -653,7 +676,16 @@ void Mesher::expandTriangulation()
                 continue;
             }
         }
-        // >>>
+        if (reconstructionType == ReconstructionType::HOLE_FILLING)
+        {
+            if (!isGoodOrentationHoleFilling(edge, eSource, eTarget))
+            {
+                std::cout << "Edge is not good orentation for hole filling" << std::endl;
+                edge->setType(Edge::BORDER);
+                m_border_edges.push_back(edge);
+                continue;
+            }
+        }
 
         this->createAndAddFacet(edge, candidate, center);
 
@@ -837,6 +869,16 @@ void Mesher::fillHoles()
         // if no oriented border links tgt to src (order is important since
         // edges of the front are oriented consistently all over the front)
         if (v == nullptr)
+        {
+            ++ei;
+            continue;
+        }
+
+        Edge *edge = *ei;
+        Edge *eSource = edge->getSource()->getLinkingEdge(v);
+        Edge *eTarget = edge->getTarget()->getLinkingEdge(v);
+
+        if (!isGoodOrentationHoleFilling(edge, eSource, eTarget))
         {
             ++ei;
             continue;
