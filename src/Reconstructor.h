@@ -15,30 +15,26 @@
 class Reconstructor
 {
     private:
+    // Reconstruction
     OctreeVertices m_octree_vertices;
-
     OctreeIteratorVertices m_iterator_vertices;
-
     OctreeBallCenters m_octree_ball_centers;
-
     OctreeIteratorBallCenters m_iterator_ball_centers;
-
     Mesher m_mesher;
-
     double m_radius;
-
     bool m_is_initialized;
     
     // Visualization related members
-    //std::condition_variable cv_debug_visualization;
-    //bool rendering_in_progress;
-    //std::mutex o3d_mesh_mutex;
-    //std::atomic<bool> should_exit;
-    //Eigen::Matrix<double, 3, 4> robot_pose;
-    //std::vector<ColorVertex> received_vertices;
-    //std::thread vis_thread;
+    std::condition_variable m_cv_debug_visualization;
+    bool m_rendering_in_progress;
+    std::mutex m_o3d_mesh_mutex;
+    std::atomic<bool> m_should_exit;
+    Eigen::Matrix<double, 3, 4> m_robot_pose;
+    std::vector<ColorVertex> m_received_vertices;
+    std::thread m_vis_thread;
 
-    void initialize(const std::list<Vertex>& vertices);
+    void initializeOctree(const std::list<Vertex>& vertices);
+    void initializeVisualization();
     void processBatch(size_t batch_index, size_t batch_size, const std::vector<SensorFrame>& sensor_frames);
 
     public:
@@ -49,7 +45,6 @@ class Reconstructor
     ~Reconstructor();
     
     void reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const std::list<Vertex>& vertices );
-    void saveMesh(const std::string& filename);
 };
 
 #endif
