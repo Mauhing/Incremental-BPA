@@ -93,7 +93,7 @@ target_compile_definitions(ballpivoting PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 # Update include directories to include yaml-cpp headers
 target_include_directories(ballpivoting PRIVATE 
     ${Open3D_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${YAML_CPP_DIR}/include
 )
 

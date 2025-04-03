@@ -22,16 +22,16 @@
 #include <getopt.h>
 #include <vector>
 
-#include "src/Octree.h"
-#include "src/OctreeIterator.h"
-#include "src/utilities.h"
-#include "src/Vertex.h"
-#include "src/Mesher.h"
-#include "src/FileIO.h"
-#include "src/types.h"
-#include "src/ProgramOptions.hpp"
-#include "src/Visualizer.h"
-#include "src/Reconstructor.h"
+#include "include/Octree.h"
+#include "include/OctreeIterator.h"
+#include "include/utilities.h"
+#include "include/Vertex.h"
+#include "include/Mesher.h"
+#include "include/FileIO.h"
+#include "include/types.h"
+#include "include/ProgramOptions.hpp"
+#include "include/Visualizer.h"
+#include "include/Reconstructor.h"
 
 #include <open3d/Open3D.h>
 #include <thread>
@@ -93,6 +93,7 @@ int main(int argc, char **argv)
     // Initialize the reconstructor
     Reconstructor reconstructor(options);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
     for (size_t i = 0; i < sensor_frames.size(); i++) {
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
