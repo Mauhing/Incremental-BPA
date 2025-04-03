@@ -10,7 +10,7 @@ m_mesher(&m_octree_vertices, &m_iterator_vertices, &m_octree_ball_centers, &m_it
 m_radius(options.radius),
 m_is_initialized(false)
 {
-    unsigned int reading_per_batch = options.reading_per_batch;
+    //unsigned int reading_per_batch = options.reading_per_batch;
     //const bool one_mesh_policy = options.policy_main_mesh.enabled;
     //const unsigned int activation_batch_number = options.policy_main_mesh_activation_batch_number;
 }

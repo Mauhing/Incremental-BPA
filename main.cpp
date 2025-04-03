@@ -74,8 +74,6 @@ int main(int argc, char **argv)
     FileIO::setBaseOutputFilename(options.output_file.erase(options.output_file.find(".ply"), 4));
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
-    // Get the radius value from the program options
-    double radius = options.radius;
     // Get the input filename from the program options 
     std::string infile = options.input_file;
 
