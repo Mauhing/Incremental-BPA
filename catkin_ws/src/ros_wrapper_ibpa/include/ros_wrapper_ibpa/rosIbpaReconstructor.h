@@ -1,3 +1,6 @@
+#ifndef ROS_IBPA_RECONSTRUCTOR_H
+#define ROS_IBPA_RECONSTRUCTOR_H
+
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Odometry.h>
@@ -55,3 +58,5 @@ private:
 
     sensor_msgs::PointCloud2 filterPointCloud(const sensor_msgs::PointCloud2& input_cloud);
 };
+
+#endif // ROS_IBPA_RECONSTRUCTOR_H

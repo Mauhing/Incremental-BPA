@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(core_ibpa)
 
+# Add this near the top of the file, after project()
+set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "Installation directory" FORCE)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,7 +34,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "YAML library location: ${CMAKE_BINARY_DIR}/third_party/yaml-cpp-0.8.0/lib$<$<CONFIG:Debug>:yaml-cppd>$<$<NOT:$<CONFIG:Debug>>:yaml-cpp>.a")
 
 # Now continue with main project in Debug mode
-option(BUILD_DEBUG "Build in Debug mode" ON)
+#option(BUILD_DEBUG "Build in Debug mode" ON)
 
 # Export compile commands for IDE support
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -81,36 +84,42 @@ message(STATUS "Open3D include dirs: ${Open3D_INCLUDE_DIRS}")
 # Add your source files
 file(GLOB_RECURSE SRC_FILES "src/*.cpp")
 
-add_executable(core_ibpa 
-    main.cpp
+# First create the library (without main.cpp)
+add_library(core_ibpa_lib STATIC
     ${SRC_FILES}
-)
-
-# Add compile definitions for debug mode
-target_compile_definitions(core_ibpa PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
-
-
-# Update include directories to include yaml-cpp headers
-target_include_directories(core_ibpa PRIVATE 
-    ${Open3D_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${YAML_CPP_DIR}/include
-)
-
-target_link_libraries(core_ibpa PRIVATE 
-    yaml-cpp
 )
 
 # Find pthread
 find_package(Threads REQUIRED)
 
-# Link against Open3D libraries and pthread
-target_link_libraries(core_ibpa PRIVATE 
+# Link the library with Open3D and other dependencies
+target_link_libraries(core_ibpa_lib PUBLIC 
     ${Open3D_LIBRARIES}
+    yaml-cpp
     Threads::Threads
 )
 
-# Export compile commands
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# Update include directories to include yaml-cpp headers
+target_include_directories(core_ibpa_lib PUBLIC 
+    ${Open3D_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${YAML_CPP_DIR}/include
+)
+
+add_executable(core_ibpa 
+    main.cpp
+)
+
+# Add compile definitions for debug mode
+target_compile_definitions(core_ibpa PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
+
+# Link against Open3D libraries and pthread
+target_link_libraries(core_ibpa PRIVATE 
+    core_ibpa_lib
+)
+
+install(TARGETS core_ibpa_lib
+    ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/static #ARCHIVE DESTINATION is used for static libraries
+)
 
 enable_testing()
