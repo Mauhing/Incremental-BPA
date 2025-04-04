@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ros_wrapper_ibpa</name>
+  <version>0.0.1</version>
+  <description>Subscribing message from bag files</description>
+  <maintainer email="your_email@example.com">Your Name</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>rosbag</depend>
+</package> 
