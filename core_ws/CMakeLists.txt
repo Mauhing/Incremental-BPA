@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(ballpivoting)
+project(core_ibpa)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -81,23 +81,23 @@ message(STATUS "Open3D include dirs: ${Open3D_INCLUDE_DIRS}")
 # Add your source files
 file(GLOB_RECURSE SRC_FILES "src/*.cpp")
 
-add_executable(ballpivoting 
+add_executable(core_ibpa 
     main.cpp
     ${SRC_FILES}
 )
 
 # Add compile definitions for debug mode
-target_compile_definitions(ballpivoting PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
+target_compile_definitions(core_ibpa PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 
 
 # Update include directories to include yaml-cpp headers
-target_include_directories(ballpivoting PRIVATE 
+target_include_directories(core_ibpa PRIVATE 
     ${Open3D_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${YAML_CPP_DIR}/include
 )
 
-target_link_libraries(ballpivoting PRIVATE 
+target_link_libraries(core_ibpa PRIVATE 
     yaml-cpp
 )
 
@@ -105,7 +105,7 @@ target_link_libraries(ballpivoting PRIVATE
 find_package(Threads REQUIRED)
 
 # Link against Open3D libraries and pthread
-target_link_libraries(ballpivoting PRIVATE 
+target_link_libraries(core_ibpa PRIVATE 
     ${Open3D_LIBRARIES}
     Threads::Threads
 )
