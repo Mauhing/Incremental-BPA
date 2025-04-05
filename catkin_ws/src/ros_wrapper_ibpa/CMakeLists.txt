@@ -1,14 +1,37 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ros_wrapper_ibpa)
 
+# ─────────────────────────────────────────────────────────────
+# 🔧 Build configuration
+# ─────────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Add this to find your core project headers
-set(CORE_WS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../core_ws")
+# 🐞 Debug/Release toggle
+option(BUILD_DEBUG "Build in Debug mode" ON)
+if (BUILD_DEBUG)
+  # Add debug symbols
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+  # Disable optimizations in Debug mode
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+  add_definitions(-D_DEBUG)
+  # print CMAKE_CXX_FLAGS_DEBUG
+  message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+else()
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+endif()
+
+# Apply global debug postfix
+if (NOT DEFINED CMAKE_DEBUG_POSTFIX)
+  set(CMAKE_DEBUG_POSTFIX "d")
+endif()
+
+# ─────────────────────────────────────────────────────────────
+# 🤖 ROS configuration
+# ─────────────────────────────────────────────────────────────
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
@@ -16,67 +39,51 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
 )
 
-# First compile yaml-cpp
-set(YAML_CPP_DIR "${CORE_WS_PATH}/third_party/yaml-cpp-0.8.0")
-set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "yaml-cpp build shared library" FORCE)
-set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "yaml-cpp build tests" FORCE)
-set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "yaml-cpp build tools" FORCE)
-set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "yaml-cpp build contrib" FORCE)
-
-# Build yaml-cpp with ABI=0
-add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-add_subdirectory(${YAML_CPP_DIR} EXCLUDE_FROM_ALL)
-
-# Update the message to show the correct library name based on build type
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "YAML library location: ${YAML_CPP_DIR}/lib$<$<CONFIG:Debug>:yaml-cppd>$<$<NOT:$<CONFIG:Debug>>:yaml-cpp>.a")
-
-if(BUILD_DEBUG)
-    set(CMAKE_BUILD_TYPE Debug)
-    # Add debug symbols
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-    # Disable optimizations in Debug mode
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-    # Add _DEBUG definition for Debug mode
-    add_definitions(-D_DEBUG)
-    message(STATUS "Building in Debug mode")
-else()
-    set(CMAKE_BUILD_TYPE Release)
-    # Enable optimizations in Release mode
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
-    message(STATUS "Building in Release mode")
-endif()
-
-# Declare catkin package information
-# This is used by other packages that want to use this package
 catkin_package(
-    INCLUDE_DIRS include     # Public header files directory
-    LIBRARIES ${PROJECT_NAME} # Libraries this package provides
-    CATKIN_DEPENDS roscpp    # ROS runtime dependencies
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS roscpp sensor_msgs nav_msgs rosbag
 )
 
-# Specify include directories for this package
-# Both for building this package and for other packages using this package
-# Add core_ws include directories
+# ─────────────────────────────────────────────────────────────
+# 🧩 Third-party dependencies
+# ─────────────────────────────────────────────────────────────
+set(CORE_WS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../core_ws")
+
+# Open3D (required to forward Open3D_DIR to core_ws)
+set(Open3D_DIR "${CORE_WS_PATH}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.18.0/lib/cmake/Open3D")
+find_package(Open3D REQUIRED)
+
 include_directories(
-    include                          # ROS package headers
-    ${catkin_INCLUDE_DIRS}          # ROS headers
-    ${CORE_WS_PATH}/include         # Core project headers
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${Open3D_INCLUDE_DIRS}
 )
 
-# Create the main library of this package
-# Built from the source files in src/
+# Include and build the core_ws as a subdirectory
+add_subdirectory(${CORE_WS_PATH} ${CMAKE_BINARY_DIR}/core_ws_build)
+
+# ─────────────────────────────────────────────────────────────
+# 🧱 Targets
+# ─────────────────────────────────────────────────────────────
 add_library(${PROJECT_NAME}
-    src/rosIbpaReconstructor.cpp
+  src/rosIbpaReconstructor.cpp
 )
 
-# Create the ROS node executable
-# The '_node' suffix is a common ROS naming convention
-add_executable(${PROJECT_NAME}_node src/main.cpp)
+add_executable(${PROJECT_NAME}_node
+  src/main.cpp
+)
 
-# Link the node executable with required libraries
+# ─────────────────────────────────────────────────────────────
+# 🔗 Linking
+# ─────────────────────────────────────────────────────────────
+target_link_libraries(${PROJECT_NAME}
+  core_ibpa_lib
+  Open3D::Open3D
+  ${catkin_LIBRARIES}
+)
+
 target_link_libraries(${PROJECT_NAME}_node
-    ${PROJECT_NAME}          # Link against our own library
-    ${catkin_LIBRARIES}      # Link against ROS libraries
-    yaml-cpp
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )
