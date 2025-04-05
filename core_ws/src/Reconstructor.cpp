@@ -8,7 +8,8 @@ m_octree_ball_centers(-1),
 m_iterator_ball_centers(&m_octree_ball_centers),
 m_mesher(&m_octree_vertices, &m_iterator_vertices, &m_octree_ball_centers, &m_iterator_ball_centers),
 m_radius(options.radius),
-m_is_initialized(false)
+m_is_initialized(false),
+m_should_exit(false)
 {
     //unsigned int reading_per_batch = options.reading_per_batch;
     //const bool one_mesh_policy = options.policy_main_mesh.enabled;
