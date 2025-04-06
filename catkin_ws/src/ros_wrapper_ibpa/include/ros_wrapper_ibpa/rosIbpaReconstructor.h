@@ -14,17 +14,17 @@
 #include "ProgramOptions.hpp"
 #include "Eigen/Dense"
 #include <vector>
-//#include "Vertex"
+#include "Vertex.h"
 
 struct rosPointCloudPose {
     sensor_msgs::PointCloud2 points;    // 256 points
     nav_msgs::Odometry pose;            // Associated pose
 };
 
-//struct PointCloudPose {
-//    Eigen::Matrix4d pose;
-//    std::vector<Vertice> points;
-//};
+struct PointCloudPose {
+    Eigen::Matrix4d pose;
+    std::vector<Vertex> points;
+};
 
 class dummyReconstructor {
 public:
@@ -69,12 +69,6 @@ public:
     void processPointCloud(const sensor_msgs::PointCloud2::ConstPtr& msg);
 
     void processOdometry(const nav_msgs::Odometry::ConstPtr& msg);
-
-    /*
-    * @brief Process a bag file offline
-    * @param bag_path The path to the bag file
-    */
-    void processBag(const std::string& bag_path);
 
 private:
 
