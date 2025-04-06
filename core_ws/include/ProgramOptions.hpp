@@ -21,6 +21,9 @@ struct ProgramOptions
     
     bool policy_main_mesh;
     int policy_main_mesh_activation_batch_number;
+
+    bool down_sample_in_ros;
+    int down_sample_in_ros_max_points;
 };
 
 inline ProgramOptions parseConfigFile(const std::string &config_file)
@@ -66,6 +69,13 @@ inline ProgramOptions parseConfigFile(const std::string &config_file)
 
     checkRequired(config["one_mesh_policy"]["activation_batch_number"], "one_mesh_policy.activation_batch_number");
     options.policy_main_mesh_activation_batch_number = config["one_mesh_policy"]["activation_batch_number"].as<int>();
+
+    checkRequired(config["down_sample_in_ros"], "down_sample_in_ros");
+
+    checkRequired(config["down_sample_in_ros"]["enabled"], "down_sample_in_ros.enabled");
+    options.down_sample_in_ros = config["down_sample_in_ros"]["enabled"].as<bool>();
+    checkRequired(config["down_sample_in_ros"]["max_points"], "down_sample_in_ros.max_points");
+    options.down_sample_in_ros_max_points = config["down_sample_in_ros"]["max_points"].as<int>();
     
     return options;
 }

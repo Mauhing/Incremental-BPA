@@ -1,5 +1,14 @@
 #include "ros_wrapper_ibpa/rosIbpaReconstructor.h"
-#include "ProgramOptions.hpp"
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
+#include <open3d/Open3D.h>
+
+std::condition_variable cv_debug_visualization;
+bool rendering_in_progress(false);
+std::mutex o3d_mesh_mutex;
+std::atomic<bool> should_exit(false);
+Eigen::Matrix<double, 3, 4> robot_pose;
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "ibpa_node");
@@ -16,7 +25,7 @@ int main(int argc, char** argv) {
     ProgramOptions program_options = parseConfigFile(config_path);
 
     ros::Duration(1.0).sleep();
-    rosIBPA ibpa;
+    rosIBPA ibpa(program_options);
     
     // Spin to receive callbacks
     ros::spin();

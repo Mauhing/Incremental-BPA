@@ -19,6 +19,3 @@ cmake -DBUILD_DEBUG=OFF ..
 
 echo "Running make"
 make -j$(nproc) 
-
-echo "Running make install"
-make install

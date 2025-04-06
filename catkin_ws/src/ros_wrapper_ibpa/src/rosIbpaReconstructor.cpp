@@ -1,6 +1,12 @@
 #include "ros_wrapper_ibpa/rosIbpaReconstructor.h"
 
-rosIBPA::rosIBPA() : has_get_points_(false), has_get_pose_(true), should_exit_(false) {
+rosIBPA::rosIBPA(const ProgramOptions& program_options) : has_get_points_(false), has_get_pose_(true), should_exit_(false) {
+    program_options_ = program_options;
+    batch_size_ = program_options_.reading_per_batch;
+
+    down_sample_in_ros_ = program_options_.down_sample_in_ros;
+    down_sample_in_ros_max_points_ = program_options_.down_sample_in_ros_max_points;
+
     // Subscribe to topics
     points_sub_ = nh_.subscribe("/depth_registered/points", 1, &rosIBPA::processPointCloud, this);
     odom_sub_ = nh_.subscribe("/rovio/odometry", 1, &rosIBPA::processOdometry, this);
@@ -27,7 +33,7 @@ void rosIBPA::processOdometry(const nav_msgs::Odometry::ConstPtr& msg) {
         has_get_pose_ = true;
         has_get_points_ = false;
 
-        if (point_batch_.size() == BATCH_SIZE && pose_batch_.size() == BATCH_SIZE) {
+        if (point_batch_.size() == batch_size_ && pose_batch_.size() == batch_size_) {
             processBatch();
             point_batch_.clear();
             pose_batch_.clear();
@@ -38,12 +44,12 @@ void rosIBPA::processOdometry(const nav_msgs::Odometry::ConstPtr& msg) {
 
 void rosIBPA::reconstruction_loop() {
     while (!should_exit_) {
-        std::vector<PointCloudPose> batch;
+        std::vector<rosPointCloudPose> batch;
         
         // Get batch when ready
         {
             std::lock_guard<std::mutex> lock(queue_mutex_);
-            if (data_queue_.size() >= BATCH_SIZE) {
+            if (data_queue_.size() >= batch_size_) {
                 // Get batch from queue...
             }
         }
@@ -61,16 +67,16 @@ void rosIBPA::reconstructSurface() {
     // Your surface reconstruction code
 }
 
-std::vector<PointCloudPose> rosIBPA::processBatch() {
+std::vector<rosPointCloudPose> rosIBPA::processBatch() {
     ROS_INFO("=== Starting processBatch ===");
-    std::vector<PointCloudPose> processed_pairs;
-    processed_pairs.reserve(BATCH_SIZE);  // Reserve space for efficiency
+    std::vector<rosPointCloudPose> processed_pairs;
+    processed_pairs.reserve(batch_size_);  // Reserve space for efficiency
 
-    for (size_t i = 0; i < BATCH_SIZE; ++i) {
+    for (size_t i = 0; i < batch_size_; ++i) {
         ROS_INFO("Processing pair %zu", i);
         
         // Create a new pair
-        PointCloudPose pair;
+        rosPointCloudPose pair;
         
         // Filter point cloud to 256 points
         pair.points = filterPointCloud(point_batch_[i]);
