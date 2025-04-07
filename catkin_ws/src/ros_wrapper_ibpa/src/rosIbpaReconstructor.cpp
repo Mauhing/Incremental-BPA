@@ -23,6 +23,21 @@ ibpa_reconstructor_(program_options)
 
     point_buffer_.clear();
     pose_buffer_.clear();
+
+    // Camera to IMU transform
+    // qCM = [0.5027695156557828, 0.5002145141495467, 0.49690290362200085, -0.5000957491655045]  # x,y,z,w
+    // MrMC = [0.04839478648122993, 0.04799781122813299, -0.009770663739786307]  # x,y,z
+    // I need to ask Mohit to know how I can actually get the number from ROS, and not hard code it.
+    Eigen::Quaterniond rot_q_s2b(-0.5000957491655045, 0.5027695156557828, 0.5002145141495467, 0.49690290362200085);
+    Eigen::Matrix3d rot_s2b = rot_q_s2b.toRotationMatrix();
+
+    Eigen::Vector3d tran_s2b(0.04839478648122993, 0.04799781122813299, -0.009770663739786307);
+
+    Eigen::Matrix3d rot_b2s = rot_s2b.transpose();
+    Eigen::Vector3d tran_b2s = -rot_b2s * tran_s2b;
+
+    b2s_pose_.block<3, 3>(0, 0) = rot_b2s;
+    b2s_pose_.block<3, 1>(0, 3) = tran_b2s; 
 }
 
 void rosIBPA::processPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
@@ -50,10 +65,50 @@ void rosIBPA::processOdometry(const nav_msgs::Odometry::ConstPtr &msg)
     }
 }
 
+static Eigen::Matrix<double, 3, 4> getTransformFromOdometry(const nav_msgs::Odometry& odom) {
+    Eigen::Matrix<double, 3, 4> transform;
+
+    // Extract rotation quaternion
+    Eigen::Quaterniond rot_q(odom.pose.pose.orientation.w,
+                           odom.pose.pose.orientation.x, 
+                           odom.pose.pose.orientation.y,
+                           odom.pose.pose.orientation.z);
+
+    // Convert quaternion to rotation matrix
+    transform.block<3,3>(0,0) = rot_q.toRotationMatrix();
+
+    // Extract translation
+    transform.block<3,1>(0,3) = Eigen::Vector3d(odom.pose.pose.position.x,
+                                               odom.pose.pose.position.y,
+                                               odom.pose.pose.position.z);
+
+    return transform;
+}
+
+static void transformPointCloud(const Eigen::Matrix<double, 3, 4>& transform,
+                              double& x, double& y, double& z) {
+    // Extract rotation and translation
+    Eigen::Matrix3d rotation = transform.block<3,3>(0,0);
+    Eigen::Vector3d translation = transform.block<3,1>(0,3);
+
+    // Create point vector
+    Eigen::Vector3d point(x, y, z);
+
+    // Transform point: R*p + t
+    point = rotation * point + translation;
+
+    // Store transformed coordinates back
+    x = point.x();
+    y = point.y(); 
+    z = point.z();
+}
+
+
 static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::PointCloud2> &point_batch,
                                             const std::vector<nav_msgs::Odometry> &pose_batch,
                                             bool down_sample,
                                             int max_points,
+                                            const Eigen::Matrix<double, 3, 4>& b2s_pose,
                                             const bool &random_device,
                                             const int &seed)
 {
@@ -65,9 +120,22 @@ static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::Point
         sensor_msgs::PointCloud2ConstIterator<float> const_iter_y(point_batch[i], "y");
         sensor_msgs::PointCloud2ConstIterator<float> const_iter_z(point_batch[i], "z");
 
-        const double position_x = pose_batch[i].pose.pose.position.x;
-        const double position_y = pose_batch[i].pose.pose.position.y;
-        const double position_z = pose_batch[i].pose.pose.position.z;
+        //const double position_x = pose_batch[i].pose.pose.position.x;
+        //const double position_y = pose_batch[i].pose.pose.position.y;
+        //const double position_z = pose_batch[i].pose.pose.position.z;
+
+        Eigen::Matrix<double, 3, 4> current_pose;
+    
+        Eigen::Quaterniond orientation(pose_batch[i].pose.pose.orientation.w, 
+                                       pose_batch[i].pose.pose.orientation.x, 
+                                       pose_batch[i].pose.pose.orientation.y, 
+                                       pose_batch[i].pose.pose.orientation.z);
+
+        current_pose.block<3, 3>(0, 0) = orientation.toRotationMatrix();
+        current_pose.block<3, 1>(0, 3) = Eigen::Vector3d(pose_batch[i].pose.pose.position.x, 
+                                                         pose_batch[i].pose.pose.position.y, 
+                                                         pose_batch[i].pose.pose.position.z);
+
 
         for (; const_iter_x != const_iter_x.end(); ++const_iter_x, ++const_iter_y, ++const_iter_z)
         {
@@ -75,14 +143,21 @@ static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::Point
             {
                 continue;
             }
+
+            double x = *const_iter_x;
+            double y = *const_iter_y;
+            double z = *const_iter_z;
+
+            transformPointCloud(b2s_pose, x, y, z);
+            transformPointCloud(current_pose, x, y, z);
             
             // Todo: I have to transform the point cloud later.
-            double normal_x = position_x - *const_iter_x;
-            double normal_y = position_y - *const_iter_y;
-            double normal_z = position_z - *const_iter_z;
+            double normal_x = pose_batch[i].pose.pose.position.x - x;
+            double normal_y = pose_batch[i].pose.pose.position.y - y;
+            double normal_z = pose_batch[i].pose.pose.position.z - z;
 
             normalize(normal_x, normal_y, normal_z);
-            points.push_back(Vertex(*const_iter_x, *const_iter_y, *const_iter_z, normal_x, normal_y, normal_z));
+            points.push_back(Vertex(x, y, z, normal_x, normal_y, normal_z));
         }
     } 
 
@@ -127,7 +202,6 @@ void rosIBPA::reconstruction_loop()
         std::vector<sensor_msgs::PointCloud2> point_batch;
         std::vector<nav_msgs::Odometry> pose_batch;
 
-        // Get batch when ready
         {
             std::lock_guard<std::mutex> lock(batch_mutex_);
             if (point_buffer_.size() >= batch_size_ && pose_buffer_.size() >= batch_size_)
@@ -149,6 +223,7 @@ void rosIBPA::reconstruction_loop()
                                                 pose_batch,
                                                 down_sample_in_ros_, 
                                                 down_sample_in_ros_max_points_,
+                                                b2s_pose_,
                                                 program_options_.random_device,
                                                 program_options_.seed);
             point_batch.clear();
