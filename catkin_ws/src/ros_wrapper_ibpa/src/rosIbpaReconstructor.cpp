@@ -53,7 +53,9 @@ void rosIBPA::processOdometry(const nav_msgs::Odometry::ConstPtr &msg)
 static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::PointCloud2> &point_batch,
                                             const std::vector<nav_msgs::Odometry> &pose_batch,
                                             bool down_sample,
-                                            int max_points)
+                                            int max_points,
+                                            const bool &random_device,
+                                            const int &seed)
 {
     // Store points
     std::vector<Vertex> points;
@@ -86,14 +88,16 @@ static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::Point
 
     if (down_sample && points.size() > max_points)
     {
-        //ros print: "Downsampling point cloud"
-        ROS_INFO("Downsampling point cloud");
         // Random shuffle
-        //std::random_device rd;
-        std::mt19937 gen(42);
-        std::shuffle(points.begin(), points.end(), gen); 
+        if (random_device) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::shuffle(points.begin(), points.end(), gen); 
+        } else {
+            std::mt19937 gen(seed);
+            std::shuffle(points.begin(), points.end(), gen);
+        }
         points.resize(max_points);
-        ROS_INFO("Downsampled point cloud");
     }
 
     size_t middle_point_idx = pose_batch.size()/2; 
@@ -110,11 +114,9 @@ static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::Point
                                                    middle_pose.pose.pose.position.y, 
                                                    middle_pose.pose.pose.position.z);
     
-    ROS_INFO("Processing point cloud pose 4");
     PointCloudPose point_cloud_pose;
     point_cloud_pose.points = points;
     point_cloud_pose.pose = Eigen_pose;
-    ROS_INFO("Processed point cloud pose 5");
     return point_cloud_pose;
 }
 
@@ -146,7 +148,9 @@ void rosIBPA::reconstruction_loop()
             point_cloud_pose = processPointCloudPose(point_batch, 
                                                 pose_batch,
                                                 down_sample_in_ros_, 
-                                                down_sample_in_ros_max_points_);
+                                                down_sample_in_ros_max_points_,
+                                                program_options_.random_device,
+                                                program_options_.seed);
             point_batch.clear();
             pose_batch.clear();
 

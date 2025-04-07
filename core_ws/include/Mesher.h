@@ -200,6 +200,12 @@ protected: // class members
     /** @brief main region*/
     Region m_main_region;
 
+    /** @brief random device*/
+    bool m_random_device;
+
+    /** @brief seed*/
+    int m_seed;
+
 public: // constructor-destructor
     /** @brief default constructor*/
     Mesher();
@@ -209,7 +215,8 @@ public: // constructor-destructor
      * @param iterator iterator over the octree
      */
     Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator,
-           OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator);
+           OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator,
+           const bool &random_device, const int &seed);
 
     /** @brief destructor*/
     ~Mesher();

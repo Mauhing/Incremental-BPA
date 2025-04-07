@@ -262,7 +262,9 @@ bool TOctreeNode<T>::isLeaf() const
 }
 
 template <class T>
-void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited_points)
+void TOctreeNode<T>::downSample(const int max_points, 
+                        std::vector<T*> &recruited_points, 
+                        const bool &random_device, const int &seed)
 {
     if (!isLeaf())
     {
@@ -271,7 +273,7 @@ void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited
             TOctreeNode<T> *node = getChild(i);
             if (node != nullptr)
             {
-                node->downSample(max_points, recruited_points);
+                node->downSample(max_points, recruited_points, random_device, seed);
             }
         }
     }
@@ -298,9 +300,14 @@ void TOctreeNode<T>::downSample(const int max_points, std::vector<T*> &recruited
             }
             
             // Random shuffle
-            //std::random_device rd;
-            std::mt19937 gen(42);
-            std::shuffle(temp_points.begin(), temp_points.end(), gen);
+            if (random_device) {
+                std::random_device rd;
+                std::mt19937 gen(rd());
+                std::shuffle(temp_points.begin(), temp_points.end(), gen);
+            } else {
+                std::mt19937 gen(seed);
+                std::shuffle(temp_points.begin(), temp_points.end(), gen);
+            }
             
             // Store points that will be deleted
             std::vector<T*> points_to_delete;

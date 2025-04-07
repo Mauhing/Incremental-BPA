@@ -306,7 +306,7 @@ public:
     template <typename Func>
     void loopOverAllNodes(Func f);
 
-    std::list<T*> downSample();
+    std::list<T*> downSample(const bool &random_device, const int &seed);
 
 private:
     template <typename Func>
@@ -1011,12 +1011,12 @@ unsigned int TOctreeIterator<T>::debug_checkTotalNumberOfElements() const
 }
 
 template <class T>
-std::list<T*> TOctreeIterator<T>::downSample()
+std::list<T*> TOctreeIterator<T>::downSample(const bool &random_device, const int &seed)
 {
     TOctreeNode<T> *root_node = m_octree->getRoot();
 
     std::vector<T*> recruited_points;
-    root_node->downSample(m_octree->getMaxPoints(), recruited_points);
+    root_node->downSample(m_octree->getMaxPoints(), recruited_points, random_device, seed);
 
     return std::list<T*>(recruited_points.begin(), recruited_points.end());
 }

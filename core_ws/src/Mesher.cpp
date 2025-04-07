@@ -58,7 +58,8 @@ Mesher::Mesher()
 }
 
 Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator_vertices,
-               OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator)
+               OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator,
+               const bool &random_device, const int &seed)
 {
     m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
@@ -69,6 +70,9 @@ Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator
     m_iterator_vertices = iterator_vertices;
     m_octree_ball_centers = octree_ball_centers;
     m_octree_ball_centers_iterator = octree_ball_centers_iterator;
+
+    m_random_device = random_device;
+    m_seed = seed;
 }
 
 void Mesher::initialize(const Point &origin, double size, unsigned int depth)
@@ -1185,7 +1189,7 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     this->addPointsToOctreeVertices(vertices);
 
     // Downsample the octree
-    std::list<Vertex*> recruited_points = this->m_iterator_vertices->downSample();
+    std::list<Vertex*> recruited_points = this->m_iterator_vertices->downSample(m_random_device, m_seed);
 
     std::cout << "Recruited points size: " << recruited_points.size() << std::endl;
 

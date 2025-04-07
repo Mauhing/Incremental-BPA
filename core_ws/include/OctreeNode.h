@@ -318,7 +318,7 @@ public:
      * @param max_points maximum number of points in the node
      * @param recruited_points vector of points to recruit
      */
-    void downSample(const int max_points, std::vector<T*> &recruited_points); 
+    void downSample(const int max_points, std::vector<T*> &recruited_points, const bool &random_device, const int &seed); 
 
     /**
      * @brief get the digit location of the node
