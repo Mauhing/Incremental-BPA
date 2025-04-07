@@ -68,7 +68,7 @@ public:
 
 private: // properties
     /** @brief nx, ny, nz normal coordinates*/
-    const double m_nx, m_ny, m_nz;
+    double m_nx, m_ny, m_nz;
 
     /** @brief set of adjacent edges*/
     Edge_set m_adjacentEdges;
@@ -88,7 +88,7 @@ private: // properties
 
 public: // constructor+destructor
     /** @brief default constructor*/
-    Vertex() = delete;
+    Vertex();
 
     /** @brief constructor from coordinates and normal*/
     Vertex(double x, double y, double z, double nx, double ny, double nz);

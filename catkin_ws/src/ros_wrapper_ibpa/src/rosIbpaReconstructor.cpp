@@ -1,6 +1,13 @@
 #include "ros_wrapper_ibpa/rosIbpaReconstructor.h"
+#include "Point.h"
+#include "utilities.h"
+#include <cmath>
 
-rosIBPA::rosIBPA(const ProgramOptions &program_options) : has_get_points_(false), has_get_pose_(true), should_exit_(false)
+rosIBPA::rosIBPA(const ProgramOptions &program_options) : 
+has_get_points_(false), 
+has_get_pose_(true), 
+should_exit_(false),
+ibpa_reconstructor_(program_options)
 {
     program_options_ = program_options;
     batch_size_ = program_options_.reading_per_batch;
@@ -13,6 +20,9 @@ rosIBPA::rosIBPA(const ProgramOptions &program_options) : has_get_points_(false)
     odom_sub_ = nh_.subscribe("/rovio/odometry", 1, &rosIBPA::processOdometry, this);
 
     reconstruction_thread_ = std::thread(&rosIBPA::reconstruction_loop, this);
+
+    point_buffer_.clear();
+    pose_buffer_.clear();
 }
 
 void rosIBPA::processPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
@@ -22,7 +32,7 @@ void rosIBPA::processPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
     {
         ROS_INFO("Received point cloud data");
         // Store original point cloud without filtering
-        point_batch_.push_back(*msg);
+        point_buffer_.push_back(*msg);
         has_get_points_ = true;
         has_get_pose_ = false;
     }
@@ -34,23 +44,77 @@ void rosIBPA::processOdometry(const nav_msgs::Odometry::ConstPtr &msg)
     if (has_get_points_ && !has_get_pose_)
     {
         ROS_INFO("Received odometry data");
-        pose_batch_.push_back(*msg);
+        pose_buffer_.push_back(*msg);
         has_get_pose_ = true;
         has_get_points_ = false;
-
-        if (point_batch_.size() == batch_size_ && pose_batch_.size() == batch_size_)
-        {
-            processBatch();
-            point_batch_.clear();
-            pose_batch_.clear();
-        }
     }
 }
 
 static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::PointCloud2> &point_batch,
-                                            const std::vector<nav_msgs::Odometry> &pose_batch)
+                                            const std::vector<nav_msgs::Odometry> &pose_batch,
+                                            bool down_sample,
+                                            int max_points)
 {
+    // Store points
+    std::vector<Vertex> points;
+    for (size_t i = 0; i < point_batch.size(); ++i)
+    {
+        sensor_msgs::PointCloud2ConstIterator<float> const_iter_x(point_batch[i], "x");
+        sensor_msgs::PointCloud2ConstIterator<float> const_iter_y(point_batch[i], "y");
+        sensor_msgs::PointCloud2ConstIterator<float> const_iter_z(point_batch[i], "z");
+
+        const double position_x = pose_batch[i].pose.pose.position.x;
+        const double position_y = pose_batch[i].pose.pose.position.y;
+        const double position_z = pose_batch[i].pose.pose.position.z;
+
+        for (; const_iter_x != const_iter_x.end(); ++const_iter_x, ++const_iter_y, ++const_iter_z)
+        {
+            if (*const_iter_x == 0.0f || *const_iter_y == 0.0f || *const_iter_z == 0.0f)
+            {
+                continue;
+            }
+            
+            // Todo: I have to transform the point cloud later.
+            double normal_x = position_x - *const_iter_x;
+            double normal_y = position_y - *const_iter_y;
+            double normal_z = position_z - *const_iter_z;
+
+            normalize(normal_x, normal_y, normal_z);
+            points.push_back(Vertex(*const_iter_x, *const_iter_y, *const_iter_z, normal_x, normal_y, normal_z));
+        }
+    } 
+
+    if (down_sample && points.size() > max_points)
+    {
+        //ros print: "Downsampling point cloud"
+        ROS_INFO("Downsampling point cloud");
+        // Random shuffle
+        //std::random_device rd;
+        std::mt19937 gen(42);
+        std::shuffle(points.begin(), points.end(), gen); 
+        points.resize(max_points);
+        ROS_INFO("Downsampled point cloud");
+    }
+
+    size_t middle_point_idx = pose_batch.size()/2; 
+    Eigen::Matrix<double, 3, 4> Eigen_pose;
+    
+    nav_msgs::Odometry middle_pose = pose_batch[middle_point_idx];
+    Eigen::Quaterniond orientation(middle_pose.pose.pose.orientation.w, 
+                                   middle_pose.pose.pose.orientation.x, 
+                                   middle_pose.pose.pose.orientation.y, 
+                                   middle_pose.pose.pose.orientation.z);
+
+    Eigen_pose.block<3, 3>(0, 0) = orientation.toRotationMatrix();
+    Eigen_pose.block<3, 1>(0, 3) = Eigen::Vector3d(middle_pose.pose.pose.position.x, 
+                                                   middle_pose.pose.pose.position.y, 
+                                                   middle_pose.pose.pose.position.z);
+    
+    ROS_INFO("Processing point cloud pose 4");
     PointCloudPose point_cloud_pose;
+    point_cloud_pose.points = points;
+    point_cloud_pose.pose = Eigen_pose;
+    ROS_INFO("Processed point cloud pose 5");
     return point_cloud_pose;
 }
 
@@ -58,22 +122,40 @@ void rosIBPA::reconstruction_loop()
 {
     while (!should_exit_)
     {
-        std::vector<rosPointCloudPose> batch;
+        std::vector<sensor_msgs::PointCloud2> point_batch;
+        std::vector<nav_msgs::Odometry> pose_batch;
 
         // Get batch when ready
         {
-            std::lock_guard<std::mutex> lock(queue_mutex_);
-            if (data_queue_.size() >= batch_size_)
+            std::lock_guard<std::mutex> lock(batch_mutex_);
+            if (point_buffer_.size() >= batch_size_ && pose_buffer_.size() >= batch_size_)
             {
-                // Get batch from queue...
+                // Pop the first batch_size_ points and poses
+                point_batch = std::vector<sensor_msgs::PointCloud2>(point_buffer_.begin(), point_buffer_.begin() + batch_size_);
+                pose_batch = std::vector<nav_msgs::Odometry>(pose_buffer_.begin(), pose_buffer_.begin() + batch_size_);
+
+                // Remove the processed points and poses
+                point_buffer_.erase(point_buffer_.begin(), point_buffer_.begin() + batch_size_);
+                pose_buffer_.erase(pose_buffer_.begin(), pose_buffer_.begin() + batch_size_);
             }
         }
 
-        if (!batch.empty())
+        PointCloudPose point_cloud_pose;
+        if (!point_batch.empty() && !pose_batch.empty())
         {
-            reconstructSurface();
-        }
+            point_cloud_pose = processPointCloudPose(point_batch, 
+                                                pose_batch,
+                                                down_sample_in_ros_, 
+                                                down_sample_in_ros_max_points_);
+            point_batch.clear();
+            pose_batch.clear();
 
+            const std::list<Vertex> vertices(point_cloud_pose.points.begin(), point_cloud_pose.points.end());
+            const Eigen::Matrix<double, 3, 4>& pose = point_cloud_pose.pose;
+
+            ibpa_reconstructor_.reconstruct(pose, vertices);
+        }
+        
         // Sleep to prevent busy waiting
         ros::Duration(0.01).sleep();
     }
@@ -98,8 +180,8 @@ std::vector<rosPointCloudPose> rosIBPA::processBatch()
         rosPointCloudPose pair;
 
         // Filter point cloud to 256 points
-        pair.points = filterPointCloud(point_batch_[i]);
-        pair.pose = pose_batch_[i];
+        pair.points = filterPointCloud(point_buffer_[i]);
+        pair.pose = pose_buffer_[i];
 
         processed_pairs.push_back(pair);
 
@@ -119,9 +201,9 @@ sensor_msgs::PointCloud2 rosIBPA::filterPointCloud(const sensor_msgs::PointCloud
     try
     {
         // Create iterators for x, y, z
-        sensor_msgs::PointCloud2Iterator<float> iter_x(cloud, "x");
-        sensor_msgs::PointCloud2Iterator<float> iter_y(cloud, "y");
-        sensor_msgs::PointCloud2Iterator<float> iter_z(cloud, "z");
+        sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud, "x");
+        sensor_msgs::PointCloud2ConstIterator<float> iter_y(cloud, "y");
+        sensor_msgs::PointCloud2ConstIterator<float> iter_z(cloud, "z");
 
         ROS_INFO("Created iterators");
         std::vector<uint8_t> filtered_data;

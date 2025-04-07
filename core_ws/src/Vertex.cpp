@@ -22,6 +22,13 @@
 #include <cstdio>
 #include <iostream>
 
+Vertex::Vertex(): Point(0, 0, 0), m_nx(0), m_ny(0), m_nz(0)
+{
+    m_index = 0;
+    setType(Vertex::ORPHAN);
+    m_octreeNodeLeaf = nullptr;
+}
+
 Vertex::Vertex(double x, double y, double z, double nx, double ny, double nz)
     : Point(x, y, z), m_nx(nx), m_ny(ny), m_nz(nz)
 {

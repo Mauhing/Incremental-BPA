@@ -15,6 +15,7 @@
 #include "Eigen/Dense"
 #include <vector>
 #include "Vertex.h"
+#include "Reconstructor.h"
 
 struct rosPointCloudPose {
     sensor_msgs::PointCloud2 points;    // 256 points
@@ -22,21 +23,8 @@ struct rosPointCloudPose {
 };
 
 struct PointCloudPose {
-    Eigen::Matrix4d pose;
+    Eigen::Matrix<double, 3, 4> pose;
     std::vector<Vertex> points;
-};
-
-class dummyReconstructor {
-public:
-    dummyReconstructor() {
-        ROS_INFO("Dummy reconstructor initialized");
-    }
-    dummyReconstructor(const ProgramOptions& program_options) {
-        ROS_INFO("Dummy reconstructor initialized");
-    }
-    void reconstructSurface() {
-        ROS_INFO("Reconstructing surface");
-    }
 };
 
 class rosIBPA {
@@ -45,15 +33,14 @@ private:
     ros::Subscriber points_sub_;
     ros::Subscriber odom_sub_;
     std::queue<rosPointCloudPose> data_queue_;
-    std::mutex queue_mutex_;
     std::thread reconstruction_thread_;
     bool has_get_points_;
     bool has_get_pose_;
     bool should_exit_;
 
     // Add containers for batches
-    std::vector<sensor_msgs::PointCloud2> point_batch_;
-    std::vector<nav_msgs::Odometry> pose_batch_;
+    std::vector<sensor_msgs::PointCloud2> point_buffer_;
+    std::vector<nav_msgs::Odometry> pose_buffer_;
     std::mutex batch_mutex_;  // Add mutex for thread safety
 
     ProgramOptions program_options_;
@@ -61,7 +48,7 @@ private:
     bool down_sample_in_ros_;
     int down_sample_in_ros_max_points_;
 
-    dummyReconstructor dummy_reconstructor_;
+    Reconstructor ibpa_reconstructor_;
 
 public:
     rosIBPA(const ProgramOptions& program_options);

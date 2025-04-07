@@ -28,9 +28,11 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
 {
     if (!m_is_initialized)
     {
+        std::cout << "\033[33mInitializing\033[0m" << std::endl;
         initializeOctree(vertices);
         initializeVisualization();
         m_is_initialized = true;
+        std::cout << "\033[33mInitialized\033[0m" << std::endl;
     }
 
     m_received_vertices.clear();

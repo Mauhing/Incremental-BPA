@@ -296,6 +296,7 @@ T *TOctree<T>::addPoint(const T &pt)
         // check if the point is inside the volume
         if (! node->isInside(pt))
         {
+            std::cerr << "In function addPoint" << std::endl;
             std::cerr << "Point is not in the volume" << std::endl;
             std::cerr << "Point: " << pt.x() << ", " << pt.y() << ", " << pt.z() << std::endl;
             std::cerr << "Volume: " << m_origin.x() << ", " << m_origin.y() << ", " << m_origin.z() << " to " << m_origin.x() + m_size << ", " << m_origin.y() + m_size << ", " << m_origin.z() + m_size << std::endl;

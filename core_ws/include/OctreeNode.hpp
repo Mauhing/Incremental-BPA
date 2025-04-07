@@ -346,6 +346,7 @@ void TOctreeNode<T>::checkAllPointsInVolume()
     {
         if (!isInside(*point))
         {
+            std::cerr << "In function checkAllPointsInVolume: first loop" << std::endl;
             std::cerr << "Point is not in the volume" << std::endl;
             std::cerr << "Point: " << point->x() << ", " << point->y() << ", " << point->z() << std::endl;
             std::cerr << "Volume: " << m_origin.x() << ", " << m_origin.y() << ", " << m_origin.z() << " to " << m_origin.x() + m_size << ", " << m_origin.y() + m_size << ", " << m_origin.z() + m_size << std::endl;
@@ -356,6 +357,7 @@ void TOctreeNode<T>::checkAllPointsInVolume()
     {
         if (!isInside(*point))
         {
+            std::cerr << "In function checkAllPointsInVolume: second loop" << std::endl;
             std::cerr << "Point is not in the volume" << std::endl;
             std::cerr << "Point: " << point->x() << ", " << point->y() << ", " << point->z() << std::endl;
             std::cerr << "Volume: " << m_origin.x() << ", " << m_origin.y() << ", " << m_origin.z() << " to " << m_origin.x() + m_size << ", " << m_origin.y() + m_size << ", " << m_origin.z() + m_size << std::endl;

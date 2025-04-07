@@ -104,6 +104,8 @@ int main(int argc, char **argv)
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        
+        //Todo: this part should be optimized. We should use vector instead of list.
         reconstructor.reconstruct(robot_pose, vertices);
     }
 

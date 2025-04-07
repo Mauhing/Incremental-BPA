@@ -79,6 +79,13 @@ public:
         double ymax = max_xyz(1);
         double zmax = max_xyz(2);
 
+        std::cout << "xmin: " << xmin << std::endl;
+        std::cout << "ymin: " << ymin << std::endl;
+        std::cout << "zmin: " << zmin << std::endl;
+        std::cout << "xmax: " << xmax << std::endl;
+        std::cout << "ymax: " << ymax << std::endl;
+        std::cout << "zmax: " << zmax << std::endl;
+
         double lx = xmax - xmin;
         double ly = ymax - ymin;
         double lz = zmax - zmin;
@@ -86,17 +93,24 @@ public:
         // Get size of one of the largest dimension
         double size = lx > ly ? lx : ly;
         size = size > lz ? size : lz;
+        std::cout << "size: " << size << std::endl;
 
         size = 1.1 * size;
+        std::cout << "size: " << size << std::endl;
         double margin;
 
         unsigned int depth = 0;
         if (min_radius > 0)
         {
+            std::cout << "min_radius: " << min_radius << std::endl;
             depth = (unsigned int)ceil(log2(size / (min_radius)));
+            std::cout << "depth: " << depth << std::endl;
             double adapted_size = pow2(depth) * min_radius;
+            std::cout << "adapted_size: " << adapted_size << std::endl;
             margin = 0.5 * (adapted_size - size);
+            std::cout << "margin: " << margin << std::endl;
             size = adapted_size;
+            std::cout << "size: " << size << std::endl;
         }
         else
         {
@@ -105,10 +119,20 @@ public:
         }
 
         // The orgin of the octree is the lower left corner (2D) of the bounding box
+        std::cout << "xmin: " << xmin << std::endl;
+        std::cout << "ymin: " << ymin << std::endl;
+        std::cout << "zmin: " << zmin << std::endl;
+        std::cout << "margin: " << margin << std::endl;
         double ox = xmin - margin;
         double oy = ymin - margin;
         double oz = zmin - margin;
+        
         Point origin(ox, oy, oz);
+
+
+        std::cout << "Origin: " << origin.x() << ", " << origin.y() << ", " << origin.z() << std::endl;
+        std::cout << "Size: " << size << std::endl;
+        std::cout << "Depth: " << depth << std::endl;
 
         return std::tuple<Point, double, unsigned int>(origin, size, depth);
 
