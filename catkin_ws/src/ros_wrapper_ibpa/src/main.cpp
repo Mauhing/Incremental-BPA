@@ -4,6 +4,17 @@
 #include <atomic>
 #include <open3d/Open3D.h>
 
+#include "Octree.h"
+#include "OctreeIterator.h"
+#include "utilities.h"
+#include "Vertex.h"
+#include "Mesher.h"
+#include "FileIO.h"
+#include "types.h"
+#include "ProgramOptions.hpp"
+#include "Visualizer.h"
+#include "Reconstructor.h"
+
 std::condition_variable cv_debug_visualization;
 bool rendering_in_progress(false);
 std::mutex o3d_mesh_mutex;
@@ -20,7 +31,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     
-    ROS_INFO("Got config path: %s", config_path.c_str());    //Sleep for 1 second
+    ROS_INFO("Got config path: %s", config_path.c_str()); 
 
     ProgramOptions program_options = parseConfigFile(config_path);
 

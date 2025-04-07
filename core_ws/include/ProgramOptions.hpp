@@ -24,6 +24,9 @@ struct ProgramOptions
 
     bool down_sample_in_ros;
     int down_sample_in_ros_max_points;
+
+    bool random_device;
+    int seed;
 };
 
 inline ProgramOptions parseConfigFile(const std::string &config_file)
@@ -63,19 +66,23 @@ inline ProgramOptions parseConfigFile(const std::string &config_file)
     options.reading_per_batch = config["reading_per_batch"].as<int>();
 
     // For nested options
-    checkRequired(config["one_mesh_policy"], "one_mesh_policy");
-    checkRequired(config["one_mesh_policy"]["enabled"], "one_mesh_policy.enabled");
-    options.policy_main_mesh = config["one_mesh_policy"]["enabled"].as<bool>();
-
-    checkRequired(config["one_mesh_policy"]["activation_batch_number"], "one_mesh_policy.activation_batch_number");
-    options.policy_main_mesh_activation_batch_number = config["one_mesh_policy"]["activation_batch_number"].as<int>();
+    checkRequired(config["main_mesh_policy"], "main_mesh_policy");
+    checkRequired(config["main_mesh_policy"]["enabled"], "main_mesh_policy.enabled");
+    checkRequired(config["main_mesh_policy"]["execute_at_batch"], "main_mesh_policy.execute_at_batch");
+    options.policy_main_mesh = config["main_mesh_policy"]["enabled"].as<bool>();
+    options.policy_main_mesh_activation_batch_number = config["main_mesh_policy"]["execute_at_batch"].as<int>();
 
     checkRequired(config["down_sample_in_ros"], "down_sample_in_ros");
-
     checkRequired(config["down_sample_in_ros"]["enabled"], "down_sample_in_ros.enabled");
-    options.down_sample_in_ros = config["down_sample_in_ros"]["enabled"].as<bool>();
     checkRequired(config["down_sample_in_ros"]["max_points"], "down_sample_in_ros.max_points");
+    options.down_sample_in_ros = config["down_sample_in_ros"]["enabled"].as<bool>();
     options.down_sample_in_ros_max_points = config["down_sample_in_ros"]["max_points"].as<int>();
+
+    checkRequired(config["random"], "random");
+    checkRequired(config["random"]["random_device"], "random.random_device");
+    checkRequired(config["random"]["seed"], "random.seed");
+    options.random_device = config["random"]["random_device"].as<bool>();
+    options.seed = config["random"]["seed"].as<int>();
     
     return options;
 }
