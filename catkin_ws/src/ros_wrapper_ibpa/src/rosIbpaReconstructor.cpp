@@ -175,7 +175,7 @@ static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::Point
         points.resize(max_points);
     }
 
-    size_t middle_point_idx = pose_batch.size()/2; 
+    size_t middle_point_idx = pose_batch.size()/2 + 1; 
     Eigen::Matrix<double, 3, 4> Eigen_pose;
     
     nav_msgs::Odometry middle_pose = pose_batch[middle_point_idx];
@@ -204,6 +204,8 @@ void rosIBPA::reconstruction_loop()
 
         {
             std::lock_guard<std::mutex> lock(batch_mutex_);
+            ROS_INFO("Batch size: %zu", point_buffer_.size());
+            ROS_INFO(" We need to have at least: %zu", batch_size_);
             if (point_buffer_.size() >= batch_size_ && pose_buffer_.size() >= batch_size_)
             {
                 // Pop the first batch_size_ points and poses
@@ -219,6 +221,7 @@ void rosIBPA::reconstruction_loop()
         PointCloudPose point_cloud_pose;
         if (!point_batch.empty() && !pose_batch.empty())
         {
+            ROS_INFO("Processing point cloud and pose batch");
             point_cloud_pose = processPointCloudPose(point_batch, 
                                                 pose_batch,
                                                 down_sample_in_ros_, 
@@ -226,6 +229,7 @@ void rosIBPA::reconstruction_loop()
                                                 b2s_pose_,
                                                 program_options_.random_device,
                                                 program_options_.seed);
+            ROS_INFO("Point cloud and pose batch processed");
             point_batch.clear();
             pose_batch.clear();
 
@@ -234,10 +238,20 @@ void rosIBPA::reconstruction_loop()
 
             ibpa_reconstructor_.reconstruct(pose, vertices);
         }
+
+        //if (ibpa_reconstructor_.shouldExit()) {
+        //    should_exit_ = true;
+        //    break;
+        //}
         
         // Sleep to prevent busy waiting
         ros::Duration(0.01).sleep();
     }
+}
+
+bool rosIBPA::shouldExit() const
+{
+    return should_exit_;
 }
 
 void rosIBPA::reconstructSurface()

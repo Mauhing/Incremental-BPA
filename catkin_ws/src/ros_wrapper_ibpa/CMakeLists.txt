@@ -51,7 +51,7 @@ catkin_package(
 set(CORE_WS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../core_ws")
 
 # Open3D (required to forward Open3D_DIR to core_ws)
-set(Open3D_DIR "${CORE_WS_PATH}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.19.0/lib/cmake/Open3D")
+set(Open3D_DIR "${CORE_WS_PATH}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.18.0/lib/cmake/Open3D")
 find_package(Open3D REQUIRED)
 
 include_directories(

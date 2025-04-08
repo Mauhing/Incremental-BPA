@@ -59,11 +59,14 @@ public:
 
     void processOdometry(const nav_msgs::Odometry::ConstPtr& msg);
 
+    bool shouldExit() const;
+
 private:
 
     void reconstruction_loop();
 
     void reconstructSurface();
+
 
     std::vector<rosPointCloudPose> processBatch();
 

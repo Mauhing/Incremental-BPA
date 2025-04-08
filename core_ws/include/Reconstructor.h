@@ -35,7 +35,6 @@ class Reconstructor
 
     void initializeOctree(const std::list<Vertex>& vertices);
     void initializeVisualization();
-    void processBatch(size_t batch_index, size_t batch_size, const std::vector<SensorFrame>& sensor_frames);
 
     public:
     // delete the default constructor
@@ -43,6 +42,8 @@ class Reconstructor
 
     Reconstructor(const ProgramOptions& options);
     ~Reconstructor();
+
+    bool shouldExit() const { return m_should_exit; }
     
     void reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const std::list<Vertex>& vertices );
 };

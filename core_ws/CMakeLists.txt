@@ -43,7 +43,7 @@ set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(${YAML_CPP_DIR})  # defines yaml-cpp target
 
 # Open3D
-set(Open3D_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.19.0/lib/cmake/Open3D")
+set(Open3D_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.18.0/lib/cmake/Open3D")
 find_package(Open3D REQUIRED)
 
 # Threads

@@ -41,5 +41,12 @@ int main(int argc, char** argv) {
     // Spin to receive callbacks
     ros::spin();
 
+    //ros::Rate rate(100); // 100Hz or adjust as needed
+    //while (ros::ok() && !ibpa.shouldExit()) {
+    //    ros::spinOnce();
+    //    rate.sleep();
+    //}
+
+    ros::shutdown();
     return 0;
 } 

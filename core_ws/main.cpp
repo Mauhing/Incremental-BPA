@@ -107,7 +107,15 @@ int main(int argc, char **argv)
         
         //Todo: this part should be optimized. We should use vector instead of list.
         reconstructor.reconstruct(robot_pose, vertices);
+
+        if (reconstructor.shouldExit()) {
+            std::cout << "\033[33mExiting\033[0m" << std::endl;
+            break;
+        }
     }
+
+    std::cout << "\033[33mPress Enter to exit\033[0m" << std::endl;
+    std::cin.get();
 
     return EXIT_SUCCESS;
 }
