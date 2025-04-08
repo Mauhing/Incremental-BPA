@@ -135,8 +135,10 @@ unsigned int Mesher::nBorderEdges() const
 
 void Mesher::reconstruct()
 {
+    #ifdef _DEBUG
     std::cout << "***********Ball radius " << m_ball_radius
               << " ***********" << std::endl;
+    #endif
 
     if (m_edge_front.empty())
     {
@@ -150,7 +152,9 @@ void Mesher::reconstruct()
     else
     {
         // If there are only one radius. This scope will never be executed.
+        #ifdef _DEBUG
         std::cout << "Edge front not empty, Expanding triangulation" << std::endl;
+        #endif
         expandTriangulation();
     }
 
@@ -1238,7 +1242,10 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     }
     //this->updateRender();
 
+    #ifdef _DEBUG
     std::cout << "Clearing" << std::endl;
+    #endif
+
     // Clear fresh facets
     this->clearFreshFacets();
 

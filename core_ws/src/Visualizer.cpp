@@ -82,11 +82,10 @@ void Visualizer::visualizationThread(
     //std::this_thread::sleep_for(std::chrono::seconds(5));
 
     // add coordinate axes
-    auto coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
+    std::shared_ptr<open3d::geometry::TriangleMesh> coordinate_axes = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
     visualizer.AddGeometry(coordinate_axes);
 
-    auto robot_pose_mesh = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
-    Eigen::Matrix4d previous_pose = Eigen::Matrix4d::Identity();
+    std::shared_ptr<open3d::geometry::TriangleMesh> robot_pose_mesh = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
     visualizer.AddGeometry(robot_pose_mesh);
 
     std::unordered_map<unsigned int, unsigned int> f_index_2_matrix_row;
@@ -127,35 +126,15 @@ void Visualizer::visualizationThread(
             std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
             renderBoundaries(boundaries, debug_edge);
 
-            // rotation
-            Eigen::Matrix3d rotation_trans;
-            rotation_trans = previous_pose.block<3, 3>(0, 0).transpose();
-
-            // translation
-            Eigen::Vector3d translation_trans;
-            translation_trans = -rotation_trans * previous_pose.block<3, 1>(0, 3);
-
-            // back to origin
-            Eigen::Matrix4d back_to_origin = Eigen::Matrix4d::Identity();
-            back_to_origin.block<3, 3>(0, 0) = rotation_trans;
-            back_to_origin.block<3, 1>(0, 3) = translation_trans;
-            robot_pose_mesh->Transform(back_to_origin);
-            
-            // the robot pose is 3x4 matrix
+            visualizer.RemoveGeometry(robot_pose_mesh, false);
+            robot_pose_mesh = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
 
             // the robot pose is 3x4 matrix
-            // the transform is 4x4 matrix
-            // so we need to convert the robot pose to 4x4 matrix
             Eigen::Matrix4d robot_pose_matrix = Eigen::Matrix4d::Identity();
             robot_pose_matrix.block<3, 3>(0, 0) = robot_pose.block<3, 3>(0, 0);
             robot_pose_matrix.block<3, 1>(0, 3) = robot_pose.block<3, 1>(0, 3); 
- 
-            //print the robot pose matrix
-            //std::cout << "Robot pose matrix:" << std::endl;
-            //std::cout << robot_pose_matrix << std::endl;
-
             robot_pose_mesh->Transform(robot_pose_matrix);
-            previous_pose = robot_pose_matrix;
+            visualizer.AddGeometry(robot_pose_mesh, false);
             
             rendering_in_progress = false;
             need_2_update = true;
@@ -172,7 +151,6 @@ void Visualizer::visualizationThread(
             visualizer.UpdateGeometry(o3d_mesh);
             visualizer.UpdateGeometry(debug_edge);
             visualizer.UpdateGeometry(debug_point);
-            visualizer.UpdateGeometry(robot_pose_mesh);
             need_2_update = false;
         }
         visualizer.UpdateRender();

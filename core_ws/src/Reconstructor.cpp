@@ -16,9 +16,6 @@ m_radius(options.radius),
 m_is_initialized(false),
 m_should_exit(false)
 {
-    //unsigned int reading_per_batch = options.reading_per_batch;
-    //const bool one_mesh_policy = options.policy_main_mesh.enabled;
-    //const unsigned int activation_batch_number = options.policy_main_mesh_activation_batch_number;
 }
 
 Reconstructor::~Reconstructor()
@@ -33,11 +30,9 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
 {
     if (!m_is_initialized)
     {
-        std::cout << "\033[33mInitializing\033[0m" << std::endl;
         initializeOctree(vertices);
         initializeVisualization();
         m_is_initialized = true;
-        std::cout << "\033[33mInitialized\033[0m" << std::endl;
     }
 
     m_received_vertices.clear();
@@ -52,11 +47,10 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
         std::unique_lock<std::mutex> lock(m_o3d_mesh_mutex);
         m_rendering_in_progress = true;
         m_cv_debug_visualization.notify_one();
-        std::cout << "\033[33mTask in progress set to true\033[0m" << std::endl;
-        std::cout << "\033[33mSignal sent from main\033[0m" << std::endl;        
+
+        // Wait for the rendering to finish
         bool& ref = m_rendering_in_progress;  // Create a local reference
         m_cv_debug_visualization.wait(lock, [&ref]{ return !ref; });
-        std::cout << "\033[33mSignal received at main\033[0m" << std::endl;
     }
 }
 
