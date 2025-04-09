@@ -313,7 +313,20 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
         // Dehomogenize the point cloud
         Eigen::Matrix3Xd point_cloud = point_cloud_homogeneous.topRows(3);
 
-        // H
+        // Randomly select max_points_per_batch columns if needed
+        if (point_cloud.cols() > max_points_per_batch) {
+            std::vector<int> indices(point_cloud.cols());
+            std::iota(indices.begin(), indices.end(), 0);
+            std::mt19937 gen(random_device ? std::random_device{}() : seed);
+            std::shuffle(indices.begin(), indices.end(), gen);
+            indices.resize(max_points_per_batch);
+            
+            Eigen::Matrix3Xd selected_points(3, max_points_per_batch);
+            for (int j = 0; j < max_points_per_batch; ++j) {
+                selected_points.col(j) = point_cloud.col(indices[j]);
+            }
+            point_cloud = selected_points;
+        } 
 
         Eigen::Matrix3Xd point_cloud_normal(3, point_cloud.cols());
         for (size_t j = 0; j < point_cloud.cols(); ++j)
@@ -340,13 +353,6 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
             flat_points.emplace_back(points_it->col(j)[0], points_it->col(j)[1], points_it->col(j)[2],
                                 normals_it->col(j)[0], normals_it->col(j)[1], normals_it->col(j)[2]);
         }
-    }
-
-    if (down_sample && flat_points.size() > max_points)
-    {
-        std::mt19937 gen(random_device ? std::random_device{}() : seed);
-        std::shuffle(flat_points.begin(), flat_points.end(), gen);
-        flat_points.resize(max_points);
     }
 
     size_t middle_point_idx = pose_batch.size() / 2 + 1;
