@@ -48,7 +48,7 @@ private:
     bool down_sample_in_ros_;
     int down_sample_in_ros_max_points_;
 
-    Eigen::Matrix<double, 3, 4> b2s_pose_;
+    Eigen::Matrix<double, 4, 4> b2s_pose_;
 
     Reconstructor ibpa_reconstructor_;
 
