@@ -299,7 +299,9 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
 
     std::list<Eigen::Matrix3Xd> all_points;
     std::list<Eigen::Matrix3Xd> all_normals;
-    int max_points_per_batch = 0;
+    int batch_size = static_cast<int>(point_batch.size());
+    int max_points_per_batch = static_cast<int>(max_points / batch_size);
+
     for (size_t i = 0; i < point_batch.size(); ++i)
     {
         Eigen::Matrix4Xd point_cloud_homogeneous = pointCloudToEigenMatrix(point_batch[i]);
@@ -308,8 +310,11 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
         transformPointCloud(b2s_pose,     point_cloud_homogeneous);
         transformPointCloud(world2body, point_cloud_homogeneous);
 
-        // After transform, the point cloud is in the body frame
+        // Dehomogenize the point cloud
         Eigen::Matrix3Xd point_cloud = point_cloud_homogeneous.topRows(3);
+
+        // H
+
         Eigen::Matrix3Xd point_cloud_normal(3, point_cloud.cols());
         for (size_t j = 0; j < point_cloud.cols(); ++j)
         {
