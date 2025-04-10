@@ -49,10 +49,7 @@ int main(int argc, char** argv) {
     }
 
     ROS_INFO("Shutdown requested or shouldExit is true. Exiting main loop.");
-
-    // Ensure the reconstruction thread finishes cleanly if it hasn't already
-    // (You might need to add a join mechanism in rosIBPA's destructor if not already present)
-    
+ 
     ros::shutdown(); // Cleanly shut down ROS
     ROS_INFO("ROS shutdown complete.");
 

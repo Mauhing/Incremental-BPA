@@ -48,7 +48,9 @@ rosIBPA::~rosIBPA()
 {
     ROS_INFO("rosIBPA destructor called");
     should_exit_ = true;
-    reconstruction_thread_.join();
+    if (reconstruction_thread_.joinable()) {
+        reconstruction_thread_.join();
+    }
     ROS_INFO("rosIBPA destructor finished");
 }
 
