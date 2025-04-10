@@ -286,6 +286,23 @@ static void transformPointCloud(const Eigen::Matrix4d &transform, Eigen::Matrix4
     point_cloud = transform * point_cloud;
 }
 
+static Eigen::Matrix3Xd randomSelectPoints(const Eigen::Matrix3Xd &point_cloud,
+                                           const int &max_points_per_batch,
+                                           const bool &random_device,
+                                           const int &seed) {
+    std::vector<int> indices(point_cloud.cols());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::mt19937 gen(random_device ? std::random_device{}() : seed);
+    std::shuffle(indices.begin(), indices.end(), gen);
+    indices.resize(max_points_per_batch);
+
+    Eigen::Matrix3Xd selected_points(3, max_points_per_batch);
+    for (int j = 0; j < max_points_per_batch; ++j) {
+        selected_points.col(j) = point_cloud.col(indices[j]);
+    }
+    return selected_points;
+}
+
 static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::PointCloud2> &point_batch,
                                                 const std::vector<nav_msgs::Odometry> &pose_batch,
                                                 bool down_sample,
@@ -313,20 +330,9 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
         // Dehomogenize the point cloud
         Eigen::Matrix3Xd point_cloud = point_cloud_homogeneous.topRows(3);
 
-        // Randomly select max_points_per_batch columns if needed
-        if (point_cloud.cols() > max_points_per_batch) {
-            std::vector<int> indices(point_cloud.cols());
-            std::iota(indices.begin(), indices.end(), 0);
-            std::mt19937 gen(random_device ? std::random_device{}() : seed);
-            std::shuffle(indices.begin(), indices.end(), gen);
-            indices.resize(max_points_per_batch);
-            
-            Eigen::Matrix3Xd selected_points(3, max_points_per_batch);
-            for (int j = 0; j < max_points_per_batch; ++j) {
-                selected_points.col(j) = point_cloud.col(indices[j]);
-            }
-            point_cloud = selected_points;
-        } 
+        if (down_sample) {
+            point_cloud = randomSelectPoints(point_cloud, max_points_per_batch, random_device, seed);
+        }
 
         Eigen::Matrix3Xd point_cloud_normal(3, point_cloud.cols());
         for (size_t j = 0; j < point_cloud.cols(); ++j)
