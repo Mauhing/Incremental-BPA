@@ -27,6 +27,8 @@ struct ProgramOptions
 
     bool random_device;
     int seed;
+
+    double hole_length;
 };
 
 inline ProgramOptions parseConfigFile(const std::string &config_file)
@@ -83,6 +85,9 @@ inline ProgramOptions parseConfigFile(const std::string &config_file)
     checkRequired(config["random"]["seed"], "random.seed");
     options.random_device = config["random"]["random_device"].as<bool>();
     options.seed = config["random"]["seed"].as<int>();
+
+    checkRequired(config["hole_length"], "hole_length");
+    options.hole_length = config["hole_length"].as<double>();
     
     return options;
 }

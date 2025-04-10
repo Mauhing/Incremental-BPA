@@ -14,7 +14,8 @@ m_mesher(&m_octree_vertices,
         options.seed),
 m_radius(options.radius),
 m_is_initialized(false),
-m_should_exit(false)
+m_should_exit(false),
+m_hole_length(options.hole_length)
 {
 }
 
@@ -75,5 +76,6 @@ void Reconstructor::initializeVisualization()
                            std::ref(m_received_vertices),
                            std::ref(m_cv_debug_visualization),
                            std::ref(m_rendering_in_progress),
-                           std::ref(m_robot_pose));
+                           std::ref(m_robot_pose),
+                           std::ref(m_hole_length));
 }

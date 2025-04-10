@@ -13,7 +13,8 @@ void Visualizer::visualizationThread(
     std::vector<ColorVertex> &received_vertices,
     std::condition_variable &cv_debug_visualization,
     bool &rendering_in_progress,
-    Eigen::Matrix<double, 3, 4> &robot_pose)
+    Eigen::Matrix<double, 3, 4> &robot_pose,
+    const double &hole_length)
 {
     // Create a visualizer object
     open3d::visualization::VisualizerWithKeyCallback visualizer;
@@ -128,7 +129,7 @@ void Visualizer::visualizationThread(
 
             // the first boundary is the boundary with the largest square length
             std::list<Boundary> boundaries = mesher.getBoundriesPurelyFromBoarder();
-            renderBoundaries(boundaries, debug_edge);
+            renderBoundaries(boundaries, debug_edge, hole_length);
 
             visualizer.RemoveGeometry(robot_pose_mesh, false);
             robot_pose_mesh = open3d::geometry::TriangleMesh::CreateCoordinateFrame(1.0);
@@ -506,7 +507,7 @@ void Visualizer::renderIncremental(const std::unordered_set<unsigned int> &facet
     }
 }
 
-void Visualizer::renderBoundaries(const std::list<Boundary> &boundaries, std::shared_ptr<open3d::geometry::LineSet> &line) {
+void Visualizer::renderBoundaries(const std::list<Boundary> &boundaries, std::shared_ptr<open3d::geometry::LineSet> &line, const double &hole_length) {
 
     line->points_.clear();
     line->colors_.clear();
@@ -534,6 +535,7 @@ void Visualizer::renderBoundaries(const std::list<Boundary> &boundaries, std::sh
     }
 
     // Add lines. First boundary blue, rest red
+    const double &hole_length_sq = hole_length * hole_length;
     bool is_first_boundary = true;
     for (const auto& boundary : boundaries) {
         for (const auto& edge : boundary.getEdges()) {
@@ -541,7 +543,7 @@ void Visualizer::renderBoundaries(const std::list<Boundary> &boundaries, std::sh
             if (is_first_boundary) {
                 line->colors_.push_back(Eigen::Vector3d(0.0, 1.0, 0.0)); // Green for first boundary
             } 
-            else if (boundary.getSqLength() < 10) {
+            else if (boundary.getSqLength() < hole_length_sq) {
                 line->colors_.push_back(Eigen::Vector3d(0.0, 0.0, 1.0)); // Blue for rest
             }
             else {

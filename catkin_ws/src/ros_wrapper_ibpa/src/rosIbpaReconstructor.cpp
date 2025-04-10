@@ -108,120 +108,6 @@ static void transformPointCloud(const Eigen::Matrix<double, 4, 4>& transform,
     z = point[2];
 }
 
-
-static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::PointCloud2> &point_batch,
-                                            const std::vector<nav_msgs::Odometry> &pose_batch,
-                                            bool down_sample,
-                                            int max_points,
-                                            const Eigen::Matrix<double, 4, 4>& b2s_pose,
-                                            const bool &random_device,
-                                            const int &seed)
-{
-    auto start_time = std::chrono::high_resolution_clock::now();
-    //ROS_INFO("Starting point cloud processing...");
-
-    std::vector<Vertex> points;
-    auto time_before_loop = std::chrono::high_resolution_clock::now();
-
-    for (size_t i = 0; i < point_batch.size(); ++i)
-    {
-        auto loop_start_time = std::chrono::high_resolution_clock::now();
-
-        sensor_msgs::PointCloud2ConstIterator<float> const_iter_x(point_batch[i], "x");
-        sensor_msgs::PointCloud2ConstIterator<float> const_iter_y(point_batch[i], "y");
-        sensor_msgs::PointCloud2ConstIterator<float> const_iter_z(point_batch[i], "z");
-
-        Eigen::Matrix<double, 4, 4> current_pose;
-        Eigen::Quaterniond orientation(pose_batch[i].pose.pose.orientation.w, 
-                                       pose_batch[i].pose.pose.orientation.x, 
-                                       pose_batch[i].pose.pose.orientation.y, 
-                                       pose_batch[i].pose.pose.orientation.z);
-
-        current_pose.block<3, 3>(0, 0) = orientation.toRotationMatrix();
-        current_pose.block<3, 1>(0, 3) = Eigen::Vector3d(pose_batch[i].pose.pose.position.x, 
-                                                         pose_batch[i].pose.pose.position.y, 
-                                                         pose_batch[i].pose.pose.position.z);
-        current_pose.block<1, 4>(3, 0) << 0, 0, 0, 1;
-
-        auto time_after_pose = std::chrono::high_resolution_clock::now();
-        //ROS_INFO("Time to set up pose for batch %zu: %ld ms", i, std::chrono::duration_cast<std::chrono::milliseconds>(time_after_pose - loop_start_time).count());
-
-        for (; const_iter_x != const_iter_x.end(); ++const_iter_x, ++const_iter_y, ++const_iter_z)
-        {
-            auto point_start_time = std::chrono::high_resolution_clock::now();
-
-            if (*const_iter_x == 0.0f || *const_iter_y == 0.0f || *const_iter_z == 0.0f)
-            {
-                continue;
-            }
-
-            double x = *const_iter_x;
-            double y = *const_iter_y;
-            double z = *const_iter_z;
-
-            auto transform_start_time = std::chrono::high_resolution_clock::now();
-            transformPointCloud(b2s_pose, x, y, z);
-            transformPointCloud(current_pose, x, y, z);
-            auto transform_end_time = std::chrono::high_resolution_clock::now();
-            //ROS_INFO("Time to transform point: %ld µs", std::chrono::duration_cast<std::chrono::microseconds>(transform_end_time - transform_start_time).count());
-
-            auto normal_start_time = std::chrono::high_resolution_clock::now();
-            double normal_x = pose_batch[i].pose.pose.position.x - x;
-            double normal_y = pose_batch[i].pose.pose.position.y - y;
-            double normal_z = pose_batch[i].pose.pose.position.z - z;
-
-            normalize(normal_x, normal_y, normal_z);
-            auto normal_end_time = std::chrono::high_resolution_clock::now();
-            //ROS_INFO("Time to calculate and normalize normal: %ld µs", std::chrono::duration_cast<std::chrono::microseconds>(normal_end_time - normal_start_time).count());
-
-            points.push_back(Vertex(x, y, z, normal_x, normal_y, normal_z));
-
-            auto point_end_time = std::chrono::high_resolution_clock::now();
-            //ROS_INFO("Total time for point processing: %ld µs", std::chrono::duration_cast<std::chrono::microseconds>(point_end_time - point_start_time).count());
-        }
-
-        auto loop_end_time = std::chrono::high_resolution_clock::now();
-        //ROS_INFO("Time to process batch %zu: %ld ms", i, std::chrono::duration_cast<std::chrono::milliseconds>(loop_end_time - loop_start_time).count());
-    }
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    //ROS_INFO("Total time taken to process point cloud: %ld ms", duration.count());
-
-    if (down_sample && points.size() > max_points)
-    {
-        // Random shuffle
-        if (random_device) {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::shuffle(points.begin(), points.end(), gen); 
-        } else {
-            std::mt19937 gen(seed);
-            std::shuffle(points.begin(), points.end(), gen);
-        }
-        points.resize(max_points);
-    }
-
-    size_t middle_point_idx = pose_batch.size()/2 + 1; 
-    Eigen::Matrix<double, 3, 4> Eigen_pose;
-    
-    nav_msgs::Odometry middle_pose = pose_batch[middle_point_idx];
-    Eigen::Quaterniond orientation(middle_pose.pose.pose.orientation.w, 
-                                   middle_pose.pose.pose.orientation.x, 
-                                   middle_pose.pose.pose.orientation.y, 
-                                   middle_pose.pose.pose.orientation.z);
-
-    Eigen_pose.block<3, 3>(0, 0) = orientation.toRotationMatrix();
-    Eigen_pose.block<3, 1>(0, 3) = Eigen::Vector3d(middle_pose.pose.pose.position.x, 
-                                                   middle_pose.pose.pose.position.y, 
-                                                   middle_pose.pose.pose.position.z);
-    
-    PointCloudPose point_cloud_pose;
-    point_cloud_pose.points = points;
-    point_cloud_pose.pose = Eigen_pose;
-    return point_cloud_pose;
-}
-
 static Eigen::Matrix4Xd pointCloudToEigenMatrix(const sensor_msgs::PointCloud2& cloud) {
     // Determine the number of points
     size_t num_points = cloud.width * cloud.height;
@@ -303,7 +189,7 @@ static Eigen::Matrix3Xd randomSelectPoints(const Eigen::Matrix3Xd &point_cloud,
     return selected_points;
 }
 
-static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::PointCloud2> &point_batch,
+static PointCloudPose processPointCloudPose(const std::vector<sensor_msgs::PointCloud2> &point_batch,
                                                 const std::vector<nav_msgs::Odometry> &pose_batch,
                                                 bool down_sample,
                                                 int max_points,
@@ -324,7 +210,7 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
         Eigen::Matrix4Xd point_cloud_homogeneous = pointCloudToEigenMatrix(point_batch[i]);
         Eigen::Matrix4d world2body = odometryToMatrix4d(pose_batch[i]);
 
-        transformPointCloud(b2s_pose,     point_cloud_homogeneous);
+        transformPointCloud(b2s_pose,   point_cloud_homogeneous);
         transformPointCloud(world2body, point_cloud_homogeneous);
 
         // Dehomogenize the point cloud
@@ -338,11 +224,8 @@ static PointCloudPose processPointCloudPose_new(const std::vector<sensor_msgs::P
         for (size_t j = 0; j < point_cloud.cols(); ++j)
         {
             Eigen::Vector3d normal  = world2body.block<3, 1>(0, 3) - point_cloud.col(j);
-            double x = normal.x();
-            double y = normal.y();
-            double z = normal.z();
-            normalize(x, y, z);
-            point_cloud_normal.col(j) = Eigen::Vector3d(x, y, z);
+            normal.normalize();
+            point_cloud_normal.col(j) = normal;
         }
         
         all_points.push_back(point_cloud);
@@ -417,7 +300,7 @@ void rosIBPA::reconstruction_loop()
         if (!point_batch.empty() && !pose_batch.empty())
         {
             // time start
-            point_cloud_pose = processPointCloudPose_new(point_batch, 
+            point_cloud_pose = processPointCloudPose(point_batch, 
                                                 pose_batch,
                                                 down_sample_in_ros_, 
                                                 down_sample_in_ros_max_points_,

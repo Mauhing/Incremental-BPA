@@ -16,11 +16,12 @@ namespace Visualizer
         std::vector<ColorVertex> &received_vertices,
         std::condition_variable &cv_debug_visualization,
         bool &rendering_in_progress,
-        Eigen::Matrix<double, 3, 4> &robot_pose);
+        Eigen::Matrix<double, 3, 4> &robot_pose,
+        const double &hole_length);
 
     void renderMainMesh(const Facet_star_list &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
 
-    void renderBoundaries(const std::list<Boundary> &boundaries, std::shared_ptr<open3d::geometry::LineSet> &line);
+    void renderBoundaries(const std::list<Boundary> &boundaries, std::shared_ptr<open3d::geometry::LineSet> &line, const double &hole_length);
 
     void renderIncremental(const std::unordered_set<unsigned int> &facets_to_remove, const std::unordered_set<Facet*> &facets_to_add, std::unordered_map<unsigned int, unsigned int> &f_index_2_matrix_row, std::unordered_map<unsigned int, unsigned int> &v_index_2_matrix_row, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
 

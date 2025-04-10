@@ -32,6 +32,7 @@ class Reconstructor
     Eigen::Matrix<double, 3, 4> m_robot_pose;
     std::vector<ColorVertex> m_received_vertices;
     std::thread m_vis_thread;
+    double m_hole_length;
 
     void initializeOctree(const std::list<Vertex>& vertices);
     void initializeVisualization();
