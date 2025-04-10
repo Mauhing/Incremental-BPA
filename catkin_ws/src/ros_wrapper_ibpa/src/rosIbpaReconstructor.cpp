@@ -44,6 +44,14 @@ ibpa_reconstructor_(program_options)
     b2s_pose_.block<1, 4>(3, 0) << 0, 0, 0, 1;
 }
 
+rosIBPA::~rosIBPA()
+{
+    ROS_INFO("rosIBPA destructor called");
+    should_exit_ = true;
+    reconstruction_thread_.join();
+    ROS_INFO("rosIBPA destructor finished");
+}
+
 void rosIBPA::processPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
 {
     std::lock_guard<std::mutex> lock(batch_mutex_);
@@ -318,14 +326,13 @@ void rosIBPA::reconstruction_loop()
             ROS_INFO("Time taken to reconstruct: %ld ms", duration.count());
         }
 
-        //if (ibpa_reconstructor_.shouldExit()) {
-        //    should_exit_ = true;
-        //    break;
-        //}
-        
-        // Sleep to prevent busy waiting
+        if (ibpa_reconstructor_.shouldExit()) {
+            should_exit_ = true;
+            break;
+        } 
         ros::Duration(0.01).sleep();
     }
+    ROS_INFO("Reconstruction loop exiting.");
 }
 
 bool rosIBPA::shouldExit() const

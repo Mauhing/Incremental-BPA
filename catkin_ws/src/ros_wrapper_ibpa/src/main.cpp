@@ -3,6 +3,7 @@
 #include <mutex>
 #include <atomic>
 #include <open3d/Open3D.h>
+#include <ros/ros.h>
 
 #include "Octree.h"
 #include "OctreeIterator.h"
@@ -39,14 +40,21 @@ int main(int argc, char** argv) {
     rosIBPA ibpa(program_options);
     
     // Spin to receive callbacks
-    ros::spin();
+    //ros::spin();
 
-    //ros::Rate rate(100); // 100Hz or adjust as needed
-    //while (ros::ok() && !ibpa.shouldExit()) {
-    //    ros::spinOnce();
-    //    rate.sleep();
-    //}
+    ros::Rate rate(100); // 100Hz or adjust as needed
+    while (ros::ok() && !ibpa.shouldExit()) {
+        ros::spinOnce();
+        rate.sleep();
+    }
 
-    ros::shutdown();
+    ROS_INFO("Shutdown requested or shouldExit is true. Exiting main loop.");
+
+    // Ensure the reconstruction thread finishes cleanly if it hasn't already
+    // (You might need to add a join mechanism in rosIBPA's destructor if not already present)
+    
+    ros::shutdown(); // Cleanly shut down ROS
+    ROS_INFO("ROS shutdown complete.");
+
     return 0;
 } 

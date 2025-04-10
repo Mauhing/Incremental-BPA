@@ -535,7 +535,7 @@ void Visualizer::renderBoundaries(const std::list<Boundary> &boundaries, std::sh
     }
 
     // Add lines. First boundary blue, rest red
-    const double &hole_length_sq = hole_length * hole_length;
+    const double hole_length_sq = hole_length * hole_length;
     bool is_first_boundary = true;
     for (const auto& boundary : boundaries) {
         for (const auto& edge : boundary.getEdges()) {

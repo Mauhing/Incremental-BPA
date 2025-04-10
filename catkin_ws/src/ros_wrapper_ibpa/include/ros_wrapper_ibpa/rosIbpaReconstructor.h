@@ -55,6 +55,8 @@ private:
 public:
     rosIBPA(const ProgramOptions& program_options);
 
+    ~rosIBPA();
+
     void processPointCloud(const sensor_msgs::PointCloud2::ConstPtr& msg);
 
     void processOdometry(const nav_msgs::Odometry::ConstPtr& msg);
