@@ -31,7 +31,6 @@ Reconstructor::~Reconstructor()
 
 void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const std::list<Vertex>& vertices )
 {
-    std::cout << "Reconstructing batch " << std::endl;
     if (!m_is_initialized)
     {
         initializeOctree(vertices);
@@ -48,31 +47,25 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
     m_robot_pose = pose;
 
     {
-        std::cout << "Entering visualization" << std::endl;
         std::unique_lock<std::mutex> lock(m_o3d_mesh_mutex);
         m_rendering_in_progress = true;
         m_cv_debug_visualization.notify_one();
 
-        std::cout << "notifying visualization" << std::endl;
         bool& ref = m_rendering_in_progress;  // Create a local reference
-        std::cout << "waiting for rendering to finish" << std::endl;
     
         auto timeout = std::chrono::milliseconds(500); // Set a timeout duration
         while (true) {
             if (m_cv_debug_visualization.wait_for(lock, timeout, [&ref]{ return !ref; })) {
-                std::cout << "rendering finished" << std::endl;
                 break;
             }
 
             if (m_should_exit) {
-                std::cout << "Exit signal received" << std::endl;
                 break;
             }
             // Optionally, add a small sleep here to prevent busy-waiting
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
-    std::cout << "Reconstructing batch done" << std::endl;
 }
 
 void Reconstructor::initializeOctree(const std::list<Vertex>& vertices)
@@ -102,13 +95,5 @@ void Reconstructor::initializeVisualization()
 
 void Reconstructor::saveMesh()
 {
-    std::string save_path = m_save_path;
-    std::cout << "Saving mesh to " << save_path << std::endl;
-    char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) != nullptr) {
-        std::cout << "Current working directory: " << cwd << std::endl;
-    } else {
-        std::cerr << "Failed to get current working directory" << std::endl;
-    }
-    FileIO::saveMeshDebug(save_path.c_str(), m_mesher.getFacets());
+    m_mesher.saveMeshAsOpen3DPLY(m_save_path);
 }

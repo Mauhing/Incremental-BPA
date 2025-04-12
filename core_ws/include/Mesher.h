@@ -512,6 +512,8 @@ public: // For incremental rendering
     void clearBatchFacets();
     void removeFromAddBatchFacet(Facet* facet);
 
+public:
+    void saveMeshAsOpen3DPLY(const std::string &filename) const;
 
 // Debugging methods
 #ifdef _DEBUG

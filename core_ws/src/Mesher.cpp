@@ -93,7 +93,9 @@ void Mesher::initialize(const Point &origin, double size, unsigned int depth)
 
 Mesher::~Mesher()
 {
-    std::cout << "Mesher destructor" << std::endl;
+    #ifdef _DEBUG
+    std::cout << "Mesher destructor is called" << std::endl;
+    #endif
     m_octree_vertices = nullptr;
     m_iterator_vertices = nullptr;
     m_octree_ball_centers = nullptr;
@@ -1227,7 +1229,10 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     //this->updateRender();
 
     std::cout << "\033[32mFresh facets size: " << this->m_fresh_facets.size() << "\033[0m" << std::endl;
+    
+    #ifdef _DEBUG
     std::cout << "Removing fanfan and disk fan singular" << std::endl;
+    #endif
     while (true)
     {
         // Remove singular vertices
@@ -1304,7 +1309,9 @@ bool Mesher::removeFanFanSingular()
         }
         else
         {
+            #ifdef _DEBUG
             std::cout << "Fan Fan vertices found: " << singular_vertices.size() << std::endl;
+            #endif
             found_fan_fan_vertex = true;
         }
 
@@ -1848,3 +1855,49 @@ void Mesher::updateRender()
     std::cin.get();
 }
 #endif
+
+void Mesher::saveMeshAsOpen3DPLY(const std::string &filename) const
+{
+    std::shared_ptr<open3d::geometry::TriangleMesh> O3d_mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    const std::list<Facet*> &facets = this->getFacets();
+    
+    // Clear existing mesh data
+    O3d_mesh->vertices_.clear();
+    O3d_mesh->triangles_.clear();
+    O3d_mesh->vertex_colors_.clear();
+
+    // Create a map of vertices to their new indices
+    std::unordered_map<Vertex *, int> vertex_to_index; // Changed to int
+    int current_index = 0;                             // Changed to int
+
+    for (auto facet : facets)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            Vertex *v = facet->getVertex(i);
+            if (vertex_to_index.find(v) == vertex_to_index.end())
+            {
+                vertex_to_index[v] = current_index++;
+                O3d_mesh->vertices_.push_back(Eigen::Vector3d(v->x(), v->y(), v->z()));
+                O3d_mesh->vertex_colors_.push_back(Eigen::Vector3d(0.5, 0.5, 0.5));
+            }
+        }
+    }
+
+    // create triangles
+    for (auto facet : facets)
+    {
+        O3d_mesh->triangles_.push_back(Eigen::Vector3i(vertex_to_index[facet->getVertex(0)], vertex_to_index[facet->getVertex(1)], vertex_to_index[facet->getVertex(2)]));
+    }
+
+    // Save the mesh to a PLY file
+    bool success = open3d::io::WriteTriangleMesh(filename, *O3d_mesh); 
+    if (!success)
+    {
+        std::cout << "Failed to save mesh to " << filename << std::endl;
+    }
+    else
+    {
+        std::cout << "Mesh saved to " << filename << std::endl;
+    }
+}

@@ -48,9 +48,8 @@ int main(int argc, char** argv) {
         rate.sleep();
     }
 
+    ROS_INFO("Shutdown requested");
     ibpa.saveMesh();
-
-    ROS_INFO("Shutdown requested or shouldExit is true. Exiting main loop.");
  
     ros::shutdown(); // Cleanly shut down ROS
     ROS_INFO("ROS shutdown complete.");

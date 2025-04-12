@@ -389,7 +389,9 @@ TOctreeIterator<T>::TOctreeIterator(TOctree<T> *octree)
 template <class T>
 TOctreeIterator<T>::~TOctreeIterator()
 {
+    #ifdef _DEBUG
     std::cout << "TOctreeIterator destructor called" << std::endl;
+    #endif
     m_octree = nullptr;
 }
 
