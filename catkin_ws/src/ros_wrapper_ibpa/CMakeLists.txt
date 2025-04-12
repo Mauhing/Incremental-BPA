@@ -37,12 +37,15 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nav_msgs
   rosbag
+  tf2_ros
+  tf2_eigen
+  tf2
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp sensor_msgs nav_msgs rosbag
+  CATKIN_DEPENDS roscpp sensor_msgs nav_msgs rosbag tf2_ros tf2_eigen tf2
 )
 
 # ─────────────────────────────────────────────────────────────

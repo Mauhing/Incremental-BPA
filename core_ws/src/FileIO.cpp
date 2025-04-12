@@ -156,6 +156,7 @@ bool FileIO::saveMeshDebug(const char *output_filename, const std::list<Facet *>
         // >>
     }
     out.close(); // close the file
+    std::cout << "Mesh saved to " << filename << std::endl;
     return true;
 }
 

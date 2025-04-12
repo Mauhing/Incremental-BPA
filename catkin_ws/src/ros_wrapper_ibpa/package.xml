@@ -12,4 +12,7 @@
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rosbag</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2</depend>
 </package> 

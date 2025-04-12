@@ -4,12 +4,17 @@
 #include <cmath>
 #include <chrono>
 #include <Eigen/Dense>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 rosIBPA::rosIBPA(const ProgramOptions &program_options) : 
 has_get_points_(false), 
 has_get_pose_(true), 
 should_exit_(false),
-ibpa_reconstructor_(program_options)
+ibpa_reconstructor_(program_options),
+tf_buffer_(),
+tf_listener_(tf_buffer_)
 {
     program_options_ = program_options;
     batch_size_ = program_options_.reading_per_batch;
@@ -26,22 +31,36 @@ ibpa_reconstructor_(program_options)
     point_buffer_.clear();
     pose_buffer_.clear();
 
-    // Camera to IMU transform
-    // qCM = [0.5027695156557828, 0.5002145141495467, 0.49690290362200085, -0.5000957491655045]  # x,y,z,w
-    // MrMC = [0.04839478648122993, 0.04799781122813299, -0.009770663739786307]  # x,y,z
-    // I need to ask Mohit to know how I can actually get the number from ROS, and not hard code it.
-
-    Eigen::Quaterniond rot_q_s2b(-0.5000957491655045, 0.5027695156557828, 0.5002145141495467, 0.49690290362200085);
-    Eigen::Matrix3d rot_s2b = rot_q_s2b.toRotationMatrix();
-
-    Eigen::Vector3d tran_s2b(0.04839478648122993, 0.04799781122813299, -0.009770663739786307);
-
-    Eigen::Matrix3d rot_b2s = rot_s2b.transpose();
-    Eigen::Vector3d tran_b2s = -rot_b2s * tran_s2b;
-
-    b2s_pose_.block<3, 3>(0, 0) = rot_b2s;
-    b2s_pose_.block<3, 1>(0, 3) = tran_b2s; 
-    b2s_pose_.block<1, 4>(3, 0) << 0, 0, 0, 1;
+    // Try to get transform between camera frame and IMU frame
+    Eigen::Matrix4d b2s_pose_matrix = Eigen::Matrix4d::Identity();
+    
+    try {
+        // Wait for transform to be available (timeout after 5 seconds)
+        geometry_msgs::TransformStamped transform_stamped = 
+            tf_buffer_.lookupTransform("imu_frame", "camera_frame", ros::Time(0), ros::Duration(5.0));
+        
+        // Convert to Eigen
+        Eigen::Affine3d eigen_transform = tf2::transformToEigen(transform_stamped);
+        b2s_pose_matrix = eigen_transform.matrix();
+        
+        ROS_INFO("Successfully loaded camera-to-IMU transform from TF");
+    }
+    catch (tf2::TransformException &ex) {
+        ROS_WARN("Could not get transform from TF: %s. Using hardcoded values.", ex.what());
+        
+        // Fall back to your hardcoded values
+        Eigen::Quaterniond rot_q_s2b(-0.5000957491655045, 0.5027695156557828, 0.5002145141495467, 0.49690290362200085);
+        Eigen::Matrix3d rot_s2b = rot_q_s2b.toRotationMatrix();
+        Eigen::Vector3d tran_s2b(0.04839478648122993, 0.04799781122813299, -0.009770663739786307);
+        Eigen::Matrix3d rot_b2s = rot_s2b.transpose();
+        Eigen::Vector3d tran_b2s = -rot_b2s * tran_s2b;
+        
+        b2s_pose_matrix.block<3, 3>(0, 0) = rot_b2s;
+        b2s_pose_matrix.block<3, 1>(0, 3) = tran_b2s;
+    }
+    
+    // Use the matrix (either from TF or hardcoded)
+    b2s_pose_ = b2s_pose_matrix;
 }
 
 rosIBPA::~rosIBPA()
@@ -454,6 +473,11 @@ sensor_msgs::PointCloud2 rosIBPA::filterPointCloud(const sensor_msgs::PointCloud
         ROS_ERROR("Error in filterPointCloud: %s", e.what());
         return input_cloud; // Return original cloud on error
     }
+}
+
+void rosIBPA::saveMesh()
+{
+    ibpa_reconstructor_.saveMesh();
 }
 
 // void rosIBPA::processBag(const std::string& bag_path) {

@@ -104,12 +104,12 @@ void Visualizer::visualizationThread(
     while (!should_exit)
     {
         if (!visualizer.PollEvents())
-        {                       // Window was closed
-            should_exit = true; // Signal main thread to exit
-
+        {   // Window was already closed
             rendering_in_progress = false;
-            need_2_update = true;
+            need_2_update = false;
             cv_debug_visualization.notify_one(); 
+
+            should_exit = true; // Signal main thread to exit
             break;
         }
 

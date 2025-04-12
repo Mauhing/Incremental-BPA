@@ -1395,7 +1395,7 @@ bool Mesher::removeDiskFanSingular()
     }
 
     for (Facet *facet : facets_to_be_removed)
-    {                        
+    {   
         std::cout << "Removing facet in DiskFan: " << facet->getVertex(0)->x() << " " << facet->getVertex(0)->y() << " " << facet->getVertex(0)->z() << std::endl;
         //this->removeRedundantDiskFanFacet(facet);
         this->removeFacet(facet);

@@ -37,6 +37,8 @@ class Reconstructor
     void initializeOctree(const std::list<Vertex>& vertices);
     void initializeVisualization();
 
+    std::string m_save_path;
+
     public:
     // delete the default constructor
     Reconstructor() = delete;
@@ -47,6 +49,8 @@ class Reconstructor
     bool shouldExit() const { return m_should_exit; }
     
     void reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const std::list<Vertex>& vertices );
+
+    void saveMesh();
 };
 
 #endif

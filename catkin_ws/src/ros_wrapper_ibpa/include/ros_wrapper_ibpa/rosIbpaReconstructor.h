@@ -16,6 +16,9 @@
 #include <vector>
 #include "Vertex.h"
 #include "Reconstructor.h"
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 struct rosPointCloudPose {
     sensor_msgs::PointCloud2 points;    // 256 points
@@ -43,6 +46,9 @@ private:
     std::vector<nav_msgs::Odometry> pose_buffer_;
     std::mutex batch_mutex_;  // Add mutex for thread safety
 
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;    
+
     ProgramOptions program_options_;
     size_t batch_size_; // This should be set up by a config file later.
     bool down_sample_in_ros_;
@@ -63,12 +69,13 @@ public:
 
     bool shouldExit() const;
 
+    void saveMesh();
+
 private:
 
     void reconstruction_loop();
 
     void reconstructSurface();
-
 
     std::vector<rosPointCloudPose> processBatch();
 

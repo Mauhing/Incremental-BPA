@@ -1,5 +1,6 @@
 #include "Reconstructor.h"
 #include "Visualizer.h"
+#include <unistd.h>
 
 Reconstructor::Reconstructor(const ProgramOptions& options):
 m_octree_vertices(options.max_orphan_per_voxel),
@@ -15,8 +16,9 @@ m_mesher(&m_octree_vertices,
 m_radius(options.radius),
 m_is_initialized(false),
 m_should_exit(false),
-m_hole_length(options.hole_length)
-{
+m_hole_length(options.hole_length),
+m_save_path(options.output_file)
+{    
 }
 
 Reconstructor::~Reconstructor()
@@ -29,6 +31,7 @@ Reconstructor::~Reconstructor()
 
 void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const std::list<Vertex>& vertices )
 {
+    std::cout << "Reconstructing batch " << std::endl;
     if (!m_is_initialized)
     {
         initializeOctree(vertices);
@@ -45,14 +48,31 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
     m_robot_pose = pose;
 
     {
+        std::cout << "Entering visualization" << std::endl;
         std::unique_lock<std::mutex> lock(m_o3d_mesh_mutex);
         m_rendering_in_progress = true;
         m_cv_debug_visualization.notify_one();
 
-        // Wait for the rendering to finish
+        std::cout << "notifying visualization" << std::endl;
         bool& ref = m_rendering_in_progress;  // Create a local reference
-        m_cv_debug_visualization.wait(lock, [&ref]{ return !ref; });
+        std::cout << "waiting for rendering to finish" << std::endl;
+    
+        auto timeout = std::chrono::milliseconds(500); // Set a timeout duration
+        while (true) {
+            if (m_cv_debug_visualization.wait_for(lock, timeout, [&ref]{ return !ref; })) {
+                std::cout << "rendering finished" << std::endl;
+                break;
+            }
+
+            if (m_should_exit) {
+                std::cout << "Exit signal received" << std::endl;
+                break;
+            }
+            // Optionally, add a small sleep here to prevent busy-waiting
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
+    std::cout << "Reconstructing batch done" << std::endl;
 }
 
 void Reconstructor::initializeOctree(const std::list<Vertex>& vertices)
@@ -78,4 +98,17 @@ void Reconstructor::initializeVisualization()
                            std::ref(m_rendering_in_progress),
                            std::ref(m_robot_pose),
                            std::ref(m_hole_length));
+}
+
+void Reconstructor::saveMesh()
+{
+    std::string save_path = m_save_path;
+    std::cout << "Saving mesh to " << save_path << std::endl;
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != nullptr) {
+        std::cout << "Current working directory: " << cwd << std::endl;
+    } else {
+        std::cerr << "Failed to get current working directory" << std::endl;
+    }
+    FileIO::saveMeshDebug(save_path.c_str(), m_mesher.getFacets());
 }
