@@ -42,7 +42,9 @@ TOctree<T>::TOctree(const int max_points): m_max_points(max_points)
 template <class T>
 TOctree<T>::~TOctree()
 {
+    #ifdef _DEBUG
     std::cout << "TOctree destructor" << std::endl;
+    #endif
     m_size = 0;
     m_root_depth = 0;
     m_nb_interval = 0;

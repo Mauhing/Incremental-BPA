@@ -95,10 +95,10 @@ int main(int argc, char **argv)
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-    for (size_t i = 0; i < sensor_frames.size(); i++) {
+    for (size_t i = 0; i < sensor_frames.size(); i += options.reading_per_batch) {
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         // Load batch of point cloud
-        std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> vertices_and_pose = FileIO::readFromBatchToList(sensor_frames, i, 1);
+        std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> vertices_and_pose = FileIO::readFromBatchToList(sensor_frames, i, options.reading_per_batch);
         std::list<Vertex> vertices = vertices_and_pose.first;
         robot_pose = vertices_and_pose.second;
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

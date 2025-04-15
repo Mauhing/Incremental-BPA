@@ -163,23 +163,26 @@ bool FileIO::saveMeshDebug(const char *output_filename, const std::list<Facet *>
  
 std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> FileIO::readFromBatchToList(const std::vector<SensorFrame> &sensor_frames, size_t batch_index, size_t batch_size)
 {
-list<Vertex> input_vertices;
+    list<Vertex> input_vertices;
 
-for (size_t i = 0; i < batch_size; i++) {
-    const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
-    const std::vector<Point3D> &points = sensor_frames[batch_index + i].points;
-    for (const auto &point : points) {
-        // Each point also have normal. it is calculated by (tx, ty, tz) - (xi, yi, zi) and normalize it.
-        double tx = pose(0, 3);
-        double ty = pose(1, 3);
-        double tz = pose(2, 3);
-        Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
+    for (size_t i = 0; i < batch_size; i++) {
+        if (batch_index + i >= sensor_frames.size()) {
+            break;
+        }
+        const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
+        const std::vector<Point3D> &points = sensor_frames[batch_index + i].points;
+        for (const auto &point : points) {
+            // Each point also have normal. it is calculated by (tx, ty, tz) - (xi, yi, zi) and normalize it.
+            double tx = pose(0, 3);
+            double ty = pose(1, 3);
+            double tz = pose(2, 3);
+            Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
 
-        input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
+            input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
+        }
     }
-}
 
-const Eigen::Matrix<double, 3, 4> pose = sensor_frames[batch_index + size_t(batch_size/2)].pose;
+    const Eigen::Matrix<double, 3, 4> pose = sensor_frames[batch_index + size_t(batch_size/2)].pose;
 
 return std::make_pair(input_vertices, pose);
 }
