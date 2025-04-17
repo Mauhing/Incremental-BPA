@@ -29,6 +29,8 @@ struct ProgramOptions
     int seed;
 
     double hole_length;
+
+    bool seed_triangles_every_batch;
 };
 
 inline ProgramOptions parseConfigFile(const std::string &config_file)
@@ -88,6 +90,9 @@ inline ProgramOptions parseConfigFile(const std::string &config_file)
 
     checkRequired(config["hole_length"], "hole_length");
     options.hole_length = config["hole_length"].as<double>();
+
+    checkRequired(config["seed_triangles_every_batch"], "seed_triangles_every_batch");
+    options.seed_triangles_every_batch = config["seed_triangles_every_batch"].as<bool>();
     
     return options;
 }

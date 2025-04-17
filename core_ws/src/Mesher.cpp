@@ -59,7 +59,7 @@ Mesher::Mesher()
 
 Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator_vertices,
                OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator,
-               const bool &random_device, const int &seed)
+               const bool &random_device, const int &seed, const bool &seed_triangles_every_batch)
 {
     m_ball_radius = iterator_vertices->getR();
     m_sq_ball_radius = m_ball_radius * m_ball_radius;
@@ -73,6 +73,7 @@ Mesher::Mesher(OctreeVertices *octree_vertices, OctreeIteratorVertices *iterator
 
     m_random_device = random_device;
     m_seed = seed;
+    m_seed_triangles_every_batch = seed_triangles_every_batch;
 }
 
 void Mesher::initialize(const Point &origin, double size, unsigned int depth)
@@ -160,7 +161,10 @@ void Mesher::reconstruct()
         expandTriangulation();
     }
 
-    //findSeedTriangle(); // This is to find the seed triangle again.
+    if (m_seed_triangles_every_batch)
+    {
+        findSeedTriangle(); // This is to find the seed triangle again.
+    }
 }
 
 void Mesher::reconstruct(const std::list<double> &radii)

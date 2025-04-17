@@ -206,6 +206,9 @@ protected: // class members
     /** @brief seed*/
     int m_seed;
 
+    /** @brief seed triangles every batch*/
+    bool m_seed_triangles_every_batch;
+
 public: // constructor-destructor
     /** @brief default constructor*/
     Mesher();
@@ -216,7 +219,7 @@ public: // constructor-destructor
      */
     Mesher(OctreeVertices *octree, OctreeIteratorVertices *iterator,
            OctreeBallCenters *octree_ball_centers, OctreeIteratorBallCenters *octree_ball_centers_iterator,
-           const bool &random_device, const int &seed);
+           const bool &random_device, const int &seed, const bool &seed_triangles_every_batch);
 
     /** @brief destructor*/
     ~Mesher();
