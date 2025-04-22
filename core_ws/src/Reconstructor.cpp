@@ -46,6 +46,11 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
     
     m_mesher.batchReconstruct(vertices);
     m_robot_pose = pose;
+    
+    #ifdef _DEBUG
+    std::cout << "Checking mesh integrity" << std::endl;
+    m_mesher.mesh_integrityCheck();
+    #endif
 
     {
         std::unique_lock<std::mutex> lock(m_o3d_mesh_mutex);

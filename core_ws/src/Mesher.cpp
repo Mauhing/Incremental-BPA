@@ -1239,10 +1239,10 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     #endif
     while (true)
     {
+        bool found_disk_fan_vertex = this->removeDiskFanSingular();
+
         // Remove singular vertices
         bool found_fan_fan_vertex = this->removeFanFanSingular();
-
-        bool found_disk_fan_vertex = this->removeDiskFanSingular();
 
         if (!found_fan_fan_vertex && !found_disk_fan_vertex)
         {
@@ -1405,6 +1405,21 @@ bool Mesher::removeDiskFanSingular()
                 facets_to_be_removed.insert(facet);
             }
         }
+        
+        // <<<< We have a list of disk facets. We want skip the first one.
+        bool skipped_first_one = false;
+        for (Facet_set &disk_facets : vertex_disk_fan_info.disk_facets)
+        {
+            if (skipped_first_one)
+            {
+                for (Facet *facet : disk_facets)
+                {
+                    facets_to_be_removed.insert(facet);
+                }
+            }
+            skipped_first_one = true;
+        }
+        // >>>>
     }
 
     for (Facet *facet : facets_to_be_removed)

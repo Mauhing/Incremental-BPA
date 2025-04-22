@@ -301,6 +301,7 @@ VertexDiskFanInfo Vertex::getDiskFan()
         }
         else
         {
+            // is_disk_facet_set is true
             vertex_disk_fan_info.disk_facets.push_back(detected_facets);
         }
 
