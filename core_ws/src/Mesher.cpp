@@ -1338,7 +1338,7 @@ bool Mesher::removeDiskFanSingular()
 
     bool found_disk_fan_vertex = false;
 
-    // All boundary vertices are relevant
+    // Get all boundary vertices
     std::set<Vertex *> boundary_vertices;
     for (Edge *e : m_border_edges)
     {
@@ -1358,15 +1358,17 @@ bool Mesher::removeDiskFanSingular()
                 // The fresh facet vertex is not in a boundary vertex. We do not need to count it.
                 continue;
             }
-            // the key does not exist, then insert it with 1
+            // <<<< Add the vertex to the counter
             if (fresh_vertices_counter.find(vertex) == fresh_vertices_counter.end())
             {
+            // the key does not exist, then insert it with 1
                 fresh_vertices_counter[vertex] = 1;
             }
             else
             {
                 fresh_vertices_counter[vertex]++;
             }
+            // >>>>
         }
     }
 
