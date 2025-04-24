@@ -1237,14 +1237,13 @@ void Mesher::batchReconstruct(const std::list<Vertex> &vertices)
     #ifdef _DEBUG
     std::cout << "Removing fanfan and disk fan singular" << std::endl;
     #endif
+    this->removeDiskFanSingular();
     while (true)
     {
-        bool found_disk_fan_vertex = this->removeDiskFanSingular();
-
         // Remove singular vertices
         bool found_fan_fan_vertex = this->removeFanFanSingular();
 
-        if (!found_fan_fan_vertex && !found_disk_fan_vertex)
+        if (!found_fan_fan_vertex)
         {
             break;
         }
