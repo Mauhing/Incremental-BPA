@@ -48,8 +48,8 @@ void Reconstructor::reconstruct(const Eigen::Matrix<double, 3, 4>& pose, const s
     m_robot_pose = pose;
     
     #ifdef _DEBUG
-    std::cout << "Checking mesh integrity" << std::endl;
-    m_mesher.mesh_integrityCheck();
+    //std::cout << "Checking mesh integrity" << std::endl;
+    //m_mesher.mesh_integrityCheck();
     #endif
 
     {

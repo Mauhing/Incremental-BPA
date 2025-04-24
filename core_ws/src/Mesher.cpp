@@ -1412,10 +1412,16 @@ bool Mesher::removeDiskFanSingular()
         {
             if (skipped_first_one)
             {
-                for (Facet *facet : disk_facets)
-                {
-                    facets_to_be_removed.insert(facet);
-                }
+                #ifdef _DEBUG
+                std::cerr << "This case should not happen" << std::endl;
+                std::exit(EXIT_FAILURE);
+                #endif
+                // <<<< It should not happen, but we still remove the facet
+                //for (Facet *facet : disk_facets)
+                //{
+                //    facets_to_be_removed.insert(facet);
+                //}
+                // >>>>
             }
             skipped_first_one = true;
         }
