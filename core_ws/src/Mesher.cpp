@@ -1917,13 +1917,24 @@ void Mesher::saveMeshAsOpen3DPLY(const std::string &filename) const
     }
 
     // Save the mesh to a PLY file
-    bool success = open3d::io::WriteTriangleMesh(filename, *O3d_mesh); 
+    // filename = "/path/to/output_mesh"; // Example filename
+    // Append timestamp to the filename
+    // filename = filename_{data}_{time}.ply 
+    std::time_t now = std::time(nullptr);
+    std::tm *tm = std::localtime(&now);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", tm);
+    std::string timestamp(buffer);  
+    std::string base_filename = filename.substr(0, filename.find_last_of('.'));
+    std::string new_filename = base_filename + "_" + timestamp + ".ply";
+    // Save the mesh
+    bool success = open3d::io::WriteTriangleMesh(new_filename, *O3d_mesh); 
     if (!success)
     {
-        std::cout << "Failed to save mesh to " << filename << std::endl;
+        std::cout << "Failed to save mesh to " << new_filename << std::endl;
     }
     else
     {
-        std::cout << "Mesh saved to " << filename << std::endl;
+        std::cout << "Mesh saved to " << new_filename << std::endl;
     }
 }

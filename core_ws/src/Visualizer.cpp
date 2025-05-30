@@ -6,6 +6,8 @@
 #include "types.h"
 #include <GLFW/glfw3.h>
 
+static void stackOldVertices(std::shared_ptr<open3d::geometry::PointCloud> &old_vertices, std::shared_ptr<open3d::geometry::PointCloud> &O3d_point);
+
 void Visualizer::visualizationThread(
     Mesher &mesher,
     std::mutex &o3d_mesh_mutex,
@@ -70,9 +72,11 @@ void Visualizer::visualizationThread(
     auto debug_facet = std::make_shared<open3d::geometry::TriangleMesh>();
     auto debug_edge = std::make_shared<open3d::geometry::LineSet>();
     auto debug_point = std::make_shared<open3d::geometry::PointCloud>();
+    auto old_vertices = std::make_shared<open3d::geometry::PointCloud>();
     visualizer.AddGeometry(debug_facet);
     visualizer.AddGeometry(debug_edge);
     visualizer.AddGeometry(debug_point);
+    visualizer.AddGeometry(old_vertices); 
 
     // Set default viewpoint
      //visualizer.GetViewControl().SetFront({0, 0, -1});
@@ -125,6 +129,8 @@ void Visualizer::visualizationThread(
             renderMainMesh(mesher.getFacets(), o3d_mesh);
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 
+            stackOldVertices(old_vertices, debug_point);
+
             renderReceivedVertices(received_vertices, debug_point);
 
             // the first boundary is the boundary with the largest square length
@@ -156,11 +162,24 @@ void Visualizer::visualizationThread(
             visualizer.UpdateGeometry(o3d_mesh);
             visualizer.UpdateGeometry(debug_edge);
             visualizer.UpdateGeometry(debug_point);
+            visualizer.UpdateGeometry(old_vertices);
             need_2_update = false;
         }
         visualizer.UpdateRender();
     }
     visualizer.DestroyVisualizerWindow();
+}
+
+static void stackOldVertices(std::shared_ptr<open3d::geometry::PointCloud> &old_vertices, std::shared_ptr<open3d::geometry::PointCloud> &recent_vertices)
+{
+    // Stack the points and colors from recent_vertices
+    for (size_t i = 0; i < recent_vertices->points_.size(); ++i)
+    {
+        old_vertices->points_.push_back(recent_vertices->points_[i]);
+        // Color make it golden
+        old_vertices->colors_.push_back(Eigen::Vector3d(1.0, 0.7, 0.0)); // Golden color
+        //old_vertices->colors_.push_back(recent_vertices->colors_[i]); // If you want to keep the original colors}
+    }
 }
 
 void Visualizer::renderMainMesh(const Facet_star_list &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh)

@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Set the base output filename
-    FileIO::setBaseOutputFilename(options.output_file.erase(options.output_file.find(".ply"), 4));
+    //FileIO::setBaseOutputFilename(options.output_file.erase(options.output_file.find(".ply"), 4));
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     // Get the input filename from the program options 
@@ -93,16 +93,7 @@ int main(int argc, char **argv)
     // Initialize the reconstructor
     Reconstructor reconstructor(options);
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
-    int first_one_third_batch = static_cast<int>(sensor_frames.size() / 3);
-    bool first_one_third_batch_done = false;
-    int second_one_third_batch = static_cast<int>(sensor_frames.size() * 2 / 3);
-    bool second_one_third_batch_done = false;
-
-    //print the first_one_third_batch and second_one_third_batch
-    std::cout << "First one third batch: " << first_one_third_batch << std::endl;
-    std::cout << "Second one third batch: " << second_one_third_batch << std::endl;
-    
+     
     //sleep for 10 seconds
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -124,22 +115,13 @@ int main(int argc, char **argv)
             std::cout << "\033[33mExiting\033[0m" << std::endl;
             break;
         }
-        
-        //if (i >= first_one_third_batch && !first_one_third_batch_done) {
-        //    std::cout << "\033[33mFirst one third batch done\033[0m" << std::endl;
-        //    std::this_thread::sleep_for(std::chrono::seconds(10));
-        //    first_one_third_batch_done = true;
-        //}
-        //if (i >= second_one_third_batch && !second_one_third_batch_done) {
-        //    std::cout << "\033[33mSecond one third batch done\033[0m" << std::endl;
-        //    std::this_thread::sleep_for(std::chrono::seconds(10));
-        //    second_one_third_batch_done = true;
-        //}
-        
+         
     }
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
     std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
+
+    reconstructor.saveMesh();
 
     std::cout << "\033[33mPress Enter to exit\033[0m" << std::endl;
     std::cin.get();
