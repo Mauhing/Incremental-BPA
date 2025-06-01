@@ -1422,6 +1422,7 @@ bool Mesher::removeDiskFanSingular()
                 //}
                 // >>>>
             }
+            (void)disk_facets.size(); // To avoid unused variable warning
             skipped_first_one = true;
         }
         // >>>>
