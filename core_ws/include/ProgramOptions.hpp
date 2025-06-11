@@ -12,6 +12,8 @@
 struct ProgramOptions
 {
     std::string input_file;
+    bool pcd_with_normal;
+
     std::string output_file;
 
     double radius;
@@ -59,6 +61,9 @@ inline ProgramOptions parseConfigFile(const std::string &config_file)
 
     checkRequired(config["input_file"], "input_file");
     options.input_file = config["input_file"].as<std::string>();
+
+    checkRequired(config["pcd_with_normal"], "pcd_with_normal");
+    options.pcd_with_normal = config["pcd_with_normal"].as<bool>();
 
     checkRequired(config["output_file"], "output_file");
     options.output_file = config["output_file"].as<std::string>();

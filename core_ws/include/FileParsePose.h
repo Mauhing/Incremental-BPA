@@ -25,11 +25,18 @@ struct SensorFrame {
             point.normal = (sensor_pos - point_pos).normalized();
         }
     }
+
+    void defaultPose() {
+        pose.setZero();
+        pose(0, 0) = 1.0; 
+        pose(1, 1) = 1.0; 
+        pose(2, 2) = 1.0;
+    }
 };
 
 class OfflineDataParser {
 public:
-    static std::vector<SensorFrame> parseFile(const std::string& filename) {
+    static std::vector<SensorFrame> parseFile(const std::string& filename, bool with_normal = false) {
         std::vector<SensorFrame> frames;
         std::ifstream file(filename);
         
@@ -40,9 +47,14 @@ public:
         std::string line;
         while (std::getline(file, line)) {
             if (line == "---") {
-                SensorFrame frame = parseSensorFrame(file);
-                frame.calculateNormals();
-                frames.push_back(frame);
+                if (with_normal) {
+                    SensorFrame frame = parseSensorFrameWithNormal(file);
+                    frames.push_back(frame);
+                } else {
+                    SensorFrame frame = parseSensorFrame(file);
+                    frame.calculateNormals();
+                    frames.push_back(frame);
+                }
             }
         }
 
@@ -76,6 +88,27 @@ private:
             std::istringstream iss(line);
             Point3D point;
             iss >> point.x >> point.y >> point.z;
+            frame.points.push_back(point);
+        }
+
+        return frame;
+    }
+
+    static SensorFrame parseSensorFrameWithNormal(std::ifstream& file) {
+        SensorFrame frame;
+        std::string line;
+        
+        frame.defaultPose();
+
+        std::getline(file, line);
+        if (line != "points:") {
+            throw std::runtime_error("Expected 'points:', got: " + line);
+        }
+
+        while (std::getline(file, line) && line != "---") {
+            std::istringstream iss(line);
+            Point3D point;
+            iss >> point.x >> point.y >> point.z >> point.normal.x() >> point.normal.y() >> point.normal.z();
             frame.points.push_back(point);
         }
 

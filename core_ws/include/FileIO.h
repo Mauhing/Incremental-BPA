@@ -52,7 +52,7 @@ public:
      * @param filename name of the file to read points from
      * @return the points and poses
      */ 
-    static std::vector<SensorFrame> readIntoFileBatch(const char *filename);
+    static std::vector<SensorFrame> readIntoFileBatch(const char *filename, bool pcd_with_normal);
 
     template <typename T>
     static std::tuple<Point, double, unsigned int> originAndDepth(

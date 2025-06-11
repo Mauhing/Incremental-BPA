@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // Read the input file
     // Turn the whole data into batch data
-    std::vector<SensorFrame> sensor_frames = FileIO::readIntoFileBatch(infile.c_str());
+    std::vector<SensorFrame> sensor_frames = FileIO::readIntoFileBatch(infile.c_str(), options.pcd_with_normal);
 
     if (sensor_frames.empty())
     {

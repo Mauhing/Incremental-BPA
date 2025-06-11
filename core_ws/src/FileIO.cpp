@@ -169,16 +169,16 @@ std::pair<std::list<Vertex>, Eigen::Matrix<double, 3, 4>> FileIO::readFromBatchT
         if (batch_index + i >= sensor_frames.size()) {
             break;
         }
-        const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
+        //const Eigen::Matrix<double, 3, 4> &pose = sensor_frames[batch_index + i].pose;
         const std::vector<Point3D> &points = sensor_frames[batch_index + i].points;
         for (const auto &point : points) {
             // Each point also have normal. it is calculated by (tx, ty, tz) - (xi, yi, zi) and normalize it.
-            double tx = pose(0, 3);
-            double ty = pose(1, 3);
-            double tz = pose(2, 3);
-            Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
-
-            input_vertices.push_back(Vertex(point.x, point.y, point.z, normal.x(), normal.y(), normal.z()));
+            //double tx = pose(0, 3);
+            //double ty = pose(1, 3);
+            //double tz = pose(2, 3);
+            //Eigen::Vector3d normal = (Eigen::Vector3d(tx, ty, tz) - Eigen::Vector3d(point.x, point.y, point.z)).normalized();
+            input_vertices.push_back(Vertex(point.x, point.y, point.z, point.normal.x() , point.normal.y(), point.normal.z()));
+            //input_vertices.push_back(Vertex(point.x, point.y, point.z, point.normal.x() , point.normal.y(), point.normal.z()));
         }
     }
 
@@ -270,9 +270,9 @@ void FileIO::setBaseOutputFilename(const std::string &filename)
     baseOutputFilename = filename;
 }
 
-std::vector<SensorFrame> FileIO::readIntoFileBatch(const char *filename)
+std::vector<SensorFrame> FileIO::readIntoFileBatch(const char *filename, bool with_normal)
 {
-    return OfflineDataParser::parseFile(filename);
+    return OfflineDataParser::parseFile(filename, with_normal);
 } 
 
 //std::tuple<Point, double, unsigned int> FileIO::originAndDepth(const SensorFrame &sensor_frames, double min_radius)
