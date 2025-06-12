@@ -13,6 +13,10 @@
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * @author Mau Hing Yip mauhingyip@hotmail.com
+ * @date 2025-06-12
+ * @note This file was further developed based on prior work by Julie Digne.
  */
 
 #ifndef OCTREENODE_H
