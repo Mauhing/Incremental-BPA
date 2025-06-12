@@ -33,6 +33,7 @@ class Reconstructor
     std::vector<ColorVertex> m_received_vertices;
     std::thread m_vis_thread;
     double m_hole_length;
+    bool m_show_previous_vertices;
 
     void initializeOctree(const std::list<Vertex>& vertices);
     void initializeVisualization();

@@ -18,6 +18,7 @@ m_radius(options.radius),
 m_is_initialized(false),
 m_should_exit(false),
 m_hole_length(options.hole_length),
+m_show_previous_vertices(options.show_previous_vertices),
 m_save_path(options.output_file)
 {    
 }
@@ -96,7 +97,8 @@ void Reconstructor::initializeVisualization()
                            std::ref(m_cv_debug_visualization),
                            std::ref(m_rendering_in_progress),
                            std::ref(m_robot_pose),
-                           std::ref(m_hole_length));
+                           std::ref(m_hole_length),
+                           std::ref(m_show_previous_vertices));
 }
 
 void Reconstructor::saveMesh()

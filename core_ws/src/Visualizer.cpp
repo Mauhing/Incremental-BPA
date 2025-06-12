@@ -16,7 +16,8 @@ void Visualizer::visualizationThread(
     std::condition_variable &cv_debug_visualization,
     bool &rendering_in_progress,
     Eigen::Matrix<double, 3, 4> &robot_pose,
-    const double &hole_length)
+    const double &hole_length,
+    const bool &show_previous_vertices)
 {
     // Create a visualizer object
     open3d::visualization::VisualizerWithKeyCallback visualizer;
@@ -129,7 +130,9 @@ void Visualizer::visualizationThread(
             renderMainMesh(mesher.getFacets(), o3d_mesh);
             //renderIncremental(mesher.getBatchFacetsRemoved(), mesher.getBatchFacetsAdded(), f_index_2_matrix_row, v_index_2_matrix_row, o3d_mesh);
 
-            stackOldVertices(old_vertices, debug_point);
+            if (show_previous_vertices) {
+                stackOldVertices(old_vertices, debug_point);
+            }
 
             renderReceivedVertices(received_vertices, debug_point);
 

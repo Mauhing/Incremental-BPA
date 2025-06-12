@@ -33,6 +33,8 @@ struct ProgramOptions
     double hole_length;
 
     bool seed_triangles_every_batch;
+
+    bool show_previous_vertices;
 };
 
 inline ProgramOptions parseConfigFile(const std::string &config_file)
@@ -73,6 +75,9 @@ inline ProgramOptions parseConfigFile(const std::string &config_file)
 
     checkRequired(config["reading_per_batch"], "reading_per_batch");
     options.reading_per_batch = config["reading_per_batch"].as<int>();
+
+    checkRequired(config["show_previous_vertices"], "show_previous_vertices");
+    options.show_previous_vertices = config["show_previous_vertices"].as<bool>();
 
     // For nested options
     checkRequired(config["main_mesh_policy"], "main_mesh_policy");

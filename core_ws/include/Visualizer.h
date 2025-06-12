@@ -17,7 +17,8 @@ namespace Visualizer
         std::condition_variable &cv_debug_visualization,
         bool &rendering_in_progress,
         Eigen::Matrix<double, 3, 4> &robot_pose,
-        const double &hole_length);
+        const double &hole_length,
+        const bool &show_previous_vertices);
 
     void renderMainMesh(const Facet_star_list &facets, std::shared_ptr<open3d::geometry::TriangleMesh> &O3d_mesh);
 

@@ -23,8 +23,8 @@ tf_listener_(tf_buffer_)
     down_sample_in_ros_max_points_ = program_options_.down_sample_in_ros_max_points;
 
     // Subscribe to topics
-    //points_sub_ = nh_.subscribe("/depth_registered/points", 1, &rosIBPA::processPointCloud, this);
-    points_sub_ = nh_.subscribe("/voxel_grid_trun/output", 10, &rosIBPA::processPointCloud, this);
+    points_sub_ = nh_.subscribe("/depth_registered/points", 1, &rosIBPA::processPointCloud, this);
+    //points_sub_ = nh_.subscribe("/voxel_grid_trun/output", 10, &rosIBPA::processPointCloud, this);
     odom_sub_ = nh_.subscribe("/rovio/odometry", 10, &rosIBPA::processOdometry, this);
 
     reconstruction_thread_ = std::thread(&rosIBPA::reconstruction_loop, this);
