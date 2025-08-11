@@ -355,7 +355,7 @@ void TOctreeNode<T>::downSample(const int max_points,
             m_points_buffer.clear();
         }
 
-        // memory leak here.
+        // memory leak here. fixed for long time ago.
     }
 }
 
