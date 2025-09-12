@@ -49,20 +49,20 @@ reading_per_batch: 5          # Number of frames fused per batch
 
 main_mesh_policy:
   enabled: true               # Reserved (parsed today, subject to change)
-  execute_at_batch: 10        # Batch index to activate main mesh policy
+  execute_at_batch: 10        # Batch index to activate main mesh policy, only valid if enable is set to true.
 
 random:
   random_device: false        # true = non-deterministic seed
   seed: 42                    # used when random_device=false
 
-seed_triangles_every_batch: false  # Reseed triangulation each batch
+seed_triangles_every_batch: false  # Search seed triangulation each batch
 show_previous_vertices: false      # Visualize previously seen vertices
 
 # Offline input (core_ws)
 input_file: ./01-data/01-input/poses_and_points.txt
 pcd_with_normal: false             # true if file contains per-point normals
 
-# Output base path (timestamp is appended)
+# Output base path
 output_file: ./01-data/02-output/Final_Mesh
 
 # Online input (ROS wrapper)
@@ -74,14 +74,14 @@ hole_length: 3.16                  # Boundary length threshold (visualization)
 ```
 
 Notes on parameters
-- `radius`: Sets reconstruction scale and octree depth; smaller captures finer detail but increases cost.
-- `max_orphan_per_voxel`: Leaf cap during downsampling; higher keeps more points (more detail/compute).
+- `radius`: Sets BPA radius and octree depth; smaller captures finer detail but increases computational cost.
+- `max_orphan_per_voxel`: Leaf cap during downsampling; higher keeps more orphan vertices.
 - `reading_per_batch`: Frames fused per iteration (trade latency vs. stability).
-- `seed_triangles_every_batch`: Useful when the edge front disappears between batches.
-- `show_previous_vertices`: Toggles visualizing accumulated vertices.
+- `seed_triangles_every_batch`: Search seed triangulation each batch.
+- `show_previous_vertices`: Toggles visualizing accumulated vertices for all previously detected vertices.
 - `down_sample_in_ros`: Subsamples incoming ROS point clouds before fusion.
-- `hole_length`: In the viewer, boundaries shorter than this are colored differently and may be considered “holes”.
-- `main_mesh_policy`: Currently parsed and printed; behavior may evolve.
+- `hole_length`: In the viewer, boundaries longer than this are colored as red.
+- `main_mesh_policy`: It it is true, after the `N` batch, keep only the largest edge-connected mesh. If one wish the same effect after the batch `N`, one can press `t` in the visualzation windows.
 
 
 Input File Format (offline)
@@ -124,15 +124,8 @@ Outputs
 ROS Wrapper Details
 -------------------
 - Subscribes: `/depth_registered/points` (sensor_msgs/PointCloud2), `/rovio/odometry` (nav_msgs/Odometry)
-- TF: Tries to read transform `imu_frame` → `camera_frame`; falls back to a hardcoded extrinsic if TF is unavailable.
+- TF: Tries to read transform `imu_frame` → `camera_frame`; falls back to a hardcoded extrinsic if TF is unavailable. (This mean that you may need to hardcode this yourself)
 - Launch: `catkin_ws/src/ros_wrapper_ibpa/launch/ibpa.launch` sets `config_path`.
-
-
-Troubleshooting
----------------
-- No mesh produced: verify `input_file` exists and has the expected format; ensure `reading_per_batch` matches your data cadence.
-- Sparse or noisy mesh: increase `max_orphan_per_voxel` or `radius`; verify normals (when using `pcd_with_normal: true`).
-- Determinism for experiments: set `random_device: false` and fix `seed`.
 
 
 Examples
