@@ -3,7 +3,7 @@
     <node name="ibpa_node" pkg="ros_wrapper_ibpa" type="ros_wrapper_ibpa_node" output="screen"> 
 
         <!-- Load config file -->   
-        <param name="config_path" value="/home/mhyip/02-works/02-real-time-surf-recon/EXPERIMENT/04_BPA/config.yaml" />
+        <param name="config_path" value="/home/mhyip/02-works/02-real-time-surf-recon/EXPERIMENT/04_BPA/config_demo_ros.yaml" />
         
         <!-- Remap topics -->
         <!-- <remap from="input_cloud" to="/camera/depth/points" /> -->

@@ -1,0 +1,33 @@
+# Surface Reconstruction Configuration
+radius: 0.3
+max_orphan_per_voxel: 3
+reading_per_batch: 5
+
+# main mesh policy
+main_mesh_policy:
+  enabled: true
+  execute_at_batch: 10
+  # It will execute the mesh generation at the given batch number
+  # After that one can use 't' to maintian the main mesh poliy if one is needed.
+
+random:
+  random_device: false
+  seed: 42 # if random_device is false
+
+seed_triangles_every_batch: false
+
+show_previous_vertices: false
+
+output_file: /home/mhyip/02-works/02-real-time-surf-recon/EXPERIMENT/04_BPA/01-data/02-output/Final_Mesh
+
+#This is for the offline reconstruction (core_ws)
+input_file: ./01-data/01-input/robot_fjord3_normal_and_points.txt
+pcd_with_normal: true
+
+#This is for the online reconstruction (catkin_ws)
+down_sample_in_ros:
+  enabled: true
+  max_points: 1000
+
+#hole_length: 3.1622776601683795 # sqrt(10)
+hole_length: 3.0
