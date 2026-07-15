@@ -1,0 +1,22 @@
+# Ignore everything by default
+*
+
+# Allow the specific folder and file
+!/core_ws/
+!/core_ws/**
+!.gitignore
+
+!/catkin_ws/
+!/catkin_ws/**
+
+!/01-data/
+!/01-data/01-input/
+!/01-data/01-input/.gitkeep
+
+!/01-data/02-output/
+!/01-data/02-output/.gitkeep
+
+!*.yaml
+
+# Keep large local Open3D SDK bundles untracked
+/core_ws/third_party/open3d-devel-linux-x86_64-cxx11-abi-*/
