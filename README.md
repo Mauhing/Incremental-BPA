@@ -13,7 +13,7 @@ Digne, Julie. "An analysis and implementation of a parallel ball pivoting algori
 Build Requirements
 ------------------
 - CMake ≥ 3.10, C++20 toolchain
-- Open3D (Please download it and put it into `core_ws/third_party`) see https://github.com/isl-org/Open3D/releases#release-v0.18.0
+- Open3D (**Please download it** and put it into `core_ws/third_party`) see https://github.com/isl-org/Open3D/releases#release-v0.18.0
 - yaml-cpp (already included in `core_ws/third_party`) see https://github.com/jbeder/yaml-cpp/releases#release-0.8.0
 - ROS (only for `catkin_ws` path)
 
