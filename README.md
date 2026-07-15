@@ -1,21 +1,38 @@
 Real-Time Surface Reconstruction (Incremental BPA)
 =================================================
 
+Author: Mauhing Yip
+
 This project implements an incremental Ball Pivoting Algorithm (BPA) for real‑time or offline surface reconstruction from point clouds. It provides:
 - An offline C++ executable with Open3D visualization (`core_ws`)
 - A ROS wrapper for online processing from topics or bag files (`catkin_ws`)
 
+We build on project: 
+Digne, Julie. "An analysis and implementation of a parallel ball pivoting algorithm." Image Processing On Line 4 (2014): 149-168.
+
+Build Requirements
+------------------
+- CMake ≥ 3.10, C++20 toolchain
+- Open3D (already included in `core_ws/third_party`) see https://github.com/isl-org/Open3D/releases#release-v0.18.0
+- yaml-cpp (already included in `core_ws/third_party`) see https://github.com/jbeder/yaml-cpp/releases#release-0.8.0
+- ROS (only for `catkin_ws` path)
 
 Quick Start
 -----------
 
 Offline (recommended for first run)
+- Download the sample file (txt) from here and put it into `/01-data/01-input`
 - Build: `cd core_ws && ./rebuild.sh`
-- Run: `./build/core_ibpa -c ../config-Figaro.yaml`
+- Back to project dir `cd ..`
+- For point cloud with normal 
+  - Run: `./core_ws/build/core_ibpa -c ./config_demo_robot_nomral_points.yaml`
+- For point cloud without normal, but sensor pose
+  - Run: `./core_ws/build/core_ibpa -c ./config_demo_robot_pose_points.yaml`
 
-ROS (online)
+Online (ROS)
+- Download our sample ros bag from here and put it into `/01-data/01-input`
 - Start core services: `roscore`
-- Play a bag (example): `rosbag play -r 5 /path/to/your.bag`
+- Play a bag (example): `rosbag play -r 1 /path/to/your.bag`
 - Build + launch wrapper: `cd catkin_ws && ./rebuild.sh`
   - The launch file `ros_wrapper_ibpa/launch/ibpa.launch` passes `config_path` to the node. Edit it to point to your YAML.
 
@@ -28,17 +45,9 @@ Repository Layout
 - `01-data/`: Example input/output files and placeholders
 
 
-Build Requirements
-------------------
-- CMake ≥ 3.10, C++20 toolchain
-- Open3D (vendored in `core_ws/third_party` via CMake config path)
-- yaml-cpp (vendored)
-- ROS (only for `catkin_ws` path)
-
 
 Configuration (YAML)
 --------------------
-Point the app to a YAML file via `-c <file.yaml>`. Examples: `config.yaml`, `config-Figaro.yaml`, `config-Nyhavna.yaml`.
 
 Minimal annotated example:
 ```yaml
