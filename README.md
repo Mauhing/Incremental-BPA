@@ -21,7 +21,7 @@ Quick Start
 -----------
 
 Offline (recommended for first run)
-- Download the sample file (txt) from here and put it into `/01-data/01-input`
+- Download the sample files (txt) from [Google Drive sample data](https://drive.google.com/drive/folders/1akYV00Lk5WZvFLY2Amjr0OE8SpZRXwcv?usp=sharing) and put it into `/01-data/01-input`
 - Build: `cd core_ws && ./rebuild.sh`
 - Back to project dir `cd ..`
 - For point cloud with normal 
@@ -30,7 +30,7 @@ Offline (recommended for first run)
   - Run: `./core_ws/build/core_ibpa -c ./config_demo_robot_pose_points.yaml`
 
 Online (ROS)
-- Download our sample ros bag from here and put it into `/01-data/01-input`
+- Download our sample ROS bag from [Google Drive sample data](https://drive.google.com/drive/folders/1akYV00Lk5WZvFLY2Amjr0OE8SpZRXwcv?usp=sharing) and put it into `/01-data/01-input`
 - Start core services: `roscore`
 - Play a bag (example): `rosbag play -r 1 /path/to/your.bag`
 - Build + launch wrapper: `cd catkin_ws && ./rebuild.sh`
