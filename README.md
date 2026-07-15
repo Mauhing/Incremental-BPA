@@ -175,6 +175,6 @@ At program exit, the mesh is written as a PLY file via Open3D:
   - `/rovio/odometry` (`nav_msgs/Odometry`)
 - TF handling:
   - Attempts to read transform `imu_frame` -> `camera_frame`
-  - Falls back to a hardcoded extrinsic transform if TF is unavailable
+  - Falls back to a hardcoded extrinsic transform if TF is unavailable. See line 68 in rosIbpaReconstructior.cpp
 - Launch file:
   - `catkin_ws/src/ros_wrapper_ibpa/launch/ibpa.launch` (sets `config_path`)
