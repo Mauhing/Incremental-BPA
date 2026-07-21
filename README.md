@@ -1,6 +1,6 @@
 # Real-Time Surface Reconstruction (Incremental BPA)
 
-Author: Mauhing Yip
+Author: Hidden for double blind submission
 
 This repository provides an incremental Ball Pivoting Algorithm (BPA) pipeline for real-time and offline surface reconstruction from point clouds.
 
