@@ -19,10 +19,10 @@ This implementation is based on:
 
 - CMake 3.10 or newer
 - C++20-compatible compiler toolchain
-- Open3D 0.18.0 (download and place in `core_ws/third_party`):
-  https://github.com/isl-org/Open3D/releases#release-v0.18.0
 - yaml-cpp 0.8.0 (already included in `core_ws/third_party`):
   https://github.com/jbeder/yaml-cpp/releases#release-0.8.0
+- Open3D 0.18.0 (download and place in `core_ws/third_party`):
+  https://github.com/isl-org/Open3D/releases#release-v0.18.0, download `open3d-devel-linux-x86_64-cxx11-abi-0.18.0.tar.xz` from the assets, extract it, and place it in `core_ws/third_party` alongside yaml-cpp
 - ROS (required only for `catkin_ws`)
 
 ## Quick Start
