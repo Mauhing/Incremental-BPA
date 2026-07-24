@@ -53,18 +53,25 @@ catkin_package(
 # ─────────────────────────────────────────────────────────────
 set(CORE_WS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../core_ws")
 
-# Open3D (required to forward Open3D_DIR to core_ws)
-set(Open3D_DIR "${CORE_WS_PATH}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.18.0/lib/cmake/Open3D")
-find_package(Open3D REQUIRED)
-
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${Open3D_INCLUDE_DIRS}
 )
 
 # Include and build the core_ws as a subdirectory
 add_subdirectory(${CORE_WS_PATH} ${CMAKE_BINARY_DIR}/core_ws_build)
+
+# Open3D imported targets are directory-scoped in CMake. Resolve Open3D again
+# in this package scope so transitive target properties can be evaluated.
+find_package(Open3D QUIET CONFIG
+  PATHS
+    "${CMAKE_BINARY_DIR}/_deps/open3d-src/lib/cmake/Open3D"
+    "${CORE_WS_PATH}/build/_deps/open3d-src/lib/cmake/Open3D"
+  NO_DEFAULT_PATH
+)
+if(NOT Open3D_FOUND)
+  find_package(Open3D REQUIRED CONFIG)
+endif()
 
 # ─────────────────────────────────────────────────────────────
 # 🧱 Targets
@@ -82,7 +89,6 @@ add_executable(${PROJECT_NAME}_node
 # ─────────────────────────────────────────────────────────────
 target_link_libraries(${PROJECT_NAME}
   core_ibpa_lib
-  Open3D::Open3D
   ${catkin_LIBRARIES}
 )
 

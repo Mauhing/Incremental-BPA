@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 project(core_ibpa)
 
 # ─────────────────────────────────────────────────────────────
@@ -32,19 +32,30 @@ if (NOT DEFINED CMAKE_DEBUG_POSTFIX)
 endif()
 
 # ─────────────────────────────────────────────────────────────
-# 🧩 Third-party dependencies
+# 🧩 Third-party dependencies (auto-downloaded via FetchContent)
 # ─────────────────────────────────────────────────────────────
+include(FetchContent)
 
-# yaml-cpp (in-source)
-set(YAML_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/yaml-cpp-0.8.0")
+# yaml-cpp
+FetchContent_Declare(yaml-cpp
+  URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+)
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
-add_subdirectory(${YAML_CPP_DIR})  # defines yaml-cpp target
+FetchContent_MakeAvailable(yaml-cpp)
 
-# Open3D
-set(Open3D_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/open3d-devel-linux-x86_64-cxx11-abi-0.18.0/lib/cmake/Open3D")
-find_package(Open3D REQUIRED)
+# Open3D (pre-built binary)
+FetchContent_Declare(Open3D
+  URL https://github.com/isl-org/Open3D/releases/download/v0.18.0/open3d-devel-linux-x86_64-cxx11-abi-0.18.0.tar.xz
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+)
+FetchContent_MakeAvailable(Open3D)
+
+# Set Open3D_DIR to the cmake config in the extracted archive
+set(Open3D_DIR "${open3d_SOURCE_DIR}/lib/cmake/Open3D")
+find_package(Open3D REQUIRED CONFIG)
 
 # Threads
 find_package(Threads REQUIRED)
@@ -52,14 +63,12 @@ find_package(Threads REQUIRED)
 # ─────────────────────────────────────────────────────────────
 # 📂 Source files and headers
 # ─────────────────────────────────────────────────────────────
-# Enable all warnings and checks for unused code
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror=conversion -Wunused -Wunused-function -Wunused-variable")
 
 file(GLOB_RECURSE core_sources CONFIGURE_DEPENDS src/*.cpp)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${YAML_CPP_DIR}/include
 )
 
 # ─────────────────────────────────────────────────────────────
