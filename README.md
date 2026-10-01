@@ -20,8 +20,18 @@ This implementation is based on:
 - CMake 3.11 or newer
 - C++20-compatible compiler toolchain
 - ROS (required only for `catkin_ws`)
+- System packages needed by the pre-built Open3D binary:
+  - `libglu1-mesa-dev`: OpenGL GLU headers (`GL/glu.h`), needed at compile time
+  - `libc++1` and `libc++abi1`: LLVM C++ runtime that `libOpen3D.so` links against, needed at link time and run time
 
-**Note:** Dependencies are automatically downloaded and extracted during the build process—no manual setup required.
+  On Ubuntu/Debian:
+
+  ```bash
+  sudo apt-get update
+  sudo apt-get install -y libglu1-mesa-dev libc++1 libc++abi1
+  ```
+
+**Note:** yaml-cpp and Open3D are downloaded and extracted automatically during the build. Only the system packages above need to be installed by hand.
 
 ## Third-Party Libraries
 
