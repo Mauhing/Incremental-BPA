@@ -22,6 +22,7 @@
 #ifndef OCTREENODE_H
 #define OCTREENODE_H
 
+#include <algorithm>
 #include <cstdlib>
 #include <list>
 

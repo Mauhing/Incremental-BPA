@@ -18,7 +18,7 @@ seed_triangles_every_batch: false
 
 show_previous_vertices: false
 
-output_file: /home/mhyip/02-works/02-real-time-surf-recon/EXPERIMENT/04_BPA/01-data/02-output/Final_Mesh
+output_file: ./01-data/02-output/Final_Mesh
 
 #This is for the offline reconstruction (core_ws)
 input_file: ./01-data/01-input/robot_fjord3_poses_and_points.txt

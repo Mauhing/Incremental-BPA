@@ -954,7 +954,7 @@ void Mesher::exileVertex(Vertex *vertex)
     vertex->clearAdjacentEdgesAndFacets();
 }
 
-template <bool exile = false>
+template <bool exile>
 void Mesher::removeFacet(Facet *facet)
 {
     Vertex *vertex[3];
@@ -1019,7 +1019,7 @@ void Mesher::removeFacet(Facet *facet)
     delete facet;
 }
 
-template <typename SetType, bool exile = false>
+template <typename SetType, bool exile>
 void Mesher::removeFacets(SetType &facets)
 {
     // Perform compile time check
