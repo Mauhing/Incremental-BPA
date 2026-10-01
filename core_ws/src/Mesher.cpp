@@ -45,6 +45,7 @@
 #include <sstream>
 #include <memory>
 #include <algorithm>
+#include <filesystem>
 #include "Visualizer.h"
 #include "Region.h"
 
@@ -1930,7 +1931,8 @@ void Mesher::saveMeshAsOpen3DPLY(const std::string &filename) const
     char buffer[80];
     std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", tm);
     std::string timestamp(buffer);  
-    std::string base_filename = filename.substr(0, filename.find_last_of('.'));
+    // Only strip an extension from the file name itself, not a '.' in the directory part (e.g. "./")
+    std::string base_filename = std::filesystem::path(filename).replace_extension().string();
     std::string new_filename = base_filename + "_" + timestamp + ".ply";
     // Save the mesh
     bool success = open3d::io::WriteTriangleMesh(new_filename, *O3d_mesh); 
