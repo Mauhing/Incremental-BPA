@@ -44,8 +44,9 @@ This implementation is based on:
 
 ### Offline (recommended for first run)
 
-1. Download sample TXT data from [Google Drive sample data](https://drive.google.com/drive/folders/1akYV00Lk5WZvFLY2Amjr0OE8SpZRXwcv?usp=sharing) into `01-data/01-input`.
-2. Build:
+Run all commands from the repository root.
+
+1. Build:
 
    ```bash
    cd core_ws
@@ -53,19 +54,55 @@ This implementation is based on:
    cd ..
    ```
 
-3. Run one of the following:
+2. Download the demo TXT files from [Google Drive sample data](https://drive.google.com/drive/folders/1akYV00Lk5WZvFLY2Amjr0OE8SpZRXwcv?usp=sharing) into `01-data/01-input`.
+3. Run the demos below in the order listed. Each demo has two configs for the same scene:
+   - `*_pose*.yaml` (`pcd_with_normal: false`) estimates normals from the sensor pose.
+   - The other config (`pcd_with_normal: true`) reads per-point normals from the file.
 
-   - Point cloud with normals:
+#### Demo 1: Synthetic sphere with holes (start here)
 
-     ```bash
-     ./core_ws/build/core_ibpa -c ./config_demo_robot_normal_points.yaml
-     ```
+A sphere of radius 10 m with eight round holes, each 1 m across. A simulated downward-facing sensor flies 1 m above the surface. It circles the sphere one latitude band at a time, from the south pole to the north pole, and every band is a closed loop. The expected result is a closed sphere with the eight holes left open.
 
-   - Point cloud without normals (uses sensor pose):
+- Files: `synthetic_sphere_normal_and_points.txt`, `synthetic_sphere_pose_and_points.txt`
+- Run:
 
-     ```bash
-     ./core_ws/build/core_ibpa -c ./config_demo_robot_pose_points.yaml
-     ```
+  ```bash
+  # Normals read from the file
+  ./core_ws/build/core_ibpa -c ./config_demo_synthetic_sphere.yaml
+
+  # Normals estimated from the sensor pose
+  ./core_ws/build/core_ibpa -c ./config_demo_synthetic_sphere_pose.yaml
+  ```
+
+#### Demo 2: Synthetic square loop
+
+Nearly flat ground (height noise of 5 mm) scanned one 4 m-wide line at a time. The sensor drives forward, turns right at each corner of a 10 m × 10 m square and ends where it started, so the scans close a loop. The expected result is a single connected mesh around the whole loop.
+
+- Files: `synthetic_square_loop_normal_and_points.txt`, `synthetic_square_loop_pose_and_points.txt`
+- Run:
+
+  ```bash
+  # Normals read from the file
+  ./core_ws/build/core_ibpa -c ./config_demo_synthetic_loop.yaml
+
+  # Normals estimated from the sensor pose
+  ./core_ws/build/core_ibpa -c ./config_demo_synthetic_loop_pose.yaml
+  ```
+
+#### Demo 3: Trondheim Fjord (real data)
+
+The fjord3 dataset is real sensor data gathered in the Trondheim Fjord, Norway.
+
+- Files: `robot_fjord3_normal_and_points.txt`, `robot_fjord3_poses_and_points.txt`
+- Run:
+
+  ```bash
+  # Normals read from the file
+  ./core_ws/build/core_ibpa -c ./config_demo_robot_normal_points.yaml
+
+  # Normals estimated from the sensor pose
+  ./core_ws/build/core_ibpa -c ./config_demo_robot_pose_points.yaml
+  ```
 
 ### Online (ROS)
 
